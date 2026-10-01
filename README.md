@@ -6,30 +6,31 @@ Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA. El docen
 
 | Carpeta | Qué hay |
 | --- | --- |
-| `server/` | API REST + MQTT (Node + TypeScript + Express) |
+| `server/` | API REST + MQTT (Python + FastAPI) |
 | `web/` | Aplicación web mobile-first (React + Vite + TypeScript) |
-| `tools/simulador/` | CLI que se hace pasar por el equipo, para probar sin hardware |
+| `tools/simulador/` | CLI en Python que se hace pasar por el equipo, para probar sin hardware |
 | `docs/` | Protocolo MQTT y documentación |
+| `scripts/` | Scripts de Node que hacen que los comandos funcionen igual en Windows y en Linux |
 
-Las tres carpetas de código son *workspaces* de npm: se instalan juntas con un solo `npm install` desde la raíz.
+Python usa un entorno virtual (`.venv`, en la raíz) con las dependencias de `requirements.txt`. La web usa npm. Los comandos de abajo se encargan de los dos.
 
 ## Requisitos
 
-- **Node.js 22.12 o más nuevo** (recomendado: 24 LTS). Verificalo con `node --version`.
+- **Python 3.10 o más nuevo.** Verificalo con `python3 --version` (en Windows: `py --version`).
+  - Windows: instalador de [python.org](https://www.python.org/downloads/) o `winget install Python.Python.3.12`.
+  - Linux Mint: viene instalado. Si falta el módulo de entornos virtuales: `sudo apt install python3-venv`.
+- **Node.js 22.12 o más nuevo** (recomendado: 24 LTS), para la web. Verificalo con `node --version`.
   - Windows: instalador de [nodejs.org](https://nodejs.org) o `winget install OpenJS.NodeJS.LTS`.
-  - Linux: [nvm](https://github.com/nvm-sh/nvm) y después `nvm install` desde la raíz del repo (lee la versión de `.nvmrc`).
+  - Linux: con [nvm](https://github.com/nvm-sh/nvm), corré `nvm install` desde la raíz del repo (lee la versión de `.nvmrc`).
 - Git.
 
 ## Primera vez
 
 ```sh
-npm install
+npm run setup
 ```
 
-Después copiá `server/.env.example` a `server/.env`. Con los valores por defecto alcanza para desarrollar.
-
-- Linux: `cp server/.env.example server/.env`
-- Windows (PowerShell): `Copy-Item server/.env.example server/.env`
+Crea el entorno virtual de Python, instala las dependencias de Python y de Node, y copia `server/.env.example` a `server/.env`. Con los valores por defecto alcanza para desarrollar. Si cambia `requirements.txt` o `package.json`, volvé a correrlo.
 
 ## Levantar todo en desarrollo
 
@@ -37,14 +38,15 @@ Después copiá `server/.env.example` a `server/.env`. Con los valores por defec
 npm run dev
 ```
 
-Levanta el servidor en `http://localhost:3000` y la web en `http://localhost:5173`. Los dos se reinician solos cuando cambiás el código.
+Levanta el servidor en `http://localhost:8000` y la web en `http://localhost:5173`. Los dos se reinician solos cuando cambiás el código.
 
-Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`.
+- Documentación interactiva de la API (la genera FastAPI): `http://localhost:8000/docs`.
+- Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`.
 
 ## Otros comandos
 
 | Comando | Qué hace |
 | --- | --- |
-| `npm test` | Corre los tests del servidor |
-| `npm run build` | Compila el servidor y la web |
+| `npm test` | Corre los tests del servidor (pytest) |
+| `npm run build` | Compila la web para producción |
 | `npm run simulador -- <comando>` | Corre el simulador del equipo (llega en la Fase 1) |

@@ -7,9 +7,10 @@ export default defineConfig({
     // host: true para poder abrir la web desde el celular con la IP del notebook
     host: true,
     port: 5173,
-    // En desarrollo, todo lo que empieza con /api se reenvia al servidor (evita CORS)
+    // En desarrollo, todo lo que empieza con /api se reenvia al servidor (evita CORS).
+    // Tiene que coincidir con el PORT de server/.env
     proxy: {
-      '/api': process.env.API_URL ?? 'http://localhost:3000',
+      '/api': 'http://localhost:8000',
     },
   },
 });

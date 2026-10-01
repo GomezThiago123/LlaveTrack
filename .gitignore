@@ -21,3 +21,8 @@ firmware/include/secrets.h
 .DS_Store
 Thumbs.db
 *.log
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/

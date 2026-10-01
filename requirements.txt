@@ -1,0 +1,11 @@
+# Dependencias de Python del servidor y del simulador.
+# Se instalan en el entorno virtual .venv con: npm run setup
+
+# Servidor
+fastapi==0.142.2
+uvicorn==0.54.0
+pydantic-settings==2.15.0
+
+# Tests
+pytest==9.1.1
+httpx2==2.13.1

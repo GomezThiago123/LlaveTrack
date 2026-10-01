@@ -19,7 +19,7 @@ Proyecto escolar (metodologías ágiles + IoT). Prioridades: que funcione en la 
 
 ## Arquitectura
 ```
-Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Node + TS) ◄──► Base de datos
+Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    ◄──► Base de datos
                                                        ▲
                                                        │ MQTT (Mosquitto)
                                                        ▼
@@ -31,10 +31,11 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Node + TS) 
 
 ## Stack
 - `firmware/`: ESP32 con framework Arduino sobre PlatformIO (extensión de VS Code + CLI `pio`, para compilar desde la terminal). Librerías: MFRC522, LiquidCrystal_I2C, Keypad, AccelStepper, PubSubClient, ArduinoJson 7.
-- `server/`: Node.js LTS + TypeScript, Express, mqtt.js, Prisma (SQLite en desarrollo, se puede pasar a PostgreSQL después), zod para validar todo lo que entra (REST y MQTT), Vitest.
+- `server/`: Python 3.10+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo, se puede pasar a PostgreSQL después), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual `.venv` en la raíz con `requirements.txt` (versiones fijas).
+- Raíz: `npm run setup` (crea el `.venv` e instala todo), `npm run dev` (servidor en :8000 + web en :5173), `npm test` (pytest). `scripts/py.mjs` ejecuta el Python del `.venv` en Windows y en Linux; los scripts de npm lo usan en lugar de llamar a Python directo. Node 22.12+ (recomendado 24) solo para la web.
 - `web/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP.
 - Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.
-- `tools/simulador/`: CLI que se hace pasar por el ESP32 vía MQTT (ingresar código, confirmar retiro, devolver un UID). Para desarrollar y testear sin hardware.
+- `tools/simulador/`: CLI en Python (usa el mismo `.venv`) que se hace pasar por el ESP32 vía MQTT (ingresar código, confirmar retiro, devolver un UID). Para desarrollar y testear sin hardware.
 - `docs/`: `protocolo-mqtt.md` (contrato) y `cableado.md` (pines y alimentación).
 
 ## Modelo de datos (MVP)
@@ -47,7 +48,7 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Node + TS) 
 - `EventoDispositivo`: eventId (único), tipo, payload, recibidoEn. Sirve de log y para descartar duplicados.
 
 Reglas:
-- Una llave nunca puede quedar tomada dos veces: cada cambio de estado es un UPDATE condicional (`where: { id, estado: 'DISPONIBLE' }`) dentro de una transacción, verificando cuántas filas cambió. Test obligatorio con dos pedidos simultáneos.
+- Una llave nunca puede quedar tomada dos veces: cada cambio de estado es un UPDATE condicional (`UPDATE llave SET estado = ... WHERE id = ? AND estado = 'DISPONIBLE'`, con SQLAlchemy) dentro de una transacción, verificando cuántas filas cambió. Test obligatorio con dos pedidos simultáneos.
 - Un docente tiene como máximo una reserva pendiente.
 - Fechas en UTC en la base; se muestran en `America/Argentina/Buenos_Aires`.
 - Seed desde un archivo editable (aulas, llaves con UID y slot, usuarios), porque el alta desde la web es V2.
@@ -77,8 +78,8 @@ En reposo siempre hay un slot vacío frente a la ventana. El RFID no puede "busc
 
 ### Autenticación (US-01, US-07, US-08): DECIDIDO, las dos opciones
 El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Google". Las dos entran al mismo `Usuario`, identificado por su email.
-- Email + contraseña (se implementa primero): hash bcrypt (`bcryptjs` no necesita compilar nada en Windows), bloqueo de 15 min tras 5 intentos fallidos (US-07) y recuperación por email (nodemailer + SMTP) con link que vence en 30 min (US-08). `passwordHash` puede ser null (usuario que solo entra con Google).
-- Google (se agrega después): la web obtiene el ID token, el servidor lo verifica (audience = client ID, email verificado) y solo deja entrar emails cargados en `Usuario` con `activo = true`; nunca crea usuarios. Guardar `googleSub` la primera vez. En desarrollo funciona en `http://localhost`; para usarlo desde celulares en la demo hace falta un dominio con HTTPS (Google no acepta IPs tipo 192.168.x.x): deploy o túnel. Si no hay, la demo usa contraseña.
+- Email + contraseña (se implementa primero): hash con `bcrypt`, bloqueo de 15 min tras 5 intentos fallidos (US-07) y recuperación por email (`smtplib` de la librería estándar) con link que vence en 30 min (US-08). `passwordHash` puede ser null (usuario que solo entra con Google).
+- Google (se agrega después): la web obtiene el ID token, el servidor lo verifica con `google-auth` (audience = client ID, email verificado) y solo deja entrar emails cargados en `Usuario` con `activo = true`; nunca crea usuarios. Guardar `googleSub` la primera vez. En desarrollo funciona en `http://localhost`; para usarlo desde celulares en la demo hace falta un dominio con HTTPS (Google no acepta IPs tipo 192.168.x.x): deploy o túnel. Si no hay, la demo usa contraseña.
 - En las dos: sesión en cookie httpOnly que se cierra tras 15 min de inactividad (US-01).
 
 ## Protocolo MQTT (ESP32 ↔ servidor)
