@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 
 from app.errores import registrar_manejadores
-from app.rutas import reservas
+from app.rutas import aulas, reservas
 
 app = FastAPI(title="LlaveTrack API")
 registrar_manejadores(app)
+app.include_router(aulas.router)
 app.include_router(reservas.router)
 
 
