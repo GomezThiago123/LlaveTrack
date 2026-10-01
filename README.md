@@ -55,9 +55,27 @@ Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts
 | `pytest` | Corre los tests (usan una base temporal, no tocan `llavetrack.db`) |
 | `alembic upgrade head` | Aplica las migraciones pendientes a la base (correrlo después de cada `git pull`) |
 | `python -m app.seed --reiniciar` | **Borra todos los datos** y vuelve a cargar `seed/datos.json` |
-| `python simulador/simulador.py` | Corre el simulador del equipo (llega en la Fase 1) |
+| `python simulador/simulador.py --help` | Simulador del equipo (ver abajo) |
 
 Con el servidor levantado, en `http://localhost:8000/docs` está la documentación interactiva de la API, que genera FastAPI.
+
+### MQTT y simulador del equipo
+
+El servidor se conecta al broker **Mosquitto** en `localhost:1883` (Linux: `sudo apt install mosquitto mosquitto-clients`; Windows: instalador de [mosquitto.org](https://mosquitto.org/download/)). Si el broker no está, la API funciona igual y el servidor reintenta conectarse solo.
+
+El simulador se hace pasar por el equipo (ESP32), así se puede probar todo sin hardware. En otra terminal, desde `backend/` con el entorno activado:
+
+```sh
+python simulador/simulador.py inicio              # el equipo arranca y queda online
+python simulador/simulador.py retirar 482913      # ingresa el código de una reserva y retira la llave
+python simulador/simulador.py devolver 04A1B2C3   # cuelga la llave con ese UID
+python simulador/simulador.py timeout 482913      # ingresa el código pero nadie retira la llave
+python simulador/simulador.py offline             # el equipo se desconecta
+```
+
+Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json`.
+
+Para ver todos los mensajes del broker: `mosquitto_sub -v -t 'llavetrack/#'` o MQTTX.
 
 ## Frontend
 

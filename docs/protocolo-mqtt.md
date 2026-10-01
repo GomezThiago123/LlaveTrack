@@ -2,14 +2,14 @@
 
 Contrato entre el equipo (ESP32) y el servidor. El simulador (`backend/simulador`) usa este mismo contrato, así que todo lo que funcione con el simulador tiene que funcionar con el equipo real.
 
-> Versión `v1`, borrador de la Fase 0. Los campos marcados con *(propuesta)* no están en el CLAUDE.md y se confirman en la Fase 1.
+> Versión `v1`, implementada en la Fase 1 (`backend/app/protocolo.py`, `backend/app/servicios/equipo.py`).
 
 ## Reglas generales
 
 - El servidor es la única fuente de verdad: decide si se entrega una llave y pone todas las horas. Los mensajes del ESP32 **no llevan fecha ni hora**.
 - Todos los mensajes son JSON en UTF-8.
 - Los UID RFID van en hexadecimal, en mayúsculas y sin separadores (ej. `04A1B2C3`).
-- Los slots se numeran desde 0 (el slot 0 es la posición de homing) *(propuesta)*.
+- Los slots se numeran desde 0 (el slot 0 es la posición de homing).
 - PubSubClient solo publica con QoS 0, por eso la confiabilidad se resuelve en la aplicación (ver [Reintentos y duplicados](#reintentos-y-duplicados)).
 - El ESP32 usa `client.setBufferSize(512)`, porque con el buffer por defecto de 256 bytes los JSON se cortan.
 
@@ -48,6 +48,7 @@ El servidor responde **cada** evento en `resp`:
 | `CODIGO_VENCIDO` | La reserva existe pero ya venció |
 | `LLAVE_DESCONOCIDA` | El UID no está cargado en el sistema |
 | `SIN_PRESTAMO_ACTIVO` | El UID existe pero esa llave no estaba prestada |
+| `DATOS_INVALIDOS` | El JSON no respeta el formato del evento (ej. código con letras, UID que no es hex, tipo de evento desconocido) |
 | `ERROR_INTERNO` | Falla del servidor. El ESP32 muestra un error y no entrega nada |
 
 ## Eventos (ESP32 → servidor)
@@ -59,7 +60,7 @@ Se publica al arrancar y en cada reconexión. Informa la configuración del disc
 → evt/inicio  {"eventId":"equipo-01-7f3a-0001","slotsTotales":24,"slotsReservados":[0]}
 ← resp        {"eventId":"equipo-01-7f3a-0001","ok":true,"slotReposo":5}
 ```
-`slotsReservados`: slots que nunca llevan llave (ej. el del tag HOME) *(propuesta)*. `slotReposo`: slot vacío que tiene que quedar en la ventana.
+`slotsReservados`: slots que nunca llevan llave (ej. el del tag HOME). `slotReposo`: el slot vacío más cercano al 0 (donde queda el disco después del homing), contando que el disco es circular.
 
 ### `solicitud_retiro`
 El docente ingresó un código en el teclado.
@@ -69,6 +70,7 @@ El docente ingresó un código en el teclado.
 ← resp  {"eventId":"equipo-01-7f3a-0042","ok":true,"slot":7,"uid":"04A1B2C3","aula":"214","apellido":"Perez"}
 ← resp  {"eventId":"equipo-01-7f3a-0042","ok":false,"motivo":"CODIGO_VENCIDO"}
 ```
+Si acepta el código, el servidor extiende la reserva al menos `RETIRO_MARGEN_SEGUNDOS` (120 s), para que no venza mientras el disco gira y el docente retira la llave.
 
 ### `retiro_confirmado`
 El UID esperado dejó de leerse de forma estable: el docente se llevó la llave. `slot` es donde estaba **realmente** (puede diferir del informado si hubo que buscarla).
@@ -95,7 +97,7 @@ Se leyó un UID estable en el slot de la ventana después de apretar `B`.
 ← resp  {"eventId":"equipo-01-7f3a-0050","ok":true,"aula":"214","apellido":"Perez","slotReposo":12}
 ← resp  {"eventId":"equipo-01-7f3a-0050","ok":false,"motivo":"SIN_PRESTAMO_ACTIVO"}
 ```
-Si se acepta, el servidor cierra el préstamo activo de esa llave, la pasa a `DISPONIBLE` y actualiza su `slot`. El disco gira a `slotReposo`.
+Si se acepta, el servidor cierra el préstamo activo de esa llave, la pasa a `DISPONIBLE` y actualiza su `slot`. El disco gira a `slotReposo`: el slot vacío más cercano al de la devolución. Es `null` si el disco está lleno.
 
 ### `error`
 Falla del equipo que el servidor tiene que registrar (ej. no encontró la llave pedida).
@@ -114,7 +116,9 @@ Falla del equipo que el servidor tiene que registrar (ej. no encontró la llave 
 ## Reintentos y duplicados
 
 - Si el ESP32 no recibe una respuesta en 5 s, muestra "Sin respuesta" en el LCD y **reenvía el mismo evento con el mismo `eventId`**.
-- El servidor guarda cada evento en `EventoDispositivo` (`eventId` único). Si llega un `eventId` repetido, **no lo vuelve a procesar**, pero reenvía la respuesta que ya había dado *(propuesta)*. Si no la reenviara, el ESP32 quedaría reintentando para siempre en los casos en que se perdió la respuesta y no el evento.
+- El servidor guarda cada evento en `EventoDispositivo` (`eventId` único). Si llega un `eventId` repetido, **no lo vuelve a procesar**, pero reenvía la respuesta que ya había dado (también si fue un rechazo). Si no la reenviara, el ESP32 quedaría reintentando para siempre en los casos en que se perdió la respuesta y no el evento.
+- Excepción: un `ERROR_INTERNO` no se guarda, así el reintento se procesa de nuevo.
+- El evento y sus cambios se guardan en la misma transacción: o queda todo registrado o nada.
 - Sin conexión, el equipo no entrega ni recibe llaves (LCD "Sin conexion").
 
 ## Seguridad del broker

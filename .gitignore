@@ -26,3 +26,6 @@ Thumbs.db
 .venv/
 __pycache__/
 .pytest_cache/
+
+# Estado local del simulador
+backend/simulador/.estado.json

@@ -56,6 +56,9 @@ Reglas:
 - `Llave.slot` es null mientras la llave está prestada (no está en el disco).
 - La lógica va en `app/servicios/` (sin commit); las rutas HTTP y el cliente MQTT llaman a esos servicios y hacen el commit.
 - SQLite abre cada transacción con `BEGIN IMMEDIATE` (pedidos simultáneos en fila): toda sesión tiene que cerrarse rápido (una por pedido HTTP o por evento MQTT).
+- Eventos MQTT: `app/protocolo.py` valida, deduplica y responde; las reglas están en `app/servicios/equipo.py`. El evento se procesa dentro de un savepoint: si se rechaza se deshace solo lo del evento (el vencimiento de reservas se conserva).
+- Al aceptar un código, la reserva se extiende al menos `RETIRO_MARGEN_SEGUNDOS` (120) para que no venza durante el retiro.
+- `slotReposo` = slot vacío más cercano (disco circular) a la posición actual; vacíos = todos − reservados − slots con llave.
 - TEMPORAL hasta la Fase 2: con `MODO_DESARROLLO=true` el usuario se indica con el encabezado `X-Usuario-Email`. Se borra al implementar el login.
 
 ## API REST (web ↔ servidor)
