@@ -26,6 +26,8 @@ def crear_engine(url: str) -> Engine:
     def _al_empezar(conexion):
         # BEGIN IMMEDIATE toma el permiso de escritura al empezar la transaccion.
         # Asi dos pedidos simultaneos se ponen en fila en vez de chocar a mitad de camino.
+        # Consecuencia: mientras una sesion este abierta, las demas esperan. Toda sesion
+        # tiene que cerrarse rapido (una por pedido HTTP o por evento MQTT, nunca global).
         conexion.exec_driver_sql("BEGIN IMMEDIATE")
 
     return engine
