@@ -21,6 +21,17 @@ class Config(BaseSettings):
     # Minutos que tiene el docente para ir al equipo con su codigo
     reserva_minutos: int = 10
 
+    # Cuando el equipo acepta un codigo, la reserva se extiende al menos estos segundos,
+    # para que no venza mientras el disco gira y el docente retira la llave
+    retiro_margen_segundos: int = 120
+
+    # Broker MQTT (Mosquitto)
+    mqtt_habilitado: bool = True
+    mqtt_host: str = "localhost"
+    mqtt_puerto: int = 1883
+    mqtt_usuario: str | None = None
+    mqtt_clave: str | None = None
+
     # TEMPORAL hasta el login (Fase 2): permite indicar el usuario con el
     # encabezado X-Usuario-Email. Nunca activarlo en la demo.
     modo_desarrollo: bool = True
