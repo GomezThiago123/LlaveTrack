@@ -31,7 +31,7 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 
 ## Stack
 - `firmware/`: ESP32 con framework Arduino sobre PlatformIO (extensión de VS Code + CLI `pio`, para compilar desde la terminal). Librerías: MFRC522, LiquidCrystal_I2C, Keypad, AccelStepper, PubSubClient, ArduinoJson 7.
-- `backend/`: Python 3.10+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo, se puede pasar a PostgreSQL después), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`.
+- `backend/`: Python 3.11+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo, se puede pasar a PostgreSQL después), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`.
 - `backend/` y `frontend/` son independientes: cada uno se instala y se levanta en su propia terminal, sin nada compartido en la raíz.
 - `frontend/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP. Se corre desde `frontend/`: `npm install`, `npm run dev` (puerto 5173; Vite reenvía `/api` al backend en :8000). Node 20.19+ (recomendado 24).
 - Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.

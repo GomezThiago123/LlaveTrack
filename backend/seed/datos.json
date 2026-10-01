@@ -1,0 +1,19 @@
+{
+  "_comentario": "Datos de prueba. Los UID y slots son INVENTADOS: reemplazarlos por los reales (el modo diagnostico del equipo los lista). slotsTotales provisorio hasta contar el disco.",
+  "dispositivos": [
+    { "deviceId": "equipo-01", "slotsTotales": 24, "slotsReservados": [0] }
+  ],
+  "aulas": [
+    { "nombre": "214", "llave": { "rfidUid": "04A1B2C3", "slot": 1 } },
+    { "nombre": "215", "llave": { "rfidUid": "04B2C3D4", "slot": 2 } },
+    { "nombre": "216", "llave": { "rfidUid": "04C3D4E5", "slot": 3 } },
+    { "nombre": "Laboratorio 1", "llave": { "rfidUid": "04D4E5F6", "slot": 4 } },
+    { "nombre": "Taller", "llave": { "rfidUid": "04E5F6A7", "slot": 5 } }
+  ],
+  "usuarios": [
+    { "nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "telefono": "11 5555-0001", "rol": "DOCENTE" },
+    { "nombre": "Bruno", "apellido": "Gomez", "email": "bruno.gomez@example.com", "telefono": "11 5555-0002", "rol": "DOCENTE" },
+    { "nombre": "Carla", "apellido": "Diaz", "email": "carla.diaz@example.com", "telefono": "11 5555-0003", "rol": "PRECEPTOR" },
+    { "nombre": "Admin", "apellido": "Sistema", "email": "admin@example.com", "telefono": null, "rol": "ADMIN" }
+  ]
+}

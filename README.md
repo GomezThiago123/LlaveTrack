@@ -14,7 +14,7 @@ El backend y el frontend son independientes: cada uno se instala y se levanta **
 
 ## Backend
 
-Requisito: **Python 3.10 o más nuevo** (`python3 --version`, en Windows `py --version`).
+Requisito: **Python 3.11 o más nuevo** (`python3 --version`, en Windows `py --version`).
 - Windows: instalador de [python.org](https://www.python.org/downloads/) marcando "Add python.exe to PATH".
 - Linux Mint: viene instalado. Si falta el módulo de entornos virtuales: `sudo apt install python3-venv`.
 
@@ -37,6 +37,12 @@ pip install -r requirements.txt
 ```
 Si PowerShell no deja activar el entorno, corré una sola vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
+Después, con el entorno activado, creá la base de datos y cargá los datos de prueba (aulas, llaves y usuarios de `seed/datos.json`):
+```sh
+alembic upgrade head
+python -m app.seed
+```
+
 El archivo `.env` es opcional: sin él se usan los valores por defecto. Para cambiarlos, copiá `.env.example` a `.env`.
 
 ### Cada vez
@@ -46,7 +52,9 @@ Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts
 | Comando | Qué hace |
 | --- | --- |
 | `python run.py` | Levanta el servidor en `http://localhost:8000`. Se reinicia solo cuando cambiás el código |
-| `pytest` | Corre los tests |
+| `pytest` | Corre los tests (usan una base temporal, no tocan `llavetrack.db`) |
+| `alembic upgrade head` | Aplica las migraciones pendientes a la base (correrlo después de cada `git pull`) |
+| `python -m app.seed --reiniciar` | **Borra todos los datos** y vuelve a cargar `seed/datos.json` |
 | `python simulador/simulador.py` | Corre el simulador del equipo (llega en la Fase 1) |
 
 Con el servidor levantado, en `http://localhost:8000/docs` está la documentación interactiva de la API, que genera FastAPI.
