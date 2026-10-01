@@ -1,0 +1,23 @@
+# Dependencias y compilados
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Secretos (los ejemplos si van al repo)
+.env
+.env.*
+!.env.example
+firmware/include/secrets.h
+
+# Base de datos local (SQLite)
+*.db
+*.db-journal
+
+# PlatformIO
+.pio/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+*.log

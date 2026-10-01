@@ -1,0 +1,22 @@
+{
+  "name": "llavetrack",
+  "private": true,
+  "description": "Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA",
+  "workspaces": [
+    "server",
+    "web",
+    "tools/simulador"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
+    "test": "npm test -w server",
+    "build": "npm run build -w server -w web",
+    "simulador": "npm start -w tools/simulador --"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

@@ -1,0 +1,53 @@
+/* Estilos base, pensados primero para el celular */
+:root {
+  --fondo: #f5f7fa;
+  --texto: #1b2430;
+  --primario: #1f3a5f;
+  --ok: #1e7b45;
+  --error: #b3261e;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #12161c;
+    --texto: #e6e9ee;
+    --primario: #8fb4e3;
+    --ok: #5cc98a;
+    --error: #f2857d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+}
+
+.contenedor {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+h1 {
+  color: var(--primario);
+  margin: 0 0 4px;
+}
+
+.estado {
+  font-weight: 600;
+}
+
+.estado-conectado {
+  color: var(--ok);
+}
+
+.estado-sin-conexion {
+  color: var(--error);
+}

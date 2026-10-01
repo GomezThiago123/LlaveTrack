@@ -1,0 +1,15 @@
+{
+  "name": "@llavetrack/simulador",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CLI que se hace pasar por el ESP32 via MQTT, para probar sin hardware",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
