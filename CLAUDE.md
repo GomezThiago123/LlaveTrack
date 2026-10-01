@@ -52,6 +52,11 @@ Reglas:
 - Un docente tiene como máximo una reserva pendiente.
 - Fechas en UTC en la base; se muestran en `America/Argentina/Buenos_Aires`.
 - Seed desde un archivo editable (aulas, llaves con UID y slot, usuarios), porque el alta desde la web es V2.
+- Vencimiento "perezoso": antes de cada consulta o cambio (REST o MQTT) se llama `vencer_reservas()`. No hay tarea periódica.
+- `Llave.slot` es null mientras la llave está prestada (no está en el disco).
+- La lógica va en `app/servicios/` (sin commit); las rutas HTTP y el cliente MQTT llaman a esos servicios y hacen el commit.
+- SQLite abre cada transacción con `BEGIN IMMEDIATE` (pedidos simultáneos en fila): toda sesión tiene que cerrarse rápido (una por pedido HTTP o por evento MQTT).
+- TEMPORAL hasta la Fase 2: con `MODO_DESARROLLO=true` el usuario se indica con el encabezado `X-Usuario-Email`. Se borra al implementar el login.
 
 ## API REST (web ↔ servidor)
 - `GET /api/publico/estado`: sin login. Aulas con su estado y si el equipo está online. Sin datos personales.
