@@ -31,11 +31,11 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 
 ## Stack
 - `firmware/`: ESP32 con framework Arduino sobre PlatformIO (extensión de VS Code + CLI `pio`, para compilar desde la terminal). Librerías: MFRC522, LiquidCrystal_I2C, Keypad, AccelStepper, PubSubClient, ArduinoJson 7.
-- `server/`: Python 3.10+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo, se puede pasar a PostgreSQL después), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual `.venv` en la raíz con `requirements.txt` (versiones fijas).
-- Raíz: `npm run setup` (crea el `.venv` e instala todo), `npm run dev` (servidor en :8000 + web en :5173), `npm test` (pytest). `scripts/py.mjs` ejecuta el Python del `.venv` en Windows y en Linux; los scripts de npm lo usan en lugar de llamar a Python directo. Node 22.12+ (recomendado 24) solo para la web.
-- `web/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP.
+- `backend/`: Python 3.10+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo, se puede pasar a PostgreSQL después), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`.
+- `backend/` y `frontend/` son independientes: cada uno se instala y se levanta en su propia terminal, sin nada compartido en la raíz.
+- `frontend/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP. Se corre desde `frontend/`: `npm install`, `npm run dev` (puerto 5173; Vite reenvía `/api` al backend en :8000). Node 20.19+ (recomendado 24).
 - Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.
-- `tools/simulador/`: CLI en Python (usa el mismo `.venv`) que se hace pasar por el ESP32 vía MQTT (ingresar código, confirmar retiro, devolver un UID). Para desarrollar y testear sin hardware.
+- `backend/simulador/`: CLI en Python (usa el `.venv` del backend) que se hace pasar por el ESP32 vía MQTT (ingresar código, confirmar retiro, devolver un UID). Para desarrollar y testear sin hardware.
 - `docs/`: `protocolo-mqtt.md` (contrato) y `cableado.md` (pines y alimentación).
 
 ## Modelo de datos (MVP)

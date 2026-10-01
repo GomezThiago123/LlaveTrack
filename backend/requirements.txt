@@ -1,5 +1,5 @@
 # Dependencias de Python del servidor y del simulador.
-# Se instalan en el entorno virtual .venv con: npm run setup
+# Se instalan en el entorno virtual backend/.venv con: pip install -r requirements.txt
 
 # Servidor
 fastapi==0.142.2

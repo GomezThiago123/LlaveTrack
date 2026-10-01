@@ -4,7 +4,7 @@
 AYUDA = """
 Simulador LlaveTrack (todavia sin implementar: llega en la Fase 1)
 
-Uso: npm run simulador -- <comando>
+Uso (desde backend/, con el .venv activado): python simulador/simulador.py <comando>
 
 Comandos previstos:
   retirar <codigo>    Ingresa un codigo de 6 digitos y confirma el retiro

@@ -6,47 +6,68 @@ Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA. El docen
 
 | Carpeta | Qué hay |
 | --- | --- |
-| `server/` | API REST + MQTT (Python + FastAPI) |
-| `web/` | Aplicación web mobile-first (React + Vite + TypeScript) |
-| `tools/simulador/` | CLI en Python que se hace pasar por el equipo, para probar sin hardware |
+| `backend/` | API REST + MQTT en Python (FastAPI). Incluye `simulador/`, que se hace pasar por el equipo para probar sin hardware |
+| `frontend/` | Aplicación web mobile-first (React + Vite + TypeScript) |
 | `docs/` | Protocolo MQTT y documentación |
-| `scripts/` | Scripts de Node que hacen que los comandos funcionen igual en Windows y en Linux |
 
-Python usa un entorno virtual (`.venv`, en la raíz) con las dependencias de `requirements.txt`. La web usa npm. Los comandos de abajo se encargan de los dos.
+El backend y el frontend son independientes: cada uno se instala y se levanta **en su propia terminal**.
 
-## Requisitos
+## Backend
 
-- **Python 3.10 o más nuevo.** Verificalo con `python3 --version` (en Windows: `py --version`).
-  - Windows: instalador de [python.org](https://www.python.org/downloads/) o `winget install Python.Python.3.12`.
-  - Linux Mint: viene instalado. Si falta el módulo de entornos virtuales: `sudo apt install python3-venv`.
-- **Node.js 22.12 o más nuevo** (recomendado: 24 LTS), para la web. Verificalo con `node --version`.
-  - Windows: instalador de [nodejs.org](https://nodejs.org) o `winget install OpenJS.NodeJS.LTS`.
-  - Linux: con [nvm](https://github.com/nvm-sh/nvm), corré `nvm install` desde la raíz del repo (lee la versión de `.nvmrc`).
-- Git.
+Requisito: **Python 3.10 o más nuevo** (`python3 --version`, en Windows `py --version`).
+- Windows: instalador de [python.org](https://www.python.org/downloads/) marcando "Add python.exe to PATH".
+- Linux Mint: viene instalado. Si falta el módulo de entornos virtuales: `sudo apt install python3-venv`.
 
-## Primera vez
+### Primera vez
 
+Linux:
 ```sh
-npm run setup
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Crea el entorno virtual de Python, instala las dependencias de Python y de Node, y copia `server/.env.example` a `server/.env`. Con los valores por defecto alcanza para desarrollar. Si cambia `requirements.txt` o `package.json`, volvé a correrlo.
-
-## Levantar todo en desarrollo
-
-```sh
-npm run dev
+Windows (PowerShell):
+```powershell
+cd backend
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
+Si PowerShell no deja activar el entorno, corré una sola vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Levanta el servidor en `http://localhost:8000` y la web en `http://localhost:5173`. Los dos se reinician solos cuando cambiás el código.
+El archivo `.env` es opcional: sin él se usan los valores por defecto. Para cambiarlos, copiá `.env.example` a `.env`.
 
-- Documentación interactiva de la API (la genera FastAPI): `http://localhost:8000/docs`.
-- Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`.
+### Cada vez
 
-## Otros comandos
+Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts\Activate.ps1` en Windows). Vas a ver `(.venv)` al principio de la línea. Después:
 
 | Comando | Qué hace |
 | --- | --- |
-| `npm test` | Corre los tests del servidor (pytest) |
-| `npm run build` | Compila la web para producción |
-| `npm run simulador -- <comando>` | Corre el simulador del equipo (llega en la Fase 1) |
+| `python run.py` | Levanta el servidor en `http://localhost:8000`. Se reinicia solo cuando cambiás el código |
+| `pytest` | Corre los tests |
+| `python simulador/simulador.py` | Corre el simulador del equipo (llega en la Fase 1) |
+
+Con el servidor levantado, en `http://localhost:8000/docs` está la documentación interactiva de la API, que genera FastAPI.
+
+## Frontend
+
+Requisito: **Node.js 20.19 o más nuevo** (recomendado: 24 LTS). Verificalo con `node --version`.
+- Windows: instalador de [nodejs.org](https://nodejs.org) o `winget install OpenJS.NodeJS.LTS`.
+- Linux: con [nvm](https://github.com/nvm-sh/nvm), corré `nvm install` dentro de `frontend/` (lee la versión de `.nvmrc`).
+
+```sh
+cd frontend
+npm install        # solo la primera vez, o cuando cambie package.json
+npm run dev
+```
+
+La web queda en `http://localhost:5173` y se actualiza sola cuando cambiás el código. Todo lo que empieza con `/api` lo reenvía al backend (puerto 8000), así que **el backend tiene que estar levantado en otra terminal**.
+
+Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`.
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm run dev` | Levanta la web en modo desarrollo |
+| `npm run build` | Compila la web para producción (queda en `dist/`) |

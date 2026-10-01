@@ -8,7 +8,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     // En desarrollo, todo lo que empieza con /api se reenvia al servidor (evita CORS).
-    // Tiene que coincidir con el PORT de server/.env
+    // Tiene que coincidir con el PORT de backend/.env
     proxy: {
       '/api': 'http://localhost:8000',
     },

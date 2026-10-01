@@ -1,6 +1,6 @@
 # Protocolo MQTT (ESP32 ↔ servidor)
 
-Contrato entre el equipo (ESP32) y el servidor. El simulador (`tools/simulador`) usa este mismo contrato, así que todo lo que funcione con el simulador tiene que funcionar con el equipo real.
+Contrato entre el equipo (ESP32) y el servidor. El simulador (`backend/simulador`) usa este mismo contrato, así que todo lo que funcione con el simulador tiene que funcionar con el equipo real.
 
 > Versión `v1`, borrador de la Fase 0. Los campos marcados con *(propuesta)* no están en el CLAUDE.md y se confirman en la Fase 1.
 

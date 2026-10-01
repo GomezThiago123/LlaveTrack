@@ -1,5 +1,5 @@
 {
-  "name": "@llavetrack/web",
+  "name": "llavetrack-frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,5 +18,8 @@
     "@vitejs/plugin-react": "^6.1.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.2"
+  },
+  "engines": {
+    "node": ">=20.19"
   }
 }
