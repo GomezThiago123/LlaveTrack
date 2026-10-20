@@ -7,7 +7,7 @@
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
 - [ ] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
-- [ ] **Motor:** motorreductor de 2 cables y **24 V** (no es paso a paso). Falta: confirmar que es de continua (DC), y si hay un sensor para contar las 32 pestañas del disco o hay que conseguirlo. Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
+- [ ] **Sensor de posición:** el motor es un motorreductor de continua de 24 V y 2 cables (no es paso a paso), así que la posición sale de contar las 32 pestañas del disco. ¿Tienen un sensor para eso (ej. óptico de horquilla) o hay que conseguirlo? Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
 - [ ] **WiFi para la demo:** la de la escuela es WPA2-Enterprise. ¿Router propio o hotspot del celular? El ESP32 puede conectarse a WPA2-Enterprise, pero necesita una cuenta de la escuela guardada en el equipo y la red puede bloquear el puerto 8883.
@@ -107,6 +107,10 @@ Estos documentos los presentaste en clase y no coinciden con lo que está constr
   - Corregir "Relugador" por "Regulador".
   - Hoy el celular va directo a la Base de Datos: tiene que ir al Servidor, porque la web nunca toca la base.
   - Agregar el broker MQTT entre el ESP32 y el servidor, y los dos LEDs.
+  - "Motor Paso a Paso" → "Motorreductor DC 24 V".
+  - "Fuente 220/12" → "Fuente 220/16" (las flechas ya dicen 16 V).
+  - El lector RFID se alimenta con 3,3 V del pin 3V3 del ESP32, no con 5 V del regulador.
+  - Agregar el sensor que cuenta las pestañas del disco (entrada del ESP32).
 - [ ] **Caso de uso del administrador** ("¿quién se olvidó de devolver la llave X?"): en el MVP lo resuelve la lista de aulas del preceptor (quién la tiene, desde qué hora y su teléfono). La pantalla dedicada de "sin devolver" es V2.
 
 ## Fuera del MVP (V2)

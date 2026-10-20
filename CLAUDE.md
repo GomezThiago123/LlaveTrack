@@ -135,7 +135,8 @@ llavetrack/v1/equipo-01/resp
 ## Pendientes (preguntame antes de asumir)
 Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al día al terminar cada historia). Las user stories con sus criterios están en `docs/user-stories.md`; US-22 a US-24 se agregaron al MVP el 20/10/2026 (en los commits viejos figuran como US-20 a US-22).
 - [x] Autenticación: las dos (email + contraseña primero, Google después). Ver "Autenticación".
-- [ ] Motor: motorreductor de 2 cables y 24 V (respuesta del 20/10/2026), no un paso a paso aunque lo diga el diagrama de bloques. Falta confirmar que es de continua (DC) y saber si hay un sensor para contar las 32 pestañas del disco (sin pasos que contar, la posición sale de ahí). La sección Firmware → Posición todavía describe el paso a paso: se reescribe cuando esté confirmado. Bloquea la Fase 3 (motor).
+- [x] Motor: motorreductor de continua (DC), 24 V y 2 cables (respuesta del 20/10/2026), no un paso a paso aunque lo diga el diagrama de bloques. Va por un canal del L298N a 24 V (coincide con su tensión nominal).
+- [ ] Sensor de posición: ¿hay un sensor para contar las 32 pestañas del disco o hay que conseguirlo (sin pasos que contar, la posición sale de ahí). La sección Firmware → Posición todavía describe el paso a paso: se reescribe cuando esté confirmado. Bloquea la Fase 3 (motor).
 - [ ] Motor: modelo, cantidad de cables, tensión nominal y reducción. Asumido: paso a paso bipolar de 4 cables. Si es un motor DC, frená y avisame: sin pasos que contar hace falta un sensor que cuente las pestañas del disco.
 - [x] Placa: NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32). Los pines 6–11 están expuestos pero son de la flash: no usarlos.
 - [x] LCD: 16x2 confirmado.
