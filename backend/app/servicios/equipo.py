@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import config
 from app.modelos import (
+    Aula,
     Dispositivo,
     EstadoLlave,
     EstadoReserva,
@@ -143,6 +144,19 @@ def devolucion(sesion: Session, device_id: str, uid: str, slot: int) -> dict:
         "apellido": prestamo.usuario.apellido,  # quien la retiro
         "slotReposo": slot_reposo,
     }
+
+
+def aulas_faltantes(sesion: Session) -> list[str]:
+    """Aulas cuya llave no esta en el disco (US-21): las PRESTADAS, ordenadas por nombre.
+
+    Las RESERVADAS no cuentan: siguen colgadas hasta que el docente las retira.
+    El equipo enciende el LED de faltantes y las muestra en el LCD (topico `faltantes`).
+    """
+    return list(
+        sesion.scalars(
+            select(Aula.nombre).join(Llave).where(Llave.estado == EstadoLlave.PRESTADA).order_by(Aula.nombre)
+        )
+    )
 
 
 def _reserva_pendiente(sesion: Session, codigo: str) -> Reserva | None:

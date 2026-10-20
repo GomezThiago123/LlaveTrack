@@ -3,17 +3,22 @@
 paho-mqtt corre en su propio hilo: recibe los mensajes del equipo, los pasa a
 app/protocolo.py (una sesion de base por mensaje) y publica la respuesta.
 Si el broker no esta, el servidor arranca igual y paho reintenta conectarse solo.
+
+Tambien publica la lista de aulas faltantes de cada equipo (US-21), retenida: el equipo
+la recibe sola al conectarse, sin pedirla.
 """
 
 import json
 import logging
 
 import paho.mqtt.client as mqtt
+from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from app import protocolo
 from app.config import config
-from app.servicios import conexion
+from app.modelos import Dispositivo
+from app.servicios import conexion, equipo
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +41,8 @@ class ClienteMqtt:
         self.cliente.on_connect = self._al_conectar
         self.cliente.on_disconnect = self._al_desconectar
         self.cliente.on_message = self._al_recibir
+        # Ultima lista de faltantes publicada por equipo, para publicar solo cuando cambia
+        self.faltantes_publicados: dict[str, list[str]] = {}
 
     def iniciar(self, host: str = config.mqtt_host, puerto: int = config.mqtt_puerto) -> None:
         # keepalive 15 s: si el broker se cae sin cerrar la conexion, paho lo nota en ~20 s
@@ -59,6 +66,9 @@ class ClienteMqtt:
         cliente.subscribe(f"{self.prefijo}/+/evt/+", qos=1)
         cliente.subscribe(f"{self.prefijo}/+/estado", qos=1)
         cliente.subscribe(f"{self.prefijo}/+/latido", qos=0)
+        # Por si algo cambio mientras estuvo desconectado: republica los faltantes de todos
+        self.faltantes_publicados.clear()
+        self._publicar_faltantes()
 
     def _al_desconectar(self, _cliente, _userdata, _flags, codigo, _props):
         log.warning("Desconectado del broker MQTT (%s). Reintentando...", codigo)
@@ -72,6 +82,24 @@ class ClienteMqtt:
                 sesion.commit()
         except Exception:
             log.exception("No se pudieron marcar los equipos offline")
+
+    def _publicar_faltantes(self, device_id: str | None = None) -> None:
+        """Publica `faltantes` (retenido) del equipo indicado, o de todos, si cambio."""
+        try:
+            with self.fabrica_sesiones() as sesion:
+                aulas = equipo.aulas_faltantes(sesion)
+                consulta = select(Dispositivo.device_id)
+                if device_id:  # solo si es un equipo conocido
+                    consulta = consulta.where(Dispositivo.device_id == device_id)
+                equipos = list(sesion.scalars(consulta))
+        except Exception:
+            log.exception("No se pudieron calcular las aulas faltantes")
+            return
+        for d in equipos:
+            if self.faltantes_publicados.get(d) == aulas:
+                continue
+            self.cliente.publish(f"{self.prefijo}/{d}/faltantes", json.dumps({"aulas": aulas}), qos=1, retain=True)
+            self.faltantes_publicados[d] = aulas
 
     def _al_recibir(self, cliente, _userdata, mensaje: mqtt.MQTTMessage):
         # Topico: {prefijo}/{deviceId}/evt/{tipo}, {prefijo}/{deviceId}/estado o {prefijo}/{deviceId}/latido
@@ -88,6 +116,10 @@ class ClienteMqtt:
                 respuesta = protocolo.procesar_evento(sesion, device_id, partes[2], mensaje.payload)
             if respuesta is not None:
                 cliente.publish(f"{self.prefijo}/{device_id}/resp", json.dumps(respuesta), qos=1)
+            if partes[2] == "inicio":
+                self.faltantes_publicados.pop(device_id, None)  # el equipo arranco: se la manda igual
+            # Solo un retiro o una devolucion cambian la lista; se publica si cambio
+            self._publicar_faltantes(device_id)
         except Exception:
             # Un error con un mensaje no puede tirar abajo el hilo de MQTT
             log.exception("Error procesando %s", mensaje.topic)

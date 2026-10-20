@@ -24,7 +24,7 @@ Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada u
 
 En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
-- [ ] **US-21: LED y LCD de llaves faltantes.** Mi propuesta: el servidor publica `llavetrack/v1/{deviceId}/faltantes` (retenido) con `{"aulas":[...]}` cada vez que cambia la lista. En el simulador y en los tests.
+- [x] **US-21: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
 - [ ] **US-22: LED de conexión con el servidor.** Mi propuesta: el servidor publica `llavetrack/v1/servidor/estado` (retenido, con su propio LWT). Falta decidir si el LED titila mientras reintenta.
 - [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315), ya desbloqueado: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto.
 - [ ] **Documentación:** actualizar el CLAUDE.md y `docs/` con los tópicos nuevos, las variables de `.env` y los LEDs.

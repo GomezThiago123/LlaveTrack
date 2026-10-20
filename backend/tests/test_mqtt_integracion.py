@@ -127,3 +127,71 @@ def test_lwt_y_estado_retenido(fabrica_sesiones):
         limpieza.publish(topico_estado, b"", retain=True).wait_for_publish(5)
         limpieza.disconnect()
         limpieza.loop_stop()
+
+
+# --- US-21: faltantes retenido ---
+
+
+def test_faltantes_retenido_despues_del_retiro(fabrica_sesiones):
+    with fabrica_sesiones() as s:
+        ana = s.scalar(select(Usuario).where(Usuario.email == "ana.perez@example.com"))
+        aula_id = s.scalar(select(Aula.id).where(Aula.nombre == "214"))
+        codigo = reservas.crear_reserva(s, ana, aula_id).codigo
+        s.commit()
+
+    prefijo = f"llavetrack-test-{secrets.token_hex(4)}/v1"
+    topico_faltantes = f"{prefijo}/equipo-01/faltantes"
+    servidor = ClienteMqtt(fabrica_sesiones, client_id=f"test-servidor-{secrets.token_hex(4)}", prefijo=prefijo)
+    servidor.iniciar("localhost", 1883)
+
+    recibidos: queue.Queue = queue.Queue()
+    equipo = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"test-equipo-{secrets.token_hex(4)}")
+    equipo.on_message = lambda _c, _u, msg: recibidos.put((msg.topic, msg.retain, json.loads(msg.payload or b"null")))
+    equipo.connect("localhost", 1883)
+    equipo.loop_start()
+    try:
+        equipo.subscribe(f"{prefijo}/equipo-01/#", qos=1)
+
+        def siguiente(topico, segundos=5):
+            limite = time.monotonic() + segundos
+            while time.monotonic() < limite:
+                try:
+                    t, retenido, datos = recibidos.get(timeout=0.5)
+                except queue.Empty:
+                    continue
+                if t == topico:
+                    return datos
+            return None
+
+        # Al conectarse, el servidor publica la lista (vacia)
+        assert siguiente(topico_faltantes) == {"aulas": []}
+
+        def evento(tipo, **datos):
+            mensaje = json.dumps({"eventId": f"equipo-01-test-{tipo}", **datos})
+            equipo.publish(f"{prefijo}/equipo-01/evt/{tipo}", mensaje)
+            return siguiente(f"{prefijo}/equipo-01/resp")
+
+        assert evento("solicitud_retiro", codigo=codigo)["ok"]
+        assert evento("retiro_confirmado", codigo=codigo, uid="04A1B2C3", slot=1)["ok"]
+        assert siguiente(topico_faltantes) == {"aulas": ["214"]}
+
+        # Un equipo que se conecta despues la recibe sola, porque es retenida
+        tarde: queue.Queue = queue.Queue()
+        otro = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"test-tarde-{secrets.token_hex(4)}")
+        otro.on_message = lambda _c, _u, msg: tarde.put((msg.retain, json.loads(msg.payload)))
+        otro.connect("localhost", 1883)
+        otro.loop_start()
+        otro.subscribe(topico_faltantes, qos=1)
+        assert tarde.get(timeout=5) == (True, {"aulas": ["214"]})
+        otro.disconnect()
+        otro.loop_stop()
+    finally:
+        equipo.disconnect()
+        equipo.loop_stop()
+        servidor.detener()
+        limpieza = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        limpieza.connect("localhost", 1883)
+        limpieza.loop_start()
+        limpieza.publish(topico_faltantes, b"", retain=True).wait_for_publish(5)
+        limpieza.disconnect()
+        limpieza.loop_stop()

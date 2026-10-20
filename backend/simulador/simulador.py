@@ -18,6 +18,7 @@ Opciones: --equipo equipo-01  --host localhost  --puerto 1883  --slots 24  --rep
 
 import argparse
 import json
+from datetime import datetime
 import queue
 import secrets
 import shlex
@@ -33,6 +34,8 @@ REINTENTOS = 3
 # unos 15 s despues de que el equipo se corta (1,5 x keepalive)
 KEEPALIVE = 10
 LATIDO_SEGUNDOS = 30
+LCD_ANCHO = 16
+DIAS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]  # sin tildes: el LCD no las tiene
 
 AYUDA = """Comandos:
   retirar CODIGO       ingresa el codigo en el teclado y retira la llave
@@ -40,12 +43,45 @@ AYUDA = """Comandos:
   devolver UID [SLOT]  cuelga la llave con ese UID (por defecto, en el slot de la ventana)
   desenchufar          corte de luz: se calla sin despedirse (el broker publica el LWT en ~15 s)
   enchufar             vuelve a arrancar despues de desenchufar
+  pantalla             muestra los LEDs y como rota el LCD en reposo
   salir                se apaga prolijo (avisa que queda offline)"""
 
 
 def lcd(linea1: str, linea2: str = "") -> None:
     # El LCD real tiene 16 caracteres por linea
-    print(f"  LCD: [{linea1[:16]:<16}]\n       [{linea2[:16]:<16}]")
+    print(f"  LCD: [{linea1[:LCD_ANCHO]:<{LCD_ANCHO}}]\n       [{linea2[:LCD_ANCHO]:<{LCD_ANCHO}}]")
+
+
+def pantallas_reposo(hora: str, faltantes: list[str]) -> list[str]:
+    """Las pantallas que rota la linea 1 del LCD en reposo (US-21), cada LCD_ROTACION_MS.
+
+    Primero la hora; despues "Faltan: 105 114" con todas las aulas que entren en 16
+    caracteres. Un nombre que no entra ni solo ("Laboratorio 1") va en su propia pantalla,
+    recortado. La linea 2 queda fija: "A:Retirar B:Dev.". El firmware hace lo mismo.
+    """
+    pantallas = [hora[:LCD_ANCHO]]
+    actual = ""
+    for aula in faltantes:
+        if len("Faltan: " + aula) > LCD_ANCHO:
+            if actual:
+                pantallas.append(actual)
+                actual = ""
+            pantallas.append(aula[:LCD_ANCHO])
+        elif not actual:
+            actual = "Faltan: " + aula
+        elif len(actual + " " + aula) <= LCD_ANCHO:
+            actual += " " + aula
+        else:
+            pantallas.append(actual)
+            actual = "Faltan: " + aula
+    if actual:
+        pantallas.append(actual)
+    return pantallas
+
+
+def hora_lcd() -> str:
+    ahora = datetime.now()
+    return f"{DIAS[ahora.weekday()]} {ahora:%d/%m}  {ahora:%H:%M}"
 
 
 class Equipo:
@@ -61,14 +97,39 @@ class Equipo:
         self.slot_reposo: int | None = None  # slot vacio frente a la ventana
         self.enchufado = False
         self.parar_latido = threading.Event()
+        self.faltantes: list[str] | None = None  # aulas sin llave en el disco (llega del servidor)
 
         self.cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"sim-{self.device_id}")
         # LWT: si el equipo se corta sin despedirse, el broker publica que quedo offline
         self.cliente.will_set(self.topico("estado"), json.dumps({"online": False}), qos=1, retain=True)
-        self.cliente.on_message = lambda _c, _u, msg: self.respuestas.put(json.loads(msg.payload))
+        self.cliente.on_message = self._al_recibir
 
     def topico(self, sufijo: str) -> str:
         return f"{PREFIJO}/{self.device_id}/{sufijo}"
+
+    def _al_recibir(self, _cliente, _userdata, mensaje) -> None:
+        try:
+            datos = json.loads(mensaje.payload)
+        except ValueError:
+            return  # ej. un mensaje retenido borrado (vacio)
+        if mensaje.topic == self.topico("resp"):
+            self.respuestas.put(datos)
+        elif mensaje.topic == self.topico("faltantes"):
+            # Llega sola: al conectarse (es retenida) y cada vez que cambia
+            self.faltantes = datos.get("aulas", [])
+            print(f"\n  ← faltantes {json.dumps(datos)}")
+            self.mostrar_reposo()
+            print("equipo> ", end="", flush=True)
+
+    def mostrar_reposo(self) -> None:
+        """Como quedan los LEDs y el LCD en reposo."""
+        faltantes = self.faltantes or []
+        led = "ENCENDIDO" if faltantes else "apagado"
+        print(f"  LED faltantes: {led}")
+        print("  LCD en reposo, la linea 1 rota:")
+        for pantalla in pantallas_reposo(hora_lcd(), faltantes):
+            print(f"       [{pantalla:<{LCD_ANCHO}}]")
+        print(f"       [{'A:Retirar B:Dev.':<{LCD_ANCHO}}]  (fija)")
 
     # --- Conexion ---
 
@@ -83,6 +144,7 @@ class Equipo:
             sys.exit(f"No se pudo conectar al broker MQTT en {self.host}:{self.puerto} ({error}). ¿Está Mosquitto?")
         self.cliente.loop_start()
         self.cliente.subscribe(self.topico("resp"), qos=1)
+        self.cliente.subscribe(self.topico("faltantes"), qos=1)
         self.publicar_estado(True)
         self.enchufado = True
 
@@ -226,6 +288,8 @@ def ejecutar(eq: Equipo, linea: str) -> bool:
         print("  (está desenchufado: usá 'enchufar')")
     elif comando == "desenchufar":
         eq.desenchufar()
+    elif comando == "pantalla":
+        eq.mostrar_reposo()
     elif comando in ("retirar", "timeout") and len(args) == 1:
         getattr(eq, comando)(args[0])
     elif comando == "devolver" and len(args) in (1, 2):

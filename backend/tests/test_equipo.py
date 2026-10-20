@@ -287,3 +287,37 @@ def test_sin_broker_todos_los_equipos_quedan_offline(fabrica_sesiones):
     servidor._al_desconectar(None, None, None, "conexion perdida", None)
     with fabrica_sesiones() as s:
         assert not conexion.equipo_online(s)
+
+
+# --- US-21: aulas faltantes ---
+
+
+def faltantes(fabrica_sesiones) -> list[str]:
+    with fabrica_sesiones() as s:
+        return equipo.aulas_faltantes(s)
+
+
+def retirar(fabrica_sesiones, aula: str, uid: str, slot: int, email="ana.perez@example.com") -> None:
+    codigo = reservar(fabrica_sesiones, email=email, aula=aula)
+    enviar(fabrica_sesiones, "solicitud_retiro", codigo=codigo)
+    assert enviar(fabrica_sesiones, "retiro_confirmado", codigo=codigo, uid=uid, slot=slot)["ok"]
+
+
+def test_retirar_agrega_a_faltantes_y_devolver_la_saca(fabrica_sesiones):
+    assert faltantes(fabrica_sesiones) == []
+    retirar(fabrica_sesiones, "214", UID_214, 1)
+    assert faltantes(fabrica_sesiones) == ["214"]
+    enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1)
+    assert faltantes(fabrica_sesiones) == []
+
+
+def test_una_llave_reservada_no_falta(fabrica_sesiones):
+    """Sigue colgada en el disco hasta que el docente la retira."""
+    reservar(fabrica_sesiones, aula="214")
+    assert faltantes(fabrica_sesiones) == []
+
+
+def test_faltantes_ordenadas_por_nombre(fabrica_sesiones):
+    retirar(fabrica_sesiones, "216", "04C3D4E5", 3, email="ana.perez@example.com")
+    retirar(fabrica_sesiones, "214", UID_214, 1, email="bruno.gomez@example.com")
+    assert faltantes(fabrica_sesiones) == ["214", "216"]

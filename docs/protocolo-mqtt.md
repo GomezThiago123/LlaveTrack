@@ -23,6 +23,7 @@ Prefijo: `llavetrack/v1/{deviceId}/` (ej. `llavetrack/v1/equipo-01/`).
 | `estado` | ESP32 | **sí** | `{"online":true}` al conectar. LWT: `{"online":false}` |
 | `latido` | ESP32 | no | `{}` cada 30 s: "sigo vivo" (ver [Conexión del equipo](#conexión-del-equipo)) |
 | `resp` | servidor | no | Respuesta a cada evento, con el mismo `eventId` |
+| `faltantes` | servidor | **sí** | Aulas cuya llave no está en el disco (ver [Llaves faltantes](#llaves-faltantes-us-21)) |
 | `cmd` | servidor | no | Comandos al equipo |
 
 ## Conexión del equipo
@@ -54,6 +55,29 @@ client.publish(topicoEstado, "{\"online\":true}", true);   // retenido
 ```
 
 El `latido` no lleva `eventId`, no tiene respuesta y no se guarda en el log de eventos (`EventoDispositivo`): solo actualiza el último contacto del equipo.
+
+## Llaves faltantes (US-21)
+
+El servidor publica en `faltantes` (retenido, QoS 1) la lista de aulas cuya llave está **PRESTADA**, ordenada por nombre:
+
+```json
+llavetrack/v1/equipo-01/faltantes  {"aulas":["105","204"]}
+llavetrack/v1/equipo-01/faltantes  {"aulas":[]}
+```
+
+- Las llaves RESERVADAS no cuentan: siguen colgadas en el disco hasta que el docente las retira. Por eso el vencimiento de una reserva no cambia la lista.
+- Se publica cuando la lista cambia (después de `retiro_confirmado` o `devolucion`), al responder `inicio` y cada vez que el servidor se conecta al broker. Como es retenida, el equipo la recibe sola al suscribirse.
+- Con las 30 aulas son unos 200 bytes: entra en el buffer de 512.
+
+Qué hace el equipo con la lista:
+
+- **LED de faltantes** encendido si la lista no está vacía.
+- **LCD en reposo:** la línea 2 queda fija (`A:Retirar B:Dev.`) y la línea 1 rota cada `LCD_ROTACION_MS` (3 s) entre la hora y las aulas que faltan, con todas las que entren en 16 caracteres. Un nombre que no entra ni solo va en su propia pantalla, recortado a 16. Sin faltantes, solo la hora. La regla está implementada en `pantallas_reposo()` del simulador, con tests:
+
+```
+[Mar 20/10  14:32]   [Faltan: 105 114 ]   [Faltan: 204     ]
+[A:Retirar B:Dev.]   [A:Retirar B:Dev.]   [A:Retirar B:Dev.]
+```
 
 ## eventId
 
