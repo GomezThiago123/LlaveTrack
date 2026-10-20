@@ -1,11 +1,13 @@
 # Pendientes de LlaveTrack
 
-Última actualización: 20/10/2026 (con tus respuestas de hardware). Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google) y US-20.
+Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-20, y US-21 y US-22 en el servidor y el simulador.
 
 ## 1. Respuestas que necesito de vos
 
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
+- [ ] **OK para el seed con las 30 aulas** (sección 2), y quién recarga la base de desarrollo: `python -m app.seed --reiniciar` borra los datos de prueba actuales.
+- [ ] **User stories completas:** el texto y los criterios de aceptación de cada una, sobre todo las del MVP (US-01 a US-08). Hoy solo conozco el número y una línea de cada una. Con eso reviso si lo construido cumple cada criterio y las guardo en `docs/` para no tener que pedirlas de nuevo.
 - [ ] **Motor:** modelo, cantidad de cables, tensión nominal y reducción (mirar la etiqueta). En las fotos parece un motorreductor de 2 cables y no un paso a paso: si es así, hace falta un sensor que cuente las pestañas del disco. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs (US-21 y US-22):** ¿uno bicolor o dos? ¿Qué colores? Se decide en la Fase 3: ahí propongo GPIO y resistencias y los confirmás vos.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
@@ -26,8 +28,9 @@ En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
 - [x] **US-21: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
 - [x] **US-22: LED de conexión con el servidor.** Hecho en el servidor y el simulador (el LED titila mientras no hay conexión); en el equipo se hace en la Fase 3.
-- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315), ya desbloqueado: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto.
-- [ ] **Documentación:** actualizar el CLAUDE.md y `docs/` con los tópicos nuevos, las variables de `.env` y los LEDs.
+- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315). Plan listo, espera tu OK: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto.
+- [x] **Documentación de US-20 a US-22:** tópicos nuevos (`latido`, `faltantes`, `servidor/estado`), `EQUIPO_TIMEOUT_SEGUNDOS` y reglas de los LEDs en el CLAUDE.md, `docs/protocolo-mqtt.md` y el README.
+- [ ] **Revisar lo construido contra los criterios de aceptación**, cuando me mandes las user stories.
 
 ## 3. El servidor en la nube
 
@@ -49,6 +52,7 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 
 Ya están hechos, pero falta tu prueba.
 
+- [ ] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
 - [ ] **Fase 2 en la compu:** pedir una llave como Ana, retirarla con el simulador y verla como Carla.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.
 - [ ] **Sesión vencida:** con `SESION_MINUTOS=1` en `backend/.env`, la web vuelve sola al login.
