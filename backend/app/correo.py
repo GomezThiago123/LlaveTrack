@@ -42,3 +42,28 @@ def enviar_link_recuperacion(usuario: Usuario, token: str) -> None:
         f"El link vence en {config.recuperacion_minutos} minutos y sirve una sola vez.\n"
         "Si no lo pediste, ignorá este mail: tu contraseña no cambia.\n",
     )
+
+
+def enviar_link_alta(usuario: Usuario, token: str) -> None:
+    """US-09: el docente nuevo crea su contrasena con este link."""
+    link = f"{config.web_url.rstrip('/')}/restablecer?token={token}"
+    enviar_correo(
+        usuario.email,
+        "LlaveTrack: creá tu contraseña",
+        f"Hola {usuario.nombre}:\n\n"
+        "Te dieron de alta en LlaveTrack, el sistema para retirar las llaves de las aulas.\n"
+        f"Para crear tu contraseña entrá a este link:\n{link}\n\n"
+        f"El link vence en {config.alta_link_horas} horas y sirve una sola vez.\n",
+    )
+
+
+def enviar_recordatorio(usuario: Usuario, aula: str) -> None:
+    """US-16: el preceptor le recuerda al docente que devuelva la llave."""
+    enviar_correo(
+        usuario.email,
+        f"LlaveTrack: todavía tenés la llave del aula {aula}",
+        f"Hola {usuario.nombre}:\n\n"
+        f"Todavía tenés la llave del aula {aula}. Cuando termines, devolvela en el equipo:\n"
+        "tecla B y colgala en el lugar vacío de la ventana.\n",
+    )
+

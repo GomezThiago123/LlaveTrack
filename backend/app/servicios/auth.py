@@ -167,20 +167,27 @@ def pedir_recuperacion(
 
     La ruta responde lo mismo en los dos casos, para no revelar que emails estan cargados.
     """
-    ahora = ahora or ahora_utc()
     usuario = _buscar_usuario(sesion, email)
     if usuario is None:
         return None
+    return usuario, crear_link_clave(sesion, usuario, timedelta(minutes=config.recuperacion_minutos), ahora)
+
+
+def crear_link_clave(
+    sesion: Session, usuario: Usuario, duracion: timedelta, ahora: datetime | None = None
+) -> str:
+    """Token para el link "elegí tu contraseña". Sirve una sola vez (ver restablecer_clave).
+
+    Lo usan la recuperacion (US-08) y el alta de un docente nuevo (US-09).
+    """
+    ahora = ahora or ahora_utc()
     token, token_hash = _nuevo_token()
     sesion.add(
         RecuperacionClave(
-            token_hash=token_hash,
-            usuario_id=usuario.id,
-            creada_en=ahora,
-            expira_en=ahora + timedelta(minutes=config.recuperacion_minutos),
+            token_hash=token_hash, usuario_id=usuario.id, creada_en=ahora, expira_en=ahora + duracion
         )
     )
-    return usuario, token
+    return token
 
 
 def restablecer_clave(

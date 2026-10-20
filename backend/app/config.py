@@ -51,6 +51,7 @@ class Config(BaseSettings):
 
     # Recuperacion de contrasena (US-08)
     recuperacion_minutos: int = 30  # vencimiento del link que llega por mail
+    alta_link_horas: int = 48  # US-09: el docente nuevo tiene este tiempo para crear su contrasena
     web_url: str = "http://localhost:5173"  # para armar el link del mail
     # Sin SMTP_HOST el mail no se envia: el link se muestra en la consola del servidor
     smtp_host: str | None = None

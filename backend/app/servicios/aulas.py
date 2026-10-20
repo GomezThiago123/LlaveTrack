@@ -72,5 +72,9 @@ def _tenedor(sesion: Session, llave: Llave) -> Tenedor | None:
 
 def _datos_tenedor(usuario: Usuario, desde) -> Tenedor:
     return Tenedor(
-        nombre=usuario.nombre, apellido=usuario.apellido, telefono=usuario.telefono, desde=desde
+        usuario_id=usuario.id,
+        nombre=usuario.nombre,
+        apellido=usuario.apellido,
+        telefono=usuario.telefono,
+        desde=desde,
     )

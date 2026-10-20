@@ -148,6 +148,8 @@ class Prestamo(Base):
     reserva_id: Mapped[int] = mapped_column(ForeignKey("reserva.id"))
     retirado_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
     devuelto_en: Mapped[datetime | None] = mapped_column(FechaUTC)  # null = prestamo activo
+    # US-16: el ultimo recordatorio de devolucion que mando el preceptor
+    recordatorio_enviado_en: Mapped[datetime | None] = mapped_column(FechaUTC)
 
     usuario: Mapped[Usuario] = relationship()
     llave: Mapped[Llave] = relationship()

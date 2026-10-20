@@ -3,7 +3,8 @@
 En Python los campos van en snake_case (expira_en) y en el JSON en camelCase (expiraEn).
 """
 
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
@@ -40,8 +41,9 @@ class EstadoPublico(Esquema):
 
 
 class Tenedor(Esquema):
-    """Quien tiene (o reservo) la llave. Solo lo ven preceptores y administradores."""
+    """Quien tiene (o reservo) la llave (US-02: lo ven todos los usuarios logueados)."""
 
+    usuario_id: int  # la web lo compara con el suyo para mostrar "En tu poder"
     nombre: str
     apellido: str
     telefono: str | None
@@ -68,6 +70,7 @@ class UsuarioSalida(Esquema):
     nombre: str
     apellido: str
     email: str
+    telefono: str | None
     rol: Rol
 
 
@@ -79,6 +82,89 @@ class CuentaBloqueada(Esquema):
     email: str
     bloqueado_hasta: datetime
 
+
+
+
+# --- Prestamos (US-17, US-12/13, US-16) ---
+
+
+class PersonaSalida(Esquema):
+    id: int
+    nombre: str
+    apellido: str
+    email: str
+    telefono: str | None
+
+
+class PrestamoSalida(Esquema):
+    id: int
+    aula: str
+    docente: PersonaSalida
+    retirado_en: datetime
+    devuelto_en: datetime | None
+    recordatorio_enviado_en: datetime | None
+
+
+class HistorialSalida(Esquema):
+    prestamos: list[PrestamoSalida]
+    en_poder: int | None  # US-13: solo si se filtro por docente
+
+
+class FiltrosHistorial(Esquema):
+    aula_id: int | None = None
+    usuario_id: int | None = None
+    desde: date | None = None
+    hasta: date | None = None
+    estado: Literal["todos", "abiertos", "devueltos"] = "todos"
+
+
+# --- Gestion de docentes (US-09) ---
+
+
+class UsuarioDetalle(Esquema):
+    id: int
+    nombre: str
+    apellido: str
+    email: str
+    telefono: str | None
+    rol: Rol
+    activo: bool
+    tiene_clave: bool  # false = todavia no uso el link del mail de alta
+
+
+class PedidoAlta(Esquema):
+    nombre: str = Field(min_length=1, max_length=80)
+    apellido: str = Field(min_length=1, max_length=80)
+    email: str = Field(min_length=3, max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    telefono: str | None = Field(default=None, max_length=30)
+
+
+class PedidoActivo(Esquema):
+    activo: bool
+
+
+# --- Equipo y llaves (US-10) ---
+
+
+class LlaveEquipo(Esquema):
+    id: int
+    aula: str
+    rfid_uid: str
+    slot: int | None  # null mientras esta prestada (no esta en el disco)
+    estado: EstadoLlave
+
+
+class EquipoSalida(Esquema):
+    device_id: str | None  # null si el equipo nunca se conecto
+    online: bool
+    ultimo_contacto: datetime | None
+    slots_totales: int
+    slots_reservados: list[int]
+    llaves: list[LlaveEquipo]
+
+
+class PedidoRfid(Esquema):
+    rfid_uid: str = Field(min_length=1, max_length=40)
 
 
 class IncidenteSalida(Esquema):
