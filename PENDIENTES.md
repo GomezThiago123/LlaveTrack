@@ -1,19 +1,24 @@
 # Pendientes de LlaveTrack
 
-Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google) y US-20.
+Última actualización: 20/10/2026 (con tus respuestas de hardware). Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google) y US-20.
 
 ## 1. Respuestas que necesito de vos
 
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
-- [ ] **Slots del disco y llaves para la demo.** Hoy son 24 slots con el 0 reservado para el tag HOME, así que entran 23 llaves, y las aulas reales son 30. *Bloquea: el seed con las aulas reales.*
-- [ ] **Asterisco de la Aula 105.** ¿Qué significa? *Bloquea: el seed.*
 - [ ] **Motor:** modelo, cantidad de cables, tensión nominal y reducción (mirar la etiqueta). En las fotos parece un motorreductor de 2 cables y no un paso a paso: si es así, hace falta un sensor que cuente las pestañas del disco. *Bloquea: la Fase 3 (motor).*
-- [ ] **Modelo exacto de la placa ESP32.** *Bloquea: el mapa de pines.*
-- [ ] **LCD:** confirmar que es 16x2 y su dirección I2C (0x27 o 0x3F). Se ve con el scanner de la Fase 3.
-- [ ] **Referencia de cero:** qué sensor (final de carrera, óptico o hall) o el tag HOME provisorio.
-- [ ] **LEDs (US-21 y US-22):** ¿uno bicolor o dos? ¿Qué colores? Los GPIO y las resistencias los propongo en la Fase 3 y los confirmás vos.
-- [ ] **Servidor en la demo:** ¿notebook en la misma red o en la nube? ¿El WiFi de la escuela tiene portal cautivo o WPA2-Enterprise? Si tiene, hay que usar el router propio o un hotspot.
+- [ ] **LEDs (US-21 y US-22):** ¿uno bicolor o dos? ¿Qué colores? Se decide en la Fase 3: ahí propongo GPIO y resistencias y los confirmás vos.
+- [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
+- [ ] **WiFi de la escuela:** aunque el servidor esté en la nube, el ESP32 tiene que salir a internet. ¿Tiene portal cautivo o WPA2-Enterprise? Si tiene, hay que usar el router propio o un hotspot.
+
+### Ya respondidas (20/10/2026)
+
+- **Disco:** 32 slots. El 0 es del tag HOME, así que quedan 31 lugares: entran las 30 aulas y sobra 1.
+- **Aula 105:** el asterisco era un error; es un aula como las demás.
+- **Placa:** NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32).
+- **LCD:** 16x2. La dirección I2C sale del scanner en la Fase 3.
+- **Referencia de cero:** el tag RFID HOME en el slot 0, por ahora.
+- **Servidor de la demo:** en la nube.
 
 ## 2. Lo próximo en el código
 
@@ -21,16 +26,26 @@ En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
 - [ ] **US-21: LED y LCD de llaves faltantes.** Mi propuesta: el servidor publica `llavetrack/v1/{deviceId}/faltantes` (retenido) con `{"aulas":[...]}` cada vez que cambia la lista. En el simulador y en los tests.
 - [ ] **US-22: LED de conexión con el servidor.** Mi propuesta: el servidor publica `llavetrack/v1/servidor/estado` (retenido, con su propio LWT). Falta decidir si el LED titila mientras reintenta.
-- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315). Espera las respuestas de los slots y de la 105.
+- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315), ya desbloqueado: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto.
 - [ ] **Documentación:** actualizar el CLAUDE.md y `docs/` con los tópicos nuevos, las variables de `.env` y los LEDs.
 
-## 3. Web: lo que falta
+## 3. El servidor en la nube
 
-- [ ] **Login con Google.** Hace falta crear el client ID en Google Cloud. Para usarlo desde celulares en la demo hace falta un dominio con HTTPS (deploy o túnel); si no hay, la demo usa contraseña.
+Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4:
+
+- [ ] **Elegir proveedor:** tiene que poder correr el servidor de Python **y** Mosquitto, que necesita un puerto TCP propio. Los hostings que solo sirven páginas web no alcanzan.
+- [ ] **Dominio con HTTPS** para la web y la API.
+- [ ] **Mosquitto expuesto a internet:** TLS en el puerto 8883, usuario y contraseña por equipo y una ACL por prefijo. Nunca el 1883 abierto. El ESP32 se conecta con `WiFiClientSecure` y el certificado raíz.
+- [ ] **Base persistente:** SQLite en un disco que no se borre al reiniciar, o pasar a PostgreSQL (el proyecto ya está preparado con SQLAlchemy + Alembic).
+- [ ] **Configurar el `.env` de producción:** `COOKIE_SEGURA=true`, `WEB_URL` con el dominio y `SMTP_*`.
+
+## 4. Web: lo que falta
+
+- [ ] **Login con Google.** Hace falta crear el client ID en Google Cloud. Ahora que va a haber un dominio con HTTPS, funciona también desde los celulares.
 - [ ] **Decidir qué parte del [prototipo](https://claude.ai/artifact/BUCVFTTa6UfGr5jqzBvFh5) pasa a la web real.** Candidatos: la grilla de aulas (con 30 aulas, la lista actual es larga), la barra de la cuenta regresiva y la confirmación de retiro.
-- [ ] **Mail de recuperación de verdad para la demo:** completar `SMTP_*` en `backend/.env`, por ejemplo con Gmail y una contraseña de aplicación. Mientras tanto, el link sale en la consola del servidor.
+- [ ] **Mail de recuperación de verdad:** completar `SMTP_*`, por ejemplo con Gmail y una contraseña de aplicación. Mientras tanto, el link sale en la consola del servidor.
 
-## 4. Para probar vos
+## 5. Para probar vos
 
 Ya están hechos, pero falta tu prueba.
 
@@ -39,11 +54,11 @@ Ya están hechos, pero falta tu prueba.
 - [ ] **Sesión vencida:** con `SESION_MINUTOS=1` en `backend/.env`, la web vuelve sola al login.
 - [ ] **US-20:** `desenchufar` y `enchufar` en el simulador; los botones de la web se deshabilitan y se habilitan solos.
 
-## 5. Fase 3: firmware
+## 6. Fase 3: firmware
 
-Está bloqueada por las respuestas de hardware de la sección 1. Va un módulo por vez, cada uno con su programa de prueba:
+Lo único que falta del hardware es el motor (sección 1); lo demás ya se puede arrancar. Va un módulo por vez, cada uno con su programa de prueba:
 
-- [ ] Proponer el mapa de pines (`config.h` y `docs/cableado.md`) y esperar tu confirmación.
+- [ ] Proponer el mapa de pines para la NodeMCU ESP32 de 38 pines (`config.h` y `docs/cableado.md`) y esperar tu confirmación.
 - [ ] LCD y scanner I2C.
 - [ ] Teclado 4x4.
 - [ ] Lector RFID (RC522 a **3,3 V**).
@@ -52,14 +67,12 @@ Está bloqueada por las respuestas de hardware de la sección 1. Va un módulo p
 - [ ] LEDs de conexión y de faltantes.
 - [ ] Máquina de estados completa y modo diagnóstico (tecla `D` al encender), que lista los UID reales para el seed.
 
-## 6. Fase 4: integración y demo
+## 7. Fase 4: integración y demo
 
 - [ ] Probar con el equipo real y medir el tiempo de un ciclo completo de retiro y devolución.
-- [ ] Mosquitto con usuario y contraseña por equipo, y una ACL que limite cada equipo a su prefijo.
 - [ ] Cambiar las contraseñas de prueba del seed (`llavetrack`) antes de la demo.
-- [ ] Si la web va por HTTPS, poner `COOKIE_SEGURA=true`.
 
-## 7. Documentación de clase y defensa
+## 8. Documentación de clase y defensa
 
 Estos documentos los presentaste en clase y no coinciden con lo que está construido.
 

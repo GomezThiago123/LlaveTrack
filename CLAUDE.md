@@ -99,7 +99,7 @@ El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Go
 - Cada evento lleva un `eventId` único aunque el ESP32 se reinicie (ej. `equipo-01-<random de arranque>-<contador>`). El servidor responde cada evento en `resp` con el mismo `eventId` y `ok: true`, o `ok: false` + `motivo` (`CODIGO_INVALIDO`, `CODIGO_VENCIDO`, `LLAVE_DESCONOCIDA`, `SIN_PRESTAMO_ACTIVO`, `ERROR_INTERNO`).
 - PubSubClient solo publica con QoS 0, así que la confiabilidad es de aplicación: el ESP32 reintenta el mismo evento hasta recibir respuesta y el servidor descarta duplicados por `eventId`. Sin respuesta en 5 s → LCD "Sin respuesta" y reintento.
 - `client.setBufferSize(512)`: el buffer por defecto (256 bytes) corta los JSON.
-- Mosquitto: en desarrollo, anónimo en localhost; para la demo, usuario y contraseña por equipo y una ACL que limite cada equipo a su prefijo.
+- Mosquitto: en desarrollo, anónimo en localhost. En la demo el servidor está en la nube, así que el broker queda expuesto a internet: TLS (puerto 8883, `WiFiClientSecure` en el ESP32), usuario y contraseña por equipo y una ACL que limite cada equipo a su prefijo. Nunca el 1883 abierto.
 
 ```
 llavetrack/v1/equipo-01/evt/solicitud_retiro
@@ -134,13 +134,15 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [x] Autenticación: las dos (email + contraseña primero, Google después). Ver "Autenticación".
 - [ ] Motor: en las fotos parece un motorreductor de 2 cables, no un paso a paso. Confirmar con la etiqueta antes de la Fase 3.
 - [ ] Motor: modelo, cantidad de cables, tensión nominal y reducción. Asumido: paso a paso bipolar de 4 cables. Si es un motor DC, frená y avisame: sin pasos que contar hace falta un sensor que cuente las pestañas del disco.
-- [ ] Modelo exacto de la placa ESP32.
-- [ ] LCD: 16x2 (asumido) y su dirección I2C.
-- [ ] Referencia de cero: qué sensor, o el tag HOME provisorio.
-- [ ] Cantidad de slots del disco y de llaves para la demo.
-- [ ] LEDs (US-21 faltantes, US-22 conexión): uno bicolor o dos, colores, GPIO y resistencias. Proponerlos en la Fase 3 (`config.h` + `docs/cableado.md`) y esperar confirmación.
-- [ ] Aula 105: qué significa el asterisco de la lista de aulas de la escuela.
-- [ ] Dónde corre el servidor en la demo (notebook en la misma red o nube). Ver si el WiFi de la escuela tiene portal cautivo o WPA2-Enterprise: si es así, usar el router propio del diagrama o un hotspot.
+- [x] Placa: NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32). Los pines 6–11 están expuestos pero son de la flash: no usarlos.
+- [x] LCD: 16x2 confirmado.
+- [ ] LCD: dirección I2C (0x27 o 0x3F), sale del scanner en la Fase 3.
+- [x] Referencia de cero: tag RFID HOME en el slot 0 por ahora (sin sensor).
+- [x] Disco de 32 slots. El 0 es del tag HOME: quedan 31 lugares, entran las 30 aulas reales y sobra 1.
+- [ ] LEDs (US-21 faltantes, US-22 conexión): uno bicolor o dos, colores, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
+- [x] Aula 105: el asterisco era un error; es un aula como las demás.
+- [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, y base persistente (ver `PENDIENTES.md`).
+- [ ] WiFi de la escuela: el ESP32 igual tiene que salir a internet. Si tiene portal cautivo o WPA2-Enterprise, usar el router propio del diagrama o un hotspot.
 
 ## Fases
 0. Esqueleto: estructura del repo, README con cómo levantar todo, `.gitignore`, ejemplos de `.env` y `secrets.h`, `docs/protocolo-mqtt.md` y borrador de `docs/cableado.md`.
