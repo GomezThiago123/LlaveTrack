@@ -44,6 +44,14 @@ def ver_reserva_activa(sesion: SesionDep, usuario: UsuarioDep) -> ReservaSalida 
     return _salida(reserva) if reserva else None
 
 
+@router.get("/{reserva_id}")
+def ver_reserva(reserva_id: int, sesion: SesionDep, usuario: UsuarioDep) -> ReservaSalida:
+    """Una reserva propia en cualquier estado: la web la consulta para saber si ya se retiró la llave."""
+    reserva = reservas.reserva_del_usuario(sesion, usuario, reserva_id)
+    sesion.commit()
+    return _salida(reserva)
+
+
 @router.delete("/{reserva_id}", status_code=204)
 def cancelar(reserva_id: int, sesion: SesionDep, usuario: UsuarioDep) -> Response:
     reservas.cancelar_reserva(sesion, usuario, reserva_id)

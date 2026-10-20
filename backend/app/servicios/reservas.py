@@ -89,12 +89,18 @@ def reserva_activa(sesion: Session, usuario: Usuario, ahora: datetime | None = N
     )
 
 
-def cancelar_reserva(sesion: Session, usuario: Usuario, reserva_id: int) -> None:
+def reserva_del_usuario(sesion: Session, usuario: Usuario, reserva_id: int) -> Reserva:
+    """Una reserva del usuario, en cualquier estado (la web la consulta para saber si ya se uso)."""
     vencer_reservas(sesion)
     reserva = sesion.get(Reserva, reserva_id)
     # Una reserva de otro usuario se trata como inexistente: no se revela que existe
     if reserva is None or reserva.usuario_id != usuario.id:
         raise ErrorNegocio(404, "RESERVA_NO_ENCONTRADA", "La reserva no existe.")
+    return reserva
+
+
+def cancelar_reserva(sesion: Session, usuario: Usuario, reserva_id: int) -> None:
+    reserva = reserva_del_usuario(sesion, usuario, reserva_id)
     if not _cerrar_reserva(sesion, reserva, EstadoReserva.CANCELADA):
         raise ErrorNegocio(
             409, "RESERVA_NO_PENDIENTE", "La reserva ya no está pendiente (se usó o venció)."

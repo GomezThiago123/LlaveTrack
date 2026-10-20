@@ -64,7 +64,9 @@ Reglas:
 ## API REST (web ↔ servidor)
 - `GET /api/publico/estado`: sin login. Aulas con su estado y si el equipo está online. Sin datos personales.
 - `GET /api/aulas`: con login. Quién tiene cada llave y su teléfono, solo visible para `PRECEPTOR`/`ADMIN`.
-- `POST /api/reservas` `{ aulaId }` → `{ codigo, expiraEn }` · `GET /api/reservas/activa` · `DELETE /api/reservas/:id`.
+- `POST /api/reservas` `{ aulaId }` → `{ codigo, expiraEn }` · `GET /api/reservas/activa` · `GET /api/reservas/:id` (cualquier estado: la web ve si ya se retiró) · `DELETE /api/reservas/:id`.
+- Login: `POST /api/auth/login` `{ email, clave }` · `POST /api/auth/logout` · `GET /api/auth/yo` · `POST /api/auth/recuperar` `{ email }` · `POST /api/auth/restablecer` `{ token, claveNueva }`.
+- La web manda `X-Refresco-Automatico: 1` en los pedidos que hace sola cada 5 s: no renuevan la sesión (si no, con la web abierta nunca vencería por inactividad).
 - Errores: `{ "error": { "codigo": "LLAVE_NO_DISPONIBLE", "mensaje": "..." } }`.
 
 ## Flujos del MVP

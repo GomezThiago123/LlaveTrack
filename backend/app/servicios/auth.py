@@ -102,16 +102,20 @@ def login(
     return usuario, token
 
 
-def usuario_de_sesion(sesion: Session, token: str, ahora: datetime | None = None) -> Usuario | None:
+def usuario_de_sesion(
+    sesion: Session, token: str, ahora: datetime | None = None, renovar: bool = True
+) -> Usuario | None:
     """El usuario dueno de la sesion, o None si no existe o vencio por inactividad.
 
     Cada uso renueva la sesion: vence tras SESION_MINUTOS *sin actividad* (US-01).
+    renovar=False para los refrescos automaticos de la web: no son actividad del usuario.
     """
     ahora = ahora or ahora_utc()
     registro = sesion.scalar(select(Sesion).where(Sesion.token_hash == _hash_token(token)))
     if registro is None or registro.ultima_actividad < _limite(ahora) or not registro.usuario.activo:
         return None
-    registro.ultima_actividad = ahora
+    if renovar:
+        registro.ultima_actividad = ahora
     return registro.usuario
 
 

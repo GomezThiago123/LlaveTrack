@@ -101,6 +101,26 @@ def test_cada_uso_renueva_la_sesion(sesion):
     assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=36)) is None
 
 
+def test_los_refrescos_automaticos_no_renuevan_la_sesion(sesion):
+    ahora = ahora_utc()
+    _, token = auth.login(sesion, ANA, CLAVE, ahora)
+    sesion.flush()
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=10), renovar=False)
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=16), renovar=False) is None
+
+
+def test_encabezado_de_refresco_automatico(cliente, fabrica_sesiones):
+    login(cliente)
+    with fabrica_sesiones() as s:
+        antes = s.scalar(select(Sesion.ultima_actividad))
+    assert cliente.get("/api/aulas", headers={"X-Refresco-Automatico": "1"}).status_code == 200
+    with fabrica_sesiones() as s:
+        assert s.scalar(select(Sesion.ultima_actividad)) == antes
+    cliente.get("/api/aulas")
+    with fabrica_sesiones() as s:
+        assert s.scalar(select(Sesion.ultima_actividad)) > antes
+
+
 def test_la_base_no_guarda_el_token_de_la_cookie(cliente, fabrica_sesiones):
     token = login(cliente).cookies["llavetrack_sesion"]
     with fabrica_sesiones() as s:

@@ -6,7 +6,7 @@ no puede robarla) y SameSite=Lax (otro sitio no puede hacer pedidos con ella).
 
 from typing import Annotated
 
-from fastapi import Cookie, Depends, Response
+from fastapi import Cookie, Depends, Header, Response
 from sqlalchemy.orm import Session
 
 from app.config import config
@@ -21,14 +21,22 @@ COOKIE_SESION = "llavetrack_sesion"
 def usuario_actual(
     sesion: Annotated[Session, Depends(obtener_sesion)],
     token: Annotated[str | None, Cookie(alias=COOKIE_SESION)] = None,
+    refresco_automatico: Annotated[
+        str | None,
+        Header(
+            alias="X-Refresco-Automatico",
+            description="La web lo manda en los pedidos que hace sola cada 5 s: no renuevan la sesión",
+        ),
+    ] = None,
 ) -> Usuario:
     """Dependencia de FastAPI para las rutas que necesitan login.
 
     Renueva la sesion; la ruta hace el commit (asi se guarda la ultima actividad).
+    Los refrescos automaticos no la renuevan: si no, con la web abierta nunca venceria.
     """
     if not token:
         raise ErrorNegocio(401, "NO_AUTENTICADO", "Tenés que iniciar sesión.")
-    usuario = auth.usuario_de_sesion(sesion, token)
+    usuario = auth.usuario_de_sesion(sesion, token, renovar=refresco_automatico is None)
     if usuario is None:
         raise ErrorNegocio(401, "SESION_VENCIDA", "Tu sesión venció. Volvé a ingresar.")
     return usuario

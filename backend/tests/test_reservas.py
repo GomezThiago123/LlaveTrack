@@ -160,8 +160,20 @@ def test_api_ciclo_reservar_consultar_cancelar(cliente, ingresar, fabrica_sesion
     activa = cliente.get("/api/reservas/activa")
     assert activa.json()["codigo"] == reserva["codigo"]
 
+    assert cliente.get(f"/api/reservas/{reserva['id']}").json()["estado"] == "PENDIENTE"
     assert cliente.delete(f"/api/reservas/{reserva['id']}").status_code == 204
     assert cliente.get("/api/reservas/activa").json() is None
+    # Despues de cancelarla se puede consultar igual (la web muestra que paso)
+    assert cliente.get(f"/api/reservas/{reserva['id']}").json()["estado"] == "CANCELADA"
+
+
+def test_api_no_se_puede_ver_la_reserva_de_otro(cliente, ingresar, fabrica_sesiones):
+    ingresar(ANA)
+    reserva = cliente.post("/api/reservas", json={"aulaId": id_aula(fabrica_sesiones, "214")}).json()
+    ingresar(BRUNO)
+    res = cliente.get(f"/api/reservas/{reserva['id']}")
+    assert res.status_code == 404
+    assert res.json()["error"]["codigo"] == "RESERVA_NO_ENCONTRADA"
 
 
 def test_api_sin_login_responde_401_con_formato_de_error(cliente):
