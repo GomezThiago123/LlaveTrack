@@ -1,17 +1,16 @@
 # Pendientes de LlaveTrack
 
-Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-20, US-21 y US-22 en el servidor y el simulador, y la base en Supabase.
+Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-20, US-21 y US-22 en el servidor y el simulador, la base en Supabase y el seed con las 30 aulas.
 
 ## 1. Respuestas que necesito de vos
 
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
-- [ ] **OK para el seed con las 30 aulas** (sección 2), y quién recarga la base: `python -m app.seed --reiniciar` borra los datos actuales. Ahora la base de Supabase es compartida, así que el reinicio afecta a todo el grupo.
-- [ ] **User stories completas:** el texto y los criterios de aceptación de cada una, sobre todo las del MVP (US-01 a US-08). Hoy solo conozco el número y una línea de cada una. Con eso reviso si lo construido cumple cada criterio y las guardo en `docs/` para no tener que pedirlas de nuevo.
+- [ ] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
 - [ ] **Motor:** modelo, cantidad de cables, tensión nominal y reducción (mirar la etiqueta). En las fotos parece un motorreductor de 2 cables y no un paso a paso: si es así, hace falta un sensor que cuente las pestañas del disco. *Bloquea: la Fase 3 (motor).*
-- [ ] **LEDs (US-21 y US-22):** ¿uno bicolor o dos? ¿Qué colores? Se decide en la Fase 3: ahí propongo GPIO y resistencias y los confirmás vos.
+- [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
-- [ ] **WiFi de la escuela:** aunque el servidor esté en la nube, el ESP32 tiene que salir a internet. ¿Tiene portal cautivo o WPA2-Enterprise? Si tiene, hay que usar el router propio o un hotspot.
+- [ ] **WiFi para la demo:** la de la escuela es WPA2-Enterprise. ¿Router propio o hotspot del celular? El ESP32 puede conectarse a WPA2-Enterprise, pero necesita una cuenta de la escuela guardada en el equipo y la red puede bloquear el puerto 8883.
 
 ### Ya respondidas (20/10/2026)
 
@@ -21,6 +20,10 @@ Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada u
 - **LCD:** 16x2. La dirección I2C sale del scanner en la Fase 3.
 - **Referencia de cero:** el tag RFID HOME en el slot 0, por ahora.
 - **Servidor de la demo:** en la nube.
+- **Seed con las 30 aulas:** OK.
+- **User stories:** recibidas y guardadas en `docs/user-stories.md`.
+- **WiFi de la escuela:** WPA2-Enterprise.
+- **LEDs:** dos bicolores, uno por agujero del panel.
 
 ## 2. Lo próximo en el código
 
@@ -28,9 +31,22 @@ En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
 - [x] **US-21: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
 - [x] **US-22: LED de conexión con el servidor.** Hecho en el servidor y el simulador (el LED titila mientras no hay conexión); en el equipo se hace en la Fase 3.
-- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315). Plan listo, espera tu OK: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto. La lista de aulas con su posición ya está en `backend/seed/aulas_reales.json`, rescatada de las tablas viejas de Supabase.
+- [x] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315): `slotsTotales: 32`, slot 0 para HOME, aulas en los slots 1 a 30 y UID inventados (`04A0` + aula, ej. `04A00214`) hasta el modo diagnóstico. El simulador usa `--slots 32` por defecto. Los tests usan sus propios datos (`tests/datos_prueba.json`) y un test valida el seed real.
 - [x] **Documentación de US-20 a US-22:** tópicos nuevos (`latido`, `faltantes`, `servidor/estado`), `EQUIPO_TIMEOUT_SEGUNDOS` y reglas de los LEDs en el CLAUDE.md, `docs/protocolo-mqtt.md` y el README.
-- [ ] **Revisar lo construido contra los criterios de aceptación**, cuando me mandes las user stories.
+- [x] **Revisar lo construido contra los criterios de aceptación.** Las diferencias están en la sección 2b.
+
+## 2b. Diferencias con las user stories (`docs/user-stories.md`)
+
+Esperan tu decisión. Después armo un plan y espero tu OK.
+
+- [ ] **Numeración:** en Notion, US-20 es "Devolver una llave retirada por otro" y US-21 es "Registrar incidentes" (las dos V2). En el código y en los commits, US-20/21/22 son equipo desconectado, LED de faltantes y LED de conexión, y no figuran en Notion. Propuesta: cargarlas en Notion como US-22, US-23 y US-24 y renombrarlas en el código y en la documentación (los commits viejos quedan como están).
+- [ ] **US-01, sesión de 60 s** (hoy 15 min). Decidido: 60 s, salvo mientras está abierta la pantalla del código. Falta implementarlo.
+- [ ] **US-02, quién ve quién tiene la llave:** decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
+- [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
+- [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Hoy el evento `error` se guarda, pero nadie lo ve. La sección "Incidentes" completa es US-21 (V2): ¿qué parte entra en el MVP?
+- [ ] **US-06, "cuando confirmo":** ¿el docente aprieta `#` para confirmar la devolución, o alcanza con colgar la llave (como ahora)?
+- [ ] **US-07, desbloqueo manual por el preceptor:** no existe. Hay que agregarlo.
+- [ ] **Textos exactos de los criterios:** "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
 
 ## 3. El servidor en la nube
 
@@ -41,7 +57,8 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 - [ ] **Mosquitto expuesto a internet:** TLS en el puerto 8883, usuario y contraseña por equipo y una ACL por prefijo. Nunca el 1883 abierto. El ESP32 se conecta con `WiFiClientSecure` y el certificado raíz.
 - [x] **Base persistente:** PostgreSQL de Supabase (`DATABASE_URL` en `backend/.env`, ver `.env.example`). Solo como base: la web y el ESP32 siguen pasando por el servidor. RLS activado en todas las tablas.
 - [x] **Conexión a Supabase:** migraciones, seed y RLS aplicados; login, reservas y conexión del simulador andan contra la base real (20/10/2026). Se borraron las tablas y funciones del diseño viejo, y el trigger sobre `auth.users`.
-- [ ] **Terminar el ciclo con Supabase:** `retirar <codigo>` y `devolver 04A1B2C3` en el simulador, y ver en **Table Editor → prestamo** la fila con `devuelto_en`.
+- [ ] **Cargar el seed nuevo en Supabase:** `python -m app.seed --reiniciar` (borra los datos de prueba que hay ahora) y reiniciar el simulador (ahora usa 32 slots).
+- [ ] **Terminar el ciclo con Supabase:** `retirar <codigo>` y `devolver 04A00214` en el simulador, y ver en **Table Editor → prestamo** la fila con `devuelto_en`.
 - [ ] **Pasarles la conexión a tus compañeros:** la URL con la contraseña va por privado (nunca al repo). Cada uno la pone en su `backend/.env`; para desarrollar sin pisarse pueden seguir con SQLite local.
 - [ ] **Configurar el `.env` de producción:** `COOKIE_SEGURA=true`, `WEB_URL` con el dominio y `SMTP_*`.
 

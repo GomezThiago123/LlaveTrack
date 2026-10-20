@@ -31,12 +31,12 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 
 ## Stack
 - `firmware/`: ESP32 con framework Arduino sobre PlatformIO (extensión de VS Code + CLI `pio`, para compilar desde la terminal). Librerías: MFRC522, LiquidCrystal_I2C, Keypad, AccelStepper, PubSubClient, ArduinoJson 7.
-- `backend/`: Python 3.11+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo; PostgreSQL de Supabase para la demo y la base compartida, vía `DATABASE_URL` con el Session pooler y el driver `psycopg`. Supabase es solo la base: no se usa su API, su Auth ni su cliente JS, y toda tabla nueva activa RLS sin políticas en su migración para que la API de Supabase no la exponga), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`.
+- `backend/`: Python 3.11+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo; PostgreSQL de Supabase para la demo y la base compartida, vía `DATABASE_URL` con el Session pooler y el driver `psycopg`. Supabase es solo la base: no se usa su API, su Auth ni su cliente JS, y toda tabla nueva activa RLS sin políticas en su migración para que la API de Supabase no la exponga), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`. Los tests ignoran el `.env` (`LLAVETRACK_TESTS=1` en `conftest.py`) y cargan `tests/datos_prueba.json`, no el seed real.
 - `backend/` y `frontend/` son independientes: cada uno se instala y se levanta en su propia terminal, sin nada compartido en la raíz.
 - `frontend/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP. Se corre desde `frontend/`: `npm install`, `npm run dev` (puerto 5173; Vite reenvía `/api` al backend en :8000). Node 20.19+ (recomendado 24).
 - Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.
 - `backend/simulador/`: CLI interactiva en Python (usa el `.venv` del backend) que se hace pasar por el ESP32 vía MQTT: queda prendida con LWT y latido, y en su prompt se puede retirar, devolver, `desenchufar` (corte de luz) y `enchufar`. Para desarrollar y testear sin hardware.
-- `docs/`: `protocolo-mqtt.md` (contrato) y `cableado.md` (pines y alimentación).
+- `docs/`: `protocolo-mqtt.md` (contrato), `cableado.md` (pines y alimentación) y `user-stories.md` (las de Notion con sus criterios de aceptación: revisarlas antes de cada historia).
 
 ## Modelo de datos (MVP)
 - `Usuario`: nombre, apellido, email (único), telefono, rol (`DOCENTE` | `PRECEPTOR` | `ADMIN`), activo, más los campos de auth que correspondan (ver Autenticación).
@@ -51,7 +51,7 @@ Reglas:
 - Una llave nunca puede quedar tomada dos veces: cada cambio de estado es un UPDATE condicional (`UPDATE llave SET estado = ... WHERE id = ? AND estado = 'DISPONIBLE'`, con SQLAlchemy) dentro de una transacción, verificando cuántas filas cambió. Test obligatorio con dos pedidos simultáneos.
 - Un docente tiene como máximo una reserva pendiente.
 - Fechas en UTC en la base; se muestran en `America/Argentina/Buenos_Aires`.
-- Seed desde un archivo editable (aulas, llaves con UID y slot, usuarios), porque el alta desde la web es V2.
+- Seed desde un archivo editable (`backend/seed/datos.json`: las 30 aulas en los slots 1–30, UID inventados `04A0` + aula hasta tener los reales, y usuarios de prueba), porque el alta desde la web es V2.
 - Vencimiento "perezoso": antes de cada consulta o cambio (REST o MQTT) se llama `vencer_reservas()`. No hay tarea periódica.
 - `Llave.slot` es null mientras la llave está prestada (no está en el disco).
 - La lógica va en `app/servicios/` (sin commit); las rutas HTTP y el cliente MQTT llaman a esos servicios y hacen el commit.
@@ -63,15 +63,15 @@ Reglas:
 
 ## API REST (web ↔ servidor)
 - `GET /api/publico/estado`: sin login. Aulas con su estado y si el equipo está online. Sin datos personales.
-- `GET /api/aulas`: con login. Quién tiene cada llave y su teléfono, solo visible para `PRECEPTOR`/`ADMIN`.
+- `GET /api/aulas`: con login. Quién tiene cada llave, desde qué hora y su teléfono, visible para todos los usuarios logueados (US-02, decidido el 20/10/2026).
 - `POST /api/reservas` `{ aulaId }` → `{ codigo, expiraEn }` · `GET /api/reservas/activa` · `GET /api/reservas/:id` (cualquier estado: la web ve si ya se retiró) · `DELETE /api/reservas/:id`.
 - Login: `POST /api/auth/login` `{ email, clave }` · `POST /api/auth/logout` · `GET /api/auth/yo` · `POST /api/auth/recuperar` `{ email }` · `POST /api/auth/restablecer` `{ token, claveNueva }`.
-- La web manda `X-Refresco-Automatico: 1` en los pedidos que hace sola cada 5 s: no renuevan la sesión (si no, con la web abierta nunca vencería por inactividad).
+- La web manda `X-Refresco-Automatico: 1` en los pedidos que hace sola cada 5 s: no renuevan la sesión (si no, con la web abierta nunca vencería por inactividad). Excepción: la pantalla del código no lo manda, así la sesión no se cierra mientras el docente va al equipo (la reserva igual vence sola).
 - Errores: `{ "error": { "codigo": "LLAVE_NO_DISPONIBLE", "mensaje": "..." } }`.
 
 ## Flujos del MVP
 ### Retiro (US-02 a US-05)
-1. El docente ve las aulas y pide una. El servidor reserva la llave y devuelve un código de 6 dígitos que vence en 10 min. La web lo muestra grande con cuenta regresiva (también si recarga la página).
+1. El docente ve las aulas y pide una. El servidor reserva la llave y devuelve un código de 6 dígitos que vence en 2 min (US-03). La web lo muestra grande con cuenta regresiva (también si recarga la página).
 2. En el equipo: tecla `A`, ingresa el código (`*` borra, `#` confirma). 3 códigos erróneos seguidos bloquean el teclado 30 s.
 3. ESP32 → `solicitud_retiro`. El servidor valida y responde `slot`, `uid`, `aula`, `apellido`, o un `motivo` de rechazo.
 4. El ESP32 mueve el disco a ese slot y verifica que lee ESE UID. Si no: prueba ±1 slot; si tampoco, da una vuelta completa buscándolo. Si no aparece: error en el LCD y no entrega nada.
@@ -90,7 +90,7 @@ En reposo siempre hay un slot vacío frente a la ventana. El RFID no puede "busc
 El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Google". Las dos entran al mismo `Usuario`, identificado por su email.
 - Email + contraseña (se implementa primero): hash con `bcrypt`, bloqueo de 15 min tras 5 intentos fallidos (US-07) y recuperación por email (`smtplib` de la librería estándar) con link que vence en 30 min (US-08). `passwordHash` puede ser null (usuario que solo entra con Google).
 - Google (se agrega después): la web obtiene el ID token, el servidor lo verifica con `google-auth` (audience = client ID, email verificado) y solo deja entrar emails cargados en `Usuario` con `activo = true`; nunca crea usuarios. Guardar `googleSub` la primera vez. En desarrollo funciona en `http://localhost`; para usarlo desde celulares en la demo hace falta un dominio con HTTPS (Google no acepta IPs tipo 192.168.x.x): deploy o túnel. Si no hay, la demo usa contraseña.
-- En las dos: sesión en cookie httpOnly que se cierra tras 15 min de inactividad (US-01).
+- En las dos: sesión en cookie httpOnly que se cierra tras 60 s de inactividad (US-01), salvo mientras está abierta la pantalla del código.
 
 ## Protocolo MQTT (ESP32 ↔ servidor)
 - Prefijo `llavetrack/v1/{deviceId}/`. El ESP32 publica en `evt/{tipo}`, en `estado` (retenido, con LWT `{"online":false}` también retenido) y en `latido` (`{}` cada 30 s, sin eventId ni respuesta); se suscribe a `resp`, `cmd`, `faltantes` y `llavetrack/v1/servidor/estado`.
@@ -134,17 +134,17 @@ llavetrack/v1/equipo-01/resp
 ## Pendientes (preguntame antes de asumir)
 Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al día al terminar cada historia).
 - [x] Autenticación: las dos (email + contraseña primero, Google después). Ver "Autenticación".
-- [ ] Motor: en las fotos parece un motorreductor de 2 cables, no un paso a paso. Confirmar con la etiqueta antes de la Fase 3.
+- [ ] Motor: el diagrama de bloques dice paso a paso, pero en las fotos parece un motorreductor de 2 cables. Confirmar con la etiqueta y la cantidad de cables antes de la Fase 3.
 - [ ] Motor: modelo, cantidad de cables, tensión nominal y reducción. Asumido: paso a paso bipolar de 4 cables. Si es un motor DC, frená y avisame: sin pasos que contar hace falta un sensor que cuente las pestañas del disco.
 - [x] Placa: NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32). Los pines 6–11 están expuestos pero son de la flash: no usarlos.
 - [x] LCD: 16x2 confirmado.
 - [ ] LCD: dirección I2C (0x27 o 0x3F), sale del scanner en la Fase 3.
 - [x] Referencia de cero: tag RFID HOME en el slot 0 por ahora (sin sensor).
 - [x] Disco de 32 slots. El 0 es del tag HOME: quedan 31 lugares, entran las 30 aulas reales y sobra 1.
-- [ ] LEDs (US-21 faltantes, US-22 conexión): uno bicolor o dos, colores, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
+- [ ] LEDs: dos bicolores, uno por agujero del panel: conexión y faltantes (respuesta del 20/10/2026). Falta: qué color significa qué, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
 - [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, (ver `PENDIENTES.md`). Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`).
-- [ ] WiFi de la escuela: el ESP32 igual tiene que salir a internet. Si tiene portal cautivo o WPA2-Enterprise, usar el router propio del diagrama o un hotspot.
+- [ ] WiFi de la escuela: WPA2-Enterprise (respuesta del 20/10/2026). Para la demo, el ESP32 sale a internet por un router propio o un hotspot (falta elegir); conectarlo a la red de la escuela queda como opcional.
 
 ## Fases
 0. Esqueleto: estructura del repo, README con cómo levantar todo, `.gitignore`, ejemplos de `.env` y `secrets.h`, `docs/protocolo-mqtt.md` y borrador de `docs/cableado.md`.
