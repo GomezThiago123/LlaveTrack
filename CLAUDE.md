@@ -147,7 +147,7 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [ ] LEDs: dos bicolores, uno por agujero del panel: conexión y faltantes (respuesta del 20/10/2026). Falta: qué color significa qué, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
 - [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, (ver `PENDIENTES.md`). Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`).
-- [ ] WiFi de la escuela: WPA2-Enterprise (respuesta del 20/10/2026). Para la demo, el ESP32 sale a internet por un router propio o un hotspot (falta elegir); conectarlo a la red de la escuela queda como opcional.
+- [ ] WiFi: el ESP32 se conecta a la WiFi de la escuela, que es WPA2-Enterprise (decidido el 20/10/2026). El módulo `red` usa WPA2-Enterprise (PEAP) con usuario y contraseña en `secrets.h`. Falta: nombre de la red, método (casi siempre PEAP), una cuenta para el equipo (mejor una que dé sistemas, no la personal de alguien), si pide certificado, y probar que la red deja salir al puerto 8883. Plan B: hotspot de un celular.
 
 ## Fases
 0. Esqueleto: estructura del repo, README con cómo levantar todo, `.gitignore`, ejemplos de `.env` y `secrets.h`, `docs/protocolo-mqtt.md` y borrador de `docs/cableado.md`.

@@ -10,7 +10,11 @@ Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada u
 - [ ] **Sensor de posición:** el motor es un motorreductor de continua de 24 V y 2 cables (no es paso a paso), así que la posición sale de contar las 32 pestañas del disco. ¿Tienen un sensor para eso (ej. óptico de horquilla) o hay que conseguirlo? Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
-- [ ] **WiFi para la demo:** la de la escuela es WPA2-Enterprise. ¿Router propio o hotspot del celular? El ESP32 puede conectarse a WPA2-Enterprise, pero necesita una cuenta de la escuela guardada en el equipo y la red puede bloquear el puerto 8883.
+- [ ] **WiFi de la escuela (decidido: el ESP32 se conecta ahí):** es WPA2-Enterprise. Hace falta:
+  - El nombre de la red y el método de acceso (casi siempre PEAP; lo sabe sistemas).
+  - Una cuenta para el equipo: mejor una que dé sistemas para el proyecto, no la personal de alguien (queda guardada en el equipo).
+  - Saber si pide un certificado.
+  - Probar que la red deja salir al puerto 8883 (MQTT con TLS): desde una notebook en esa WiFi, en MQTTX conectarse a `test.mosquitto.org`, puerto 8883, con SSL. Si conecta, el puerto está abierto. Si no, plan B: hotspot de un celular.
 
 ### Ya respondidas (20/10/2026)
 
@@ -22,7 +26,7 @@ Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada u
 - **Servidor de la demo:** en la nube.
 - **Seed con las 30 aulas:** OK.
 - **User stories:** recibidas y guardadas en `docs/user-stories.md`.
-- **WiFi de la escuela:** WPA2-Enterprise.
+- **WiFi:** la de la escuela (WPA2-Enterprise).
 - **LEDs:** dos bicolores, uno por agujero del panel.
 
 ## 2. Lo próximo en el código
