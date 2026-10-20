@@ -94,13 +94,14 @@ export default function Aulas() {
             )}
 
             {aula.estado === 'DISPONIBLE' && !activa && (
+              // US-20: sin equipo no se puede retirar la llave. Se reactiva solo con el refresco
               <button
                 type="button"
                 className="boton boton-ancho"
-                disabled={pidiendo !== null}
+                disabled={pidiendo !== null || !equipoOnline}
                 onClick={() => pedir(aula)}
               >
-                {pidiendo === aula.id ? 'Pidiendo…' : 'Pedir llave'}
+                {!equipoOnline ? 'Equipo desconectado' : pidiendo === aula.id ? 'Pidiendo…' : 'Pedir llave'}
               </button>
             )}
           </li>

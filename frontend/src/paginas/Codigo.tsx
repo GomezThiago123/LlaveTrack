@@ -14,6 +14,7 @@ export default function Codigo() {
   const [ahora, setAhora] = useState(Date.now());
   const [error, setError] = useState<string | null>(null);
   const [cancelando, setCancelando] = useState(false);
+  const [equipoOnline, setEquipoOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
     api
@@ -23,13 +24,25 @@ export default function Codigo() {
   }, [manejarError]);
 
   // Mientras esta pendiente, pregunta al servidor si cambio (ej. el equipo acepto el codigo)
+  // y si el equipo sigue conectado (US-20: si se cae, la reserva sigue valiendo hasta que vence)
   const actualizar = useCallback(() => {
     if (reserva?.estado !== 'PENDIENTE') return;
     api
       .reserva(reserva.id, true)
       .then(setReserva)
       .catch((err) => setError(manejarError(err)));
+    api
+      .estadoPublico(true)
+      .then((estado) => setEquipoOnline(estado.equipoOnline))
+      .catch(() => {}); // si falla, el pedido de la reserva ya muestra el error
   }, [reserva, manejarError]);
+
+  useEffect(() => {
+    api
+      .estadoPublico()
+      .then((estado) => setEquipoOnline(estado.equipoOnline))
+      .catch(() => {});
+  }, []);
 
   useIntervalo(actualizar, REFRESCO_MS);
   useIntervalo(() => setAhora(Date.now()), 1000); // para la cuenta regresiva
@@ -99,6 +112,12 @@ export default function Codigo() {
   return (
     <Pagina>
       <h1>{nombreAula(reserva.aula)}</h1>
+      {equipoOnline === false && (
+        <Alerta tipo="aviso">
+          El equipo está desconectado. Tu código sigue valiendo hasta que venza: si el equipo vuelve
+          antes, lo vas a poder usar.
+        </Alerta>
+      )}
       <div className="codigo" aria-label={`Código ${reserva.codigo.split('').join(' ')}`}>
         {reserva.codigo.slice(0, 3)}&nbsp;{reserva.codigo.slice(3)}
       </div>

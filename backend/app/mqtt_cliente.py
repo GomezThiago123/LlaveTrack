@@ -13,6 +13,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app import protocolo
 from app.config import config
+from app.servicios import conexion
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +38,8 @@ class ClienteMqtt:
         self.cliente.on_message = self._al_recibir
 
     def iniciar(self, host: str = config.mqtt_host, puerto: int = config.mqtt_puerto) -> None:
-        self.cliente.connect_async(host, puerto)
+        # keepalive 15 s: si el broker se cae sin cerrar la conexion, paho lo nota en ~20 s
+        self.cliente.connect_async(host, puerto, keepalive=15)
         self.cliente.loop_start()  # arranca el hilo de paho
 
     def detener(self) -> None:
@@ -49,21 +51,39 @@ class ClienteMqtt:
             log.error("No se pudo conectar al broker MQTT: %s", codigo)
             return
         log.info("Conectado al broker MQTT")
+        # Mientras estuvo desconectado no supo nada de los equipos: los marca offline y al
+        # suscribirse a `estado` el broker le manda el ultimo mensaje retenido de cada uno.
+        # Asi tambien recupera el estado real cuando se reinicia el servidor.
+        self._marcar_equipos_offline()
         # Se suscribe en cada conexion (tambien al reconectar). "+" = cualquier equipo / evento
         cliente.subscribe(f"{self.prefijo}/+/evt/+", qos=1)
         cliente.subscribe(f"{self.prefijo}/+/estado", qos=1)
+        cliente.subscribe(f"{self.prefijo}/+/latido", qos=0)
 
     def _al_desconectar(self, _cliente, _userdata, _flags, codigo, _props):
         log.warning("Desconectado del broker MQTT (%s). Reintentando...", codigo)
+        # Sin broker no se puede saber si el equipo sigue vivo: se lo trata como desconectado
+        self._marcar_equipos_offline()
+
+    def _marcar_equipos_offline(self) -> None:
+        try:
+            with self.fabrica_sesiones() as sesion:
+                conexion.marcar_equipos_offline(sesion)
+                sesion.commit()
+        except Exception:
+            log.exception("No se pudieron marcar los equipos offline")
 
     def _al_recibir(self, cliente, _userdata, mensaje: mqtt.MQTTMessage):
-        # Topico: {prefijo}/{deviceId}/evt/{tipo}  o  {prefijo}/{deviceId}/estado
+        # Topico: {prefijo}/{deviceId}/evt/{tipo}, {prefijo}/{deviceId}/estado o {prefijo}/{deviceId}/latido
         partes = mensaje.topic.removeprefix(self.prefijo + "/").split("/")
         device_id = partes[0]
         try:
             with self.fabrica_sesiones() as sesion:
                 if partes[1] == "estado":
                     protocolo.procesar_estado(sesion, device_id, mensaje.payload)
+                    return
+                if partes[1] == "latido":
+                    protocolo.procesar_latido(sesion, device_id)
                     return
                 respuesta = protocolo.procesar_evento(sesion, device_id, partes[2], mensaje.payload)
             if respuesta is not None:

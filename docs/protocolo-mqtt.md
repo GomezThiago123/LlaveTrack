@@ -21,8 +21,39 @@ Prefijo: `llavetrack/v1/{deviceId}/` (ej. `llavetrack/v1/equipo-01/`).
 | --- | --- | --- | --- |
 | `evt/{tipo}` | ESP32 | no | Eventos (ver abajo) |
 | `estado` | ESP32 | **sí** | `{"online":true}` al conectar. LWT: `{"online":false}` |
+| `latido` | ESP32 | no | `{}` cada 30 s: "sigo vivo" (ver [Conexión del equipo](#conexión-del-equipo)) |
 | `resp` | servidor | no | Respuesta a cada evento, con el mismo `eventId` |
 | `cmd` | servidor | no | Comandos al equipo |
+
+## Conexión del equipo
+
+El servidor considera **online** a un equipo solo si se cumplen las dos cosas:
+
+1. Su último mensaje de `estado` dice `{"online":true}`.
+2. Tuvo contacto (cualquier evento o un `latido`) hace menos de `EQUIPO_TIMEOUT_SEGUNDOS` (90 s por defecto: 3 latidos perdidos).
+
+Con el equipo desconectado, la web no deja pedir llaves: `POST /api/reservas` responde `409 EQUIPO_DESCONECTADO` (US-20). Una reserva que ya estaba pendiente no se cancela: vence sola y, si el equipo vuelve antes, el código sirve.
+
+| Situación | Qué pasa | En cuánto se entera el servidor |
+| --- | --- | --- |
+| El equipo se corta (luz, WiFi, cuelgue) | El broker no recibe más pings y publica el LWT `{"online":false}` (retenido) | ~15 s (1,5 × keepalive de 10 s) |
+| El equipo se apaga prolijo | Publica `{"online":false}` antes de desconectarse | Enseguida |
+| El servidor pierde el broker | Marca todos los equipos offline: sin broker no puede saber nada de ellos | Enseguida (keepalive del servidor: 15 s) |
+| Se reinicia el servidor | Al conectarse marca todos offline y se suscribe a `estado`: el broker le manda el último mensaje retenido de cada equipo | Enseguida |
+| Quedó retenido un `{"online":true}` viejo (ej. Mosquitto con persistencia y el equipo muerto) | Sin latidos, vence el contacto | `EQUIPO_TIMEOUT_SEGUNDOS` |
+
+Del lado del ESP32 (PubSubClient):
+
+```cpp
+client.setKeepAlive(MQTT_KEEPALIVE_S);            // 10 s (por defecto son 15)
+client.connect(clientId, usuario, clave,
+               topicoEstado, 1, true,             // LWT con QoS 1 y retenido
+               "{\"online\":false}");
+client.publish(topicoEstado, "{\"online\":true}", true);   // retenido
+// y cada LATIDO_S (30 s): client.publish(topicoLatido, "{}");
+```
+
+El `latido` no lleva `eventId`, no tiene respuesta y no se guarda en el log de eventos (`EventoDispositivo`): solo actualiza el último contacto del equipo.
 
 ## eventId
 

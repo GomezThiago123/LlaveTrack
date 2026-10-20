@@ -8,7 +8,7 @@ import json
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app import protocolo
 from app.modelos import (
@@ -22,7 +22,8 @@ from app.modelos import (
     Reserva,
     Usuario,
 )
-from app.servicios import equipo, reservas
+from app.mqtt_cliente import ClienteMqtt
+from app.servicios import conexion, equipo, reservas
 from app.tipos import ahora_utc
 
 EQUIPO = "equipo-01"
@@ -259,3 +260,30 @@ def test_rechazo_deshace_los_cambios_a_medias_pero_no_el_vencimiento(fabrica_ses
     assert llave_214(fabrica_sesiones).slot == 1  # el cambio a medias se deshizo
     with fabrica_sesiones() as s:  # el vencimiento de la otra reserva se guardo
         assert s.scalar(select(Reserva.estado).where(Reserva.codigo == vieja)) == EstadoReserva.VENCIDA
+
+
+# --- US-20: latido y perdida del broker ---
+
+
+def test_latido_actualiza_el_ultimo_contacto(fabrica_sesiones):
+    with fabrica_sesiones() as s:
+        s.execute(update(Dispositivo).values(ultimo_contacto=ahora_utc() - timedelta(minutes=5)))
+        s.commit()
+        assert not conexion.equipo_online(s)
+        protocolo.procesar_latido(s, EQUIPO)
+        assert conexion.equipo_online(s)
+
+
+def test_latido_no_revive_un_equipo_que_mando_lwt(fabrica_sesiones):
+    """El latido dice "sigo vivo", pero si el ultimo `estado` es offline manda el `estado`."""
+    with fabrica_sesiones() as s:
+        protocolo.procesar_estado(s, EQUIPO, b'{"online": false}')
+        protocolo.procesar_latido(s, EQUIPO)
+        assert not conexion.equipo_online(s)
+
+
+def test_sin_broker_todos_los_equipos_quedan_offline(fabrica_sesiones):
+    servidor = ClienteMqtt(fabrica_sesiones, client_id="test-sin-broker")
+    servidor._al_desconectar(None, None, None, "conexion perdida", None)
+    with fabrica_sesiones() as s:
+        assert not conexion.equipo_online(s)

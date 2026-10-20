@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from app.esquemas import AulaDetalle, AulaPublica, EstadoPublico, Tenedor
 from app.modelos import (
     Aula,
-    Dispositivo,
     EstadoLlave,
     EstadoReserva,
     Llave,
@@ -15,6 +14,7 @@ from app.modelos import (
     Rol,
     Usuario,
 )
+from app.servicios.conexion import equipo_online
 from app.servicios.reservas import vencer_reservas
 
 ROLES_QUE_VEN_TENEDOR = {Rol.PRECEPTOR, Rol.ADMIN}
@@ -32,9 +32,8 @@ def _llaves_en_uso(sesion: Session) -> list[Llave]:
 def estado_publico(sesion: Session) -> EstadoPublico:
     """Lo que se ve sin login: estado de cada aula y si el equipo esta online. Sin datos personales."""
     vencer_reservas(sesion)
-    equipo_online = sesion.scalar(select(Dispositivo.id).where(Dispositivo.online)) is not None
     return EstadoPublico(
-        equipo_online=equipo_online,
+        equipo_online=equipo_online(sesion),
         aulas=[
             AulaPublica(id=llave.aula.id, nombre=llave.aula.nombre, estado=llave.estado)
             for llave in _llaves_en_uso(sesion)

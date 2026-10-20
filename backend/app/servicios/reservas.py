@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.config import config
 from app.errores import ErrorNegocio
 from app.modelos import Aula, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
+from app.servicios.conexion import equipo_online
 from app.tipos import ahora_utc
 
 
@@ -49,6 +50,14 @@ def crear_reserva(
     aula = sesion.get(Aula, aula_id)
     if aula is None:
         raise ErrorNegocio(404, "AULA_NO_ENCONTRADA", "El aula no existe.")
+
+    # US-20: sin equipo no hay como retirar la llave; no tiene sentido reservarla
+    if not equipo_online(sesion, ahora):
+        raise ErrorNegocio(
+            409,
+            "EQUIPO_DESCONECTADO",
+            "El equipo de llaves está desconectado. Probá de nuevo en unos minutos.",
+        )
 
     llave = sesion.scalar(
         select(Llave).where(Llave.aula_id == aula.id, Llave.estado != EstadoLlave.BAJA)

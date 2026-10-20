@@ -35,7 +35,7 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 - `backend/` y `frontend/` son independientes: cada uno se instala y se levanta en su propia terminal, sin nada compartido en la raíz.
 - `frontend/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP. Se corre desde `frontend/`: `npm install`, `npm run dev` (puerto 5173; Vite reenvía `/api` al backend en :8000). Node 20.19+ (recomendado 24).
 - Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.
-- `backend/simulador/`: CLI en Python (usa el `.venv` del backend) que se hace pasar por el ESP32 vía MQTT (ingresar código, confirmar retiro, devolver un UID). Para desarrollar y testear sin hardware.
+- `backend/simulador/`: CLI interactiva en Python (usa el `.venv` del backend) que se hace pasar por el ESP32 vía MQTT: queda prendida con LWT y latido, y en su prompt se puede retirar, devolver, `desenchufar` (corte de luz) y `enchufar`. Para desarrollar y testear sin hardware.
 - `docs/`: `protocolo-mqtt.md` (contrato) y `cableado.md` (pines y alimentación).
 
 ## Modelo de datos (MVP)
@@ -93,7 +93,8 @@ El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Go
 - En las dos: sesión en cookie httpOnly que se cierra tras 15 min de inactividad (US-01).
 
 ## Protocolo MQTT (ESP32 ↔ servidor)
-- Prefijo `llavetrack/v1/{deviceId}/`. El ESP32 publica en `evt/{tipo}` y en `estado` (retenido, con LWT `{"online":false}`); se suscribe a `resp` y `cmd`.
+- Prefijo `llavetrack/v1/{deviceId}/`. El ESP32 publica en `evt/{tipo}`, en `estado` (retenido, con LWT `{"online":false}` también retenido) y en `latido` (`{}` cada 30 s, sin eventId ni respuesta); se suscribe a `resp` y `cmd`.
+- Equipo online (US-20, `app/servicios/conexion.py`): último `estado` online **y** contacto (evento o latido) hace menos de `EQUIPO_TIMEOUT_SEGUNDOS` (90). El servidor marca todos offline al conectarse y al desconectarse del broker; al suscribirse recupera el `estado` retenido. Keepalive del ESP32: 10 s (el broker publica el LWT a los ~15 s). Sin equipo online, `POST /api/reservas` → 409 `EQUIPO_DESCONECTADO`; una reserva PENDIENTE no se cancela si el equipo se cae (vence sola).
 - Eventos: `inicio` (informa su configuración de slots; el servidor responde `slotReposo`), `solicitud_retiro`, `retiro_confirmado`, `retiro_timeout`, `devolucion`, `error`. Comando del MVP: `recalibrar`.
 - Cada evento lleva un `eventId` único aunque el ESP32 se reinicie (ej. `equipo-01-<random de arranque>-<contador>`). El servidor responde cada evento en `resp` con el mismo `eventId` y `ok: true`, o `ok: false` + `motivo` (`CODIGO_INVALIDO`, `CODIGO_VENCIDO`, `LLAVE_DESCONOCIDA`, `SIN_PRESTAMO_ACTIVO`, `ERROR_INTERNO`).
 - PubSubClient solo publica con QoS 0, así que la confiabilidad es de aplicación: el ESP32 reintenta el mismo evento hasta recibir respuesta y el servidor descarta duplicados por `eventId`. Sin respuesta en 5 s → LCD "Sin respuesta" y reintento.
@@ -117,6 +118,7 @@ llavetrack/v1/equipo-01/resp
 - LCD 16x2: máximo 16 caracteres por línea y sin tildes ni ñ (el juego de caracteres del HD44780 no es español). Una función `lcdMensaje(linea1, linea2)` que recorte. En reposo: hora (NTP, TZ `<-03>3`) y "A:Retirar B:Dev."
 - Teclas: `A` retirar, `B` devolver, `C` cancelar, `*` borrar, `#` confirmar.
 - Sin conexión el equipo no entrega ni recibe llaves (LCD "Sin conexion"). La devolución offline es V2 (US-14).
+- MQTT: `client.setKeepAlive(10)`, LWT retenido (`willRetain = true` en `connect()`), `estado` `{"online":true}` retenido al conectar y `latido` cada 30 s (`MQTT_KEEPALIVE_S` y `LATIDO_S` en `config.h`).
 - Modo diagnóstico (mantener `D` al encender): UIDs por Serial y LCD, escaneo del bus I2C y una vuelta al disco listando qué UID hay en cada slot (sirve para armar el seed).
 
 ## Hardware y cableado (→ `docs/cableado.md` y `config.h`)
@@ -140,7 +142,7 @@ llavetrack/v1/equipo-01/resp
 ## Fases
 0. Esqueleto: estructura del repo, README con cómo levantar todo, `.gitignore`, ejemplos de `.env` y `secrets.h`, `docs/protocolo-mqtt.md` y borrador de `docs/cableado.md`.
 1. Servidor + base + MQTT + simulador: modelo, migraciones, seed, reglas de reserva y préstamo con tests (concurrencia, vencimiento, eventos duplicados). Termina cuando el ciclo retiro → devolución anda completo con el simulador y Mosquitto.
-2. Web: vista pública de disponibilidad, login, lista de aulas con refresco cada 5 s, pedir llave con código y cuenta regresiva, estado del equipo.
+2. Web: vista pública de disponibilidad, login, lista de aulas con refresco cada 5 s, pedir llave con código y cuenta regresiva, estado del equipo. Con el equipo desconectado, "Pedir llave" queda deshabilitado ("Equipo desconectado") y se reactiva solo con el refresco (US-20).
 3. Firmware por módulos, cada uno con su programa de prueba: LCD + scanner I2C → teclado → RFID → motor + homing + calibración → WiFi/MQTT → máquina de estados completa.
 4. Integración con el equipo real y pruebas de usabilidad (medir el tiempo del ciclo retiro + devolución).
 

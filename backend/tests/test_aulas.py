@@ -39,7 +39,7 @@ def test_estado_publico_sin_login_y_sin_datos_personales(cliente, fabrica_sesion
     res = cliente.get("/api/publico/estado")
     assert res.status_code == 200
     datos = res.json()
-    assert datos["equipoOnline"] is False
+    assert datos["equipoOnline"] is True
     aulas = por_nombre(datos["aulas"])
     assert aulas["214"]["estado"] == "RESERVADA"
     assert aulas["215"]["estado"] == "PRESTADA"
@@ -48,11 +48,19 @@ def test_estado_publico_sin_login_y_sin_datos_personales(cliente, fabrica_sesion
     assert "Perez" not in res.text and "5555" not in res.text
 
 
-def test_estado_publico_muestra_equipo_online(cliente, fabrica_sesiones):
+def test_estado_publico_muestra_equipo_offline_por_lwt(cliente, fabrica_sesiones):
     with fabrica_sesiones() as s:
-        s.execute(update(Dispositivo).values(online=True))
+        s.execute(update(Dispositivo).values(online=False))
         s.commit()
-    assert cliente.get("/api/publico/estado").json()["equipoOnline"] is True
+    assert cliente.get("/api/publico/estado").json()["equipoOnline"] is False
+
+
+def test_estado_publico_muestra_equipo_offline_sin_latidos(cliente, fabrica_sesiones):
+    """US-20: aunque el ultimo `estado` diga online, sin contacto en 90 s esta desconectado."""
+    with fabrica_sesiones() as s:
+        s.execute(update(Dispositivo).values(ultimo_contacto=ahora_utc() - timedelta(seconds=91)))
+        s.commit()
+    assert cliente.get("/api/publico/estado").json()["equipoOnline"] is False
 
 
 def test_estado_publico_no_muestra_llaves_dadas_de_baja(cliente, fabrica_sesiones):

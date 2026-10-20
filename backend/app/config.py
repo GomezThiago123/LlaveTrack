@@ -32,6 +32,10 @@ class Config(BaseSettings):
     mqtt_usuario: str | None = None
     mqtt_clave: str | None = None
 
+    # US-20: el equipo se considera desconectado si pasa este tiempo sin ningun mensaje suyo
+    # (manda un latido cada 30 s, asi que 90 s = 3 latidos perdidos)
+    equipo_timeout_segundos: int = 90
+
     # Login (US-01 y US-07)
     sesion_minutos: int = 15  # la sesion se cierra tras estos minutos sin actividad
     login_intentos_max: int = 5  # intentos fallidos seguidos antes de bloquear la cuenta

@@ -4,10 +4,10 @@ import threading
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.errores import ErrorNegocio
-from app.modelos import Aula, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
+from app.modelos import Aula, Dispositivo, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
 from app.servicios import reservas
 from app.tipos import ahora_utc
 
@@ -199,3 +199,42 @@ def test_api_datos_invalidos(cliente, ingresar):
     res = cliente.post("/api/reservas", json={"aula": "214"})
     assert res.status_code == 422
     assert res.json()["error"]["codigo"] == "DATOS_INVALIDOS"
+
+
+# --- US-20: sin equipo no se reserva ---
+
+
+def test_no_se_reserva_con_el_equipo_desconectado(sesion):
+    sesion.execute(update(Dispositivo).values(online=False))
+    with pytest.raises(ErrorNegocio) as error:
+        reservas.crear_reserva(sesion, usuario(sesion, ANA), aula(sesion, "214").id)
+    assert error.value.status == 409
+    assert error.value.codigo == "EQUIPO_DESCONECTADO"
+    assert estado_llave(sesion, "214") == EstadoLlave.DISPONIBLE  # no quedo reservada
+
+
+def test_no_se_reserva_si_el_equipo_no_manda_latidos(sesion):
+    """El ultimo `estado` dice online, pero hace mas de 90 s que no se sabe nada del equipo."""
+    sesion.execute(update(Dispositivo).values(ultimo_contacto=ahora_utc() - timedelta(seconds=91)))
+    with pytest.raises(ErrorNegocio) as error:
+        reservas.crear_reserva(sesion, usuario(sesion, ANA), aula(sesion, "214").id)
+    assert error.value.codigo == "EQUIPO_DESCONECTADO"
+
+
+def test_api_reservar_con_equipo_desconectado(cliente, ingresar, fabrica_sesiones):
+    with fabrica_sesiones() as s:
+        s.execute(update(Dispositivo).values(online=False))
+        s.commit()
+    ingresar(ANA)
+    res = cliente.post("/api/reservas", json={"aulaId": id_aula(fabrica_sesiones, "214")})
+    assert res.status_code == 409
+    assert res.json()["error"]["codigo"] == "EQUIPO_DESCONECTADO"
+
+
+def test_la_reserva_pendiente_sigue_valiendo_si_el_equipo_se_cae(sesion):
+    """Decision de US-20: no se cancela; vence sola y si el equipo vuelve antes, el codigo sirve."""
+    reserva = reservas.crear_reserva(sesion, usuario(sesion, ANA), aula(sesion, "214").id)
+    sesion.execute(update(Dispositivo).values(online=False))
+    reservas.vencer_reservas(sesion)
+    sesion.refresh(reserva)
+    assert reserva.estado == EstadoReserva.PENDIENTE

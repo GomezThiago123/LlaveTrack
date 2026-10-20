@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modelos import EventoDispositivo
-from app.servicios import equipo
+from app.servicios import conexion, equipo
 from app.servicios.equipo import RechazoEquipo
 from app.servicios.reservas import vencer_reservas
 
@@ -138,7 +138,7 @@ def procesar_evento(sesion: Session, device_id: str, tipo: str, crudo: bytes) ->
     if evento is None:
         respuesta = _rechazo(event_id, "DATOS_INVALIDOS")
     else:
-        equipo.registrar_contacto(sesion, device_id)
+        conexion.registrar_contacto(sesion, device_id)
         # Se guarda aunque despues el evento se rechace (ej. CODIGO_VENCIDO)
         vencer_reservas(sesion)
         try:
@@ -172,9 +172,15 @@ def procesar_estado(sesion: Session, device_id: str, crudo: bytes) -> None:
     except (ValueError, KeyError, TypeError):
         log.warning("Estado ilegible de %s: %r", device_id, crudo[:200])
         return
-    equipo.registrar_contacto(sesion, device_id, online=online)
+    conexion.registrar_contacto(sesion, device_id, online=online)
     sesion.commit()
     log.info("Equipo %s %s", device_id, "online" if online else "OFFLINE")
+
+
+def procesar_latido(sesion: Session, device_id: str) -> None:
+    """Mensaje de `latido` (cada 30 s): el equipo sigue vivo. No lleva eventId ni respuesta."""
+    conexion.registrar_contacto(sesion, device_id)
+    sesion.commit()
 
 
 def _rechazo(event_id: str, motivo: str) -> dict:

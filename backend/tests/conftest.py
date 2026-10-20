@@ -1,6 +1,7 @@
 """Configuracion compartida de los tests.
 
-Cada test usa una base SQLite nueva en una carpeta temporal, cargada con seed/datos.json.
+Cada test usa una base SQLite nueva en una carpeta temporal, cargada con seed/datos.json
+y con el equipo online.
 Nunca toca backend/llavetrack.db.
 """
 
@@ -12,11 +13,14 @@ os.environ["BCRYPT_RONDAS"] = "4"
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import update
 from sqlalchemy.orm import sessionmaker
 
 from app.db import Base, crear_engine, obtener_sesion
 from app.main import app
+from app.modelos import Dispositivo
 from app.seed import ARCHIVO_DATOS, cargar_datos
+from app.tipos import ahora_utc
 
 
 @pytest.fixture
@@ -27,6 +31,9 @@ def fabrica_sesiones(tmp_path):
     fabrica = sessionmaker(engine, expire_on_commit=False)
     with fabrica() as sesion:
         cargar_datos(sesion, json.loads(ARCHIVO_DATOS.read_text(encoding="utf-8")))
+        # El equipo arranca conectado: sin equipo no se puede reservar (US-20).
+        # Los tests de equipo desconectado lo cambian a mano.
+        sesion.execute(update(Dispositivo).values(online=True, ultimo_contacto=ahora_utc()))
         sesion.commit()
     yield fabrica
     engine.dispose()

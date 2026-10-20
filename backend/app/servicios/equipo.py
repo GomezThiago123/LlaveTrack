@@ -31,14 +31,6 @@ class RechazoEquipo(Exception):
         self.motivo = motivo
 
 
-def registrar_contacto(sesion: Session, device_id: str, online: bool | None = None) -> None:
-    """Actualiza ultimo_contacto (y online, si se indica) de un equipo conocido."""
-    valores: dict = {"ultimo_contacto": ahora_utc()}
-    if online is not None:
-        valores["online"] = online
-    sesion.execute(update(Dispositivo).where(Dispositivo.device_id == device_id).values(**valores))
-
-
 def inicio(sesion: Session, device_id: str, slots_totales: int, slots_reservados: list[int]) -> dict:
     """El equipo arranco: guarda su configuracion y le dice en que slot vacio quedarse."""
     dispositivo = sesion.scalar(select(Dispositivo).where(Dispositivo.device_id == device_id))

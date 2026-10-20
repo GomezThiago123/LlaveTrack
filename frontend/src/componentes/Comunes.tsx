@@ -39,7 +39,7 @@ export function EstadoEquipo({ online }: { online: boolean | null }) {
   return (
     <p className={`equipo ${online ? 'equipo-online' : 'equipo-offline'}`}>
       <span className="punto" aria-hidden />
-      {online ? 'Equipo en línea' : 'Equipo sin conexión: por ahora no entrega ni recibe llaves'}
+      {online ? 'Equipo en línea' : 'El equipo está desconectado: por ahora no entrega ni recibe llaves'}
     </p>
   );
 }
