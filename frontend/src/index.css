@@ -1,10 +1,18 @@
 /* Estilos base, pensados primero para el celular */
 :root {
   --fondo: #f5f7fa;
+  --superficie: #ffffff;
+  --borde: #d9dee6;
   --texto: #1b2430;
+  --texto-suave: #5b6676;
   --primario: #1f3a5f;
+  --primario-texto: #ffffff;
   --ok: #1e7b45;
+  --ok-fondo: #e3f4ea;
+  --aviso: #8a5a00;
+  --aviso-fondo: #fdf1d8;
   --error: #b3261e;
+  --error-fondo: #fbe5e3;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--texto);
   background: var(--fondo);
@@ -13,10 +21,18 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --fondo: #12161c;
+    --superficie: #1c222b;
+    --borde: #313946;
     --texto: #e6e9ee;
+    --texto-suave: #9aa5b4;
     --primario: #8fb4e3;
+    --primario-texto: #0e1a2b;
     --ok: #5cc98a;
+    --ok-fondo: #173525;
+    --aviso: #f0c46a;
+    --aviso-fondo: #3a2d10;
     --error: #f2857d;
+    --error-fondo: #3d1c1a;
   }
 }
 
@@ -29,25 +45,295 @@ body {
   background: var(--fondo);
 }
 
+a {
+  color: var(--primario);
+}
+
 .contenedor {
   max-width: 480px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 16px 16px 40px;
 }
 
 h1 {
   color: var(--primario);
-  margin: 0 0 4px;
+  margin: 8px 0 12px;
+  font-size: 1.6rem;
 }
 
-.estado {
+.centrado {
+  text-align: center;
+}
+
+.cargando {
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+/* --- Encabezado --- */
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--primario);
+  text-decoration: none;
+}
+
+.encabezado-usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--texto-suave);
+}
+
+/* --- Botones (grandes: se usan con el dedo) --- */
+
+.boton {
+  display: inline-block;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primario);
+  color: var(--primario-texto);
+  font: inherit;
   font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.estado-conectado {
+.boton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.boton-ancho {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.boton-secundario {
+  background: transparent;
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.boton-texto {
+  background: none;
+  border: none;
+  padding: 8px;
+  color: var(--primario);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- Listas y tarjetas --- */
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.tarjeta {
+  display: block;
+  padding: 14px 16px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.tarjeta-destacada {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-color: var(--primario);
+  border-width: 2px;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.tarjeta-destacada span {
+  color: var(--primario);
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aula-nombre {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.telefono {
+  white-space: nowrap;
+}
+
+.tenedor {
+  margin: 8px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-disponible {
+  background: var(--ok-fondo);
   color: var(--ok);
 }
 
-.estado-sin-conexion {
+.chip-reservada {
+  background: var(--aviso-fondo);
+  color: var(--aviso);
+}
+
+.chip-prestada,
+.chip-baja {
+  background: var(--error-fondo);
   color: var(--error);
+}
+
+/* --- Estado del equipo --- */
+
+.equipo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.equipo-online {
+  color: var(--ok);
+}
+
+.equipo-offline {
+  color: var(--error);
+}
+
+/* --- Alertas --- */
+
+.alerta {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin: 12px 0;
+}
+
+.alerta-error {
+  background: var(--error-fondo);
+  color: var(--error);
+}
+
+.alerta-aviso {
+  background: var(--aviso-fondo);
+  color: var(--aviso);
+}
+
+.alerta-ok {
+  background: var(--ok-fondo);
+  color: var(--ok);
+  font-weight: 600;
+}
+
+/* --- Formularios --- */
+
+.formulario {
+  display: grid;
+  gap: 14px;
+}
+
+.formulario label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.formulario input {
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  font-weight: 400;
+  font-size: 1rem; /* 16px o mas: el iPhone no hace zoom al tocar el campo */
+}
+
+/* --- Codigo de retiro --- */
+
+.codigo {
+  margin: 16px 0 4px;
+  font-family: ui-monospace, 'Cascadia Mono', 'DejaVu Sans Mono', monospace;
+  font-size: clamp(3rem, 16vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--primario);
+}
+
+.cuenta {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave);
+}
+
+.cuenta-poco {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.pasos {
+  padding-left: 22px;
+  line-height: 1.7;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 6px;
+  border: 1px solid var(--borde);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  background: var(--superficie);
+  font-family: inherit;
+  font-weight: 700;
+  text-align: center;
 }

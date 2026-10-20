@@ -104,7 +104,16 @@ npm run dev
 
 La web queda en `http://localhost:5173` y se actualiza sola cuando cambiás el código. Todo lo que empieza con `/api` lo reenvía al backend (puerto 8000), así que **el backend tiene que estar levantado en otra terminal**.
 
-Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`.
+Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`. Si vas a probar "Olvidé mi contraseña" desde el celular, poné esa misma dirección en `WEB_URL` del `backend/.env`, así el link del mail apunta a la compu.
+
+| Pantalla | Qué hay |
+| --- | --- |
+| `/` | Sin login: estado de cada aula y si el equipo está en línea |
+| `/login`, `/recuperar`, `/restablecer` | Ingresar y recuperar la contraseña |
+| `/aulas` | Con login: pedir una llave. Preceptores y admin ven quién tiene cada una y su teléfono |
+| `/codigo` | El código para el equipo, con cuenta regresiva. Avisa cuando se retiró la llave |
+
+Las pantallas de aulas y del código se actualizan solas cada 5 segundos.
 
 | Comando | Qué hace |
 | --- | --- |
