@@ -7,7 +7,7 @@
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
 - [ ] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
-- [ ] **Motor:** en la foto del 20/10/2026 se ve un motorreductor blanco con 2 cables: no es un paso a paso. Falta una foto de cerca de la **etiqueta**: si es de continua (DC) o de 220 V alterna, y su tensión. Con 2 cables hace falta un sensor que cuente las 32 pestañas del disco. *Bloquea: la Fase 3 (motor).*
+- [ ] **Motor:** motorreductor de 2 cables y **24 V** (no es paso a paso). Falta: confirmar que es de continua (DC), y si hay un sensor para contar las 32 pestañas del disco o hay que conseguirlo. Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
 - [ ] **WiFi para la demo:** la de la escuela es WPA2-Enterprise. ¿Router propio o hotspot del celular? El ESP32 puede conectarse a WPA2-Enterprise, pero necesita una cuenta de la escuela guardada en el equipo y la red puede bloquear el puerto 8883.
