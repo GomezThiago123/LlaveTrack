@@ -32,9 +32,23 @@ class Config(BaseSettings):
     mqtt_usuario: str | None = None
     mqtt_clave: str | None = None
 
-    # TEMPORAL hasta el login (Fase 2): permite indicar el usuario con el
-    # encabezado X-Usuario-Email. Nunca activarlo en la demo.
-    modo_desarrollo: bool = True
+    # Login (US-01 y US-07)
+    sesion_minutos: int = 15  # la sesion se cierra tras estos minutos sin actividad
+    login_intentos_max: int = 5  # intentos fallidos seguidos antes de bloquear la cuenta
+    login_bloqueo_minutos: int = 15
+    bcrypt_rondas: int = 12  # costo del hash de contrasenas (los tests usan menos, para ir rapido)
+    # La cookie de sesion solo viaja por HTTPS. En desarrollo es false porque la web va por http
+    cookie_segura: bool = False
+
+    # Recuperacion de contrasena (US-08)
+    recuperacion_minutos: int = 30  # vencimiento del link que llega por mail
+    web_url: str = "http://localhost:5173"  # para armar el link del mail
+    # Sin SMTP_HOST el mail no se envia: el link se muestra en la consola del servidor
+    smtp_host: str | None = None
+    smtp_puerto: int = 587
+    smtp_usuario: str | None = None
+    smtp_clave: str | None = None
+    smtp_remitente: str | None = None  # por defecto, smtp_usuario
 
 
 config = Config()

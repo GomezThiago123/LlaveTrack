@@ -59,7 +59,7 @@ Reglas:
 - Eventos MQTT: `app/protocolo.py` valida, deduplica y responde; las reglas están en `app/servicios/equipo.py`. El evento se procesa dentro de un savepoint: si se rechaza se deshace solo lo del evento (el vencimiento de reservas se conserva).
 - Al aceptar un código, la reserva se extiende al menos `RETIRO_MARGEN_SEGUNDOS` (120) para que no venza durante el retiro.
 - `slotReposo` = slot vacío más cercano (disco circular) a la posición actual; vacíos = todos − reservados − slots con llave.
-- TEMPORAL hasta la Fase 2: con `MODO_DESARROLLO=true` el usuario se indica con el encabezado `X-Usuario-Email`. Se borra al implementar el login.
+- Sesiones en la tabla `Sesion` (token al azar en la cookie, solo su hash sha256 en la base; igual los links de `RecuperacionClave`). `usuario_actual` (`app/auth.py`) lee la cookie `llavetrack_sesion` y renueva la sesión en cada pedido. El login fallido igual hace commit (para que cuente el intento).
 
 ## API REST (web ↔ servidor)
 - `GET /api/publico/estado`: sin login. Aulas con su estado y si el equipo está online. Sin datos personales.

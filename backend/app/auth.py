@@ -1,32 +1,52 @@
-"""Identifica al usuario que hace cada pedido.
+"""Identifica al usuario que hace cada pedido, a partir de la cookie de sesion.
 
-TEMPORAL (Fase 1): en modo desarrollo el usuario se indica con el encabezado
-X-Usuario-Email. En la Fase 2 se reemplaza por la sesion del login.
+La cookie es httpOnly (el JavaScript de la web no la puede leer, asi un script malicioso
+no puede robarla) y SameSite=Lax (otro sitio no puede hacer pedidos con ella).
 """
 
 from typing import Annotated
 
-from fastapi import Depends, Header
-from sqlalchemy import select
+from fastapi import Cookie, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.config import config
 from app.db import obtener_sesion
 from app.errores import ErrorNegocio
 from app.modelos import Usuario
+from app.servicios import auth
+
+COOKIE_SESION = "llavetrack_sesion"
 
 
 def usuario_actual(
     sesion: Annotated[Session, Depends(obtener_sesion)],
-    x_usuario_email: Annotated[
-        str | None, Header(description="TEMPORAL: email del usuario (solo en modo desarrollo)")
-    ] = None,
+    token: Annotated[str | None, Cookie(alias=COOKIE_SESION)] = None,
 ) -> Usuario:
-    if not config.modo_desarrollo or not x_usuario_email:
+    """Dependencia de FastAPI para las rutas que necesitan login.
+
+    Renueva la sesion; la ruta hace el commit (asi se guarda la ultima actividad).
+    """
+    if not token:
         raise ErrorNegocio(401, "NO_AUTENTICADO", "Tenés que iniciar sesión.")
-    usuario = sesion.scalar(
-        select(Usuario).where(Usuario.email == x_usuario_email.strip().lower(), Usuario.activo)
-    )
+    usuario = auth.usuario_de_sesion(sesion, token)
     if usuario is None:
-        raise ErrorNegocio(401, "NO_AUTENTICADO", "Usuario inexistente o inactivo.")
+        raise ErrorNegocio(401, "SESION_VENCIDA", "Tu sesión venció. Volvé a ingresar.")
     return usuario
+
+
+def poner_cookie(respuesta: Response, token: str) -> None:
+    # Sin max_age: el navegador la borra al cerrarse. El vencimiento por inactividad lo controla el servidor
+    respuesta.set_cookie(
+        COOKIE_SESION,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=config.cookie_segura,
+        path="/",
+    )
+
+
+def borrar_cookie(respuesta: Response) -> None:
+    respuesta.delete_cookie(
+        COOKIE_SESION, httponly=True, samesite="lax", secure=config.cookie_segura, path="/"
+    )

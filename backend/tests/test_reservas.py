@@ -147,40 +147,43 @@ def id_aula(fabrica_sesiones, nombre) -> int:
         return aula(s, nombre).id
 
 
-def test_api_ciclo_reservar_consultar_cancelar(cliente, fabrica_sesiones):
-    ana = {"X-Usuario-Email": ANA}
+def test_api_ciclo_reservar_consultar_cancelar(cliente, ingresar, fabrica_sesiones):
+    ingresar(ANA)
     aula_id = id_aula(fabrica_sesiones, "214")
 
-    res = cliente.post("/api/reservas", json={"aulaId": aula_id}, headers=ana)
+    res = cliente.post("/api/reservas", json={"aulaId": aula_id})
     assert res.status_code == 201
     reserva = res.json()
     assert set(reserva) == {"id", "aula", "codigo", "expiraEn", "estado"}
     assert reserva["aula"] == "214"
 
-    activa = cliente.get("/api/reservas/activa", headers=ana)
+    activa = cliente.get("/api/reservas/activa")
     assert activa.json()["codigo"] == reserva["codigo"]
 
-    assert cliente.delete(f"/api/reservas/{reserva['id']}", headers=ana).status_code == 204
-    assert cliente.get("/api/reservas/activa", headers=ana).json() is None
+    assert cliente.delete(f"/api/reservas/{reserva['id']}").status_code == 204
+    assert cliente.get("/api/reservas/activa").json() is None
 
 
-def test_api_sin_usuario_responde_401_con_formato_de_error(cliente):
+def test_api_sin_login_responde_401_con_formato_de_error(cliente):
     res = cliente.post("/api/reservas", json={"aulaId": 1})
     assert res.status_code == 401
     assert res.json()["error"]["codigo"] == "NO_AUTENTICADO"
 
 
-def test_api_error_de_negocio_tiene_codigo_y_mensaje(cliente, fabrica_sesiones):
+def test_api_error_de_negocio_tiene_codigo_y_mensaje(cliente, ingresar, fabrica_sesiones):
     aula_id = id_aula(fabrica_sesiones, "214")
-    cliente.post("/api/reservas", json={"aulaId": aula_id}, headers={"X-Usuario-Email": ANA})
-    res = cliente.post("/api/reservas", json={"aulaId": aula_id}, headers={"X-Usuario-Email": BRUNO})
+    ingresar(ANA)
+    cliente.post("/api/reservas", json={"aulaId": aula_id})
+    ingresar(BRUNO)  # el mismo navegador, ahora con la sesion de Bruno
+    res = cliente.post("/api/reservas", json={"aulaId": aula_id})
     assert res.status_code == 409
     assert res.json() == {
         "error": {"codigo": "LLAVE_NO_DISPONIBLE", "mensaje": "La llave del aula 214 no está disponible."}
     }
 
 
-def test_api_datos_invalidos(cliente):
-    res = cliente.post("/api/reservas", json={"aula": "214"}, headers={"X-Usuario-Email": ANA})
+def test_api_datos_invalidos(cliente, ingresar):
+    ingresar(ANA)
+    res = cliente.post("/api/reservas", json={"aula": "214"})
     assert res.status_code == 422
     assert res.json()["error"]["codigo"] == "DATOS_INVALIDOS"

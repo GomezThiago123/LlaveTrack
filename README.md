@@ -57,7 +57,20 @@ Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts
 | `python -m app.seed --reiniciar` | **Borra todos los datos** y vuelve a cargar `seed/datos.json` |
 | `python simulador/simulador.py --help` | Simulador del equipo (ver abajo) |
 
-Con el servidor levantado, en `http://localhost:8000/docs` está la documentación interactiva de la API, que genera FastAPI.
+Con el servidor levantado, en `http://localhost:8000/docs` está la documentación interactiva de la API, que genera FastAPI. Para probar las rutas que piden login, primero ejecutá `POST /api/auth/login` ahí mismo: el navegador guarda la cookie de sesión y la manda en los pedidos siguientes.
+
+### Usuarios de prueba
+
+Los de `seed/datos.json`, todos con la contraseña `llavetrack`:
+
+| Email | Rol |
+| --- | --- |
+| `ana.perez@example.com` | Docente |
+| `bruno.gomez@example.com` | Docente |
+| `carla.diaz@example.com` | Preceptora (ve quién tiene cada llave) |
+| `admin@example.com` | Administrador |
+
+5 contraseñas incorrectas seguidas bloquean la cuenta 15 minutos. Para "Olvidé mi contraseña": si no configuraste un servidor de mail (`SMTP_*` en `.env`), el link de recuperación aparece en la terminal del servidor.
 
 ### MQTT y simulador del equipo
 

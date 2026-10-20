@@ -76,16 +76,18 @@ def test_reserva_vencida_aparece_disponible(cliente, fabrica_sesiones):
     assert aulas["214"]["estado"] == "DISPONIBLE"
 
 
-def test_docente_no_ve_quien_tiene_las_llaves(cliente, fabrica_sesiones):
+def test_docente_no_ve_quien_tiene_las_llaves(cliente, ingresar, fabrica_sesiones):
     preparar(fabrica_sesiones)
-    res = cliente.get("/api/aulas", headers={"X-Usuario-Email": ANA})
+    ingresar(ANA)
+    res = cliente.get("/api/aulas")
     assert res.status_code == 200
     assert all(aula["tenedor"] is None for aula in res.json())
 
 
-def test_preceptor_ve_quien_tiene_cada_llave_y_su_telefono(cliente, fabrica_sesiones):
+def test_preceptor_ve_quien_tiene_cada_llave_y_su_telefono(cliente, ingresar, fabrica_sesiones):
     preparar(fabrica_sesiones)
-    aulas = por_nombre(cliente.get("/api/aulas", headers={"X-Usuario-Email": CARLA_PRECEPTORA}).json())
+    ingresar(CARLA_PRECEPTORA)
+    aulas = por_nombre(cliente.get("/api/aulas").json())
 
     assert aulas["214"]["tenedor"]["apellido"] == "Perez"  # reservada
     assert aulas["215"]["tenedor"]["apellido"] == "Gomez"  # prestada

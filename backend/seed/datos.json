@@ -1,5 +1,5 @@
 {
-  "_comentario": "Datos de prueba. Los UID y slots son INVENTADOS: reemplazarlos por los reales (el modo diagnostico del equipo los lista). slotsTotales provisorio hasta contar el disco.",
+  "_comentario": "Datos de prueba. Todas las claves son de prueba (cambiarlas antes de la demo). Los UID y slots son INVENTADOS: reemplazarlos por los reales (el modo diagnostico del equipo los lista). slotsTotales provisorio hasta contar el disco.",
   "dispositivos": [
     { "deviceId": "equipo-01", "slotsTotales": 24, "slotsReservados": [0] }
   ],
@@ -11,9 +11,9 @@
     { "nombre": "Taller", "llave": { "rfidUid": "04E5F6A7", "slot": 5 } }
   ],
   "usuarios": [
-    { "nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "telefono": "11 5555-0001", "rol": "DOCENTE" },
-    { "nombre": "Bruno", "apellido": "Gomez", "email": "bruno.gomez@example.com", "telefono": "11 5555-0002", "rol": "DOCENTE" },
-    { "nombre": "Carla", "apellido": "Diaz", "email": "carla.diaz@example.com", "telefono": "11 5555-0003", "rol": "PRECEPTOR" },
-    { "nombre": "Admin", "apellido": "Sistema", "email": "admin@example.com", "telefono": null, "rol": "ADMIN" }
+    { "nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "telefono": "11 5555-0001", "rol": "DOCENTE", "clave": "llavetrack" },
+    { "nombre": "Bruno", "apellido": "Gomez", "email": "bruno.gomez@example.com", "telefono": "11 5555-0002", "rol": "DOCENTE", "clave": "llavetrack" },
+    { "nombre": "Carla", "apellido": "Diaz", "email": "carla.diaz@example.com", "telefono": "11 5555-0003", "rol": "PRECEPTOR", "clave": "llavetrack" },
+    { "nombre": "Admin", "apellido": "Sistema", "email": "admin@example.com", "telefono": null, "rol": "ADMIN", "clave": "llavetrack" }
   ]
 }

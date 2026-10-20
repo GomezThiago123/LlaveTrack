@@ -20,16 +20,21 @@ from app.modelos import (
     Llave,
     Prestamo,
     Reserva,
+    RecuperacionClave,
     Rol,
+    Sesion,
     Usuario,
 )
+from app.servicios.auth import hashear_clave
 
 ARCHIVO_DATOS = Path(__file__).parent.parent / "seed" / "datos.json"
 
 
 def borrar_todo(sesion: Session) -> None:
     # En orden inverso a las dependencias (primero lo que apunta a otras tablas)
-    for tabla in (EventoDispositivo, Prestamo, Reserva, Llave, Aula, Usuario, Dispositivo):
+    for tabla in (
+        EventoDispositivo, Prestamo, Reserva, Sesion, RecuperacionClave, Llave, Aula, Usuario, Dispositivo
+    ):
         sesion.execute(delete(tabla))
 
 
@@ -54,6 +59,8 @@ def cargar_datos(sesion: Session, datos: dict) -> None:
                 email=u["email"].lower(),
                 telefono=u["telefono"],
                 rol=Rol(u["rol"]),
+                # Sin "clave" el usuario no puede entrar con contrasena (solo con Google, mas adelante)
+                password_hash=hashear_clave(u["clave"]) if u.get("clave") else None,
             )
         )
 

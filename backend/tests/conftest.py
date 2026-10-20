@@ -5,6 +5,10 @@ Nunca toca backend/llavetrack.db.
 """
 
 import json
+import os
+
+# Antes de importar la app: hashes de contrasena baratos, para que los tests vayan rapido
+os.environ["BCRYPT_RONDAS"] = "4"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -45,3 +49,22 @@ def cliente(fabrica_sesiones):
     app.dependency_overrides[obtener_sesion] = sesion_de_test
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+
+CLAVE_DE_PRUEBA = "llavetrack"  # la de seed/datos.json
+
+
+@pytest.fixture
+def ingresar(cliente):
+    """Hace login con el cliente de test: desde ahi manda la cookie de sesion en cada pedido.
+
+    Uso: ingresar("ana.perez@example.com")
+    """
+
+    def _ingresar(email: str, clave: str = CLAVE_DE_PRUEBA):
+        res = cliente.post("/api/auth/login", json={"email": email, "clave": clave})
+        assert res.status_code == 200, res.text
+        return res
+
+    return _ingresar

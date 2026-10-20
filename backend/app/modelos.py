@@ -47,11 +47,40 @@ class Usuario(Base):
     rol: Mapped[Rol] = mapped_column(_enum(Rol))
     activo: Mapped[bool] = mapped_column(default=True)
 
-    # Autenticacion (se usan en la Fase 2)
+    # Autenticacion (ver app/servicios/auth.py)
     password_hash: Mapped[str | None] = mapped_column(String(100))  # null = solo entra con Google
     google_sub: Mapped[str | None] = mapped_column(String(64), unique=True)
     intentos_fallidos: Mapped[int] = mapped_column(default=0)
     bloqueado_hasta: Mapped[datetime | None] = mapped_column(FechaUTC)
+
+
+class Sesion(Base):
+    """Una sesion abierta (US-01). La cookie del navegador lleva el token; aca solo su hash."""
+
+    __tablename__ = "sesion"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # sha256 del token
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+    creada_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+    ultima_actividad: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+
+    usuario: Mapped[Usuario] = relationship()
+
+
+class RecuperacionClave(Base):
+    """Link para elegir una contrasena nueva (US-08). Vence y sirve una sola vez."""
+
+    __tablename__ = "recuperacion_clave"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)  # sha256 del token del link
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+    creada_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+    expira_en: Mapped[datetime] = mapped_column(FechaUTC)
+    usada_en: Mapped[datetime | None] = mapped_column(FechaUTC)  # null = todavia se puede usar
+
+    usuario: Mapped[Usuario] = relationship()
 
 
 class Aula(Base):
