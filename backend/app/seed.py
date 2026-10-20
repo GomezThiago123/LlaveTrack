@@ -17,6 +17,7 @@ from app.modelos import (
     Aula,
     Dispositivo,
     EventoDispositivo,
+    Incidente,
     Llave,
     Prestamo,
     Reserva,
@@ -33,7 +34,8 @@ ARCHIVO_DATOS = Path(__file__).parent.parent / "seed" / "datos.json"
 def borrar_todo(sesion: Session) -> None:
     # En orden inverso a las dependencias (primero lo que apunta a otras tablas)
     for tabla in (
-        EventoDispositivo, Prestamo, Reserva, Sesion, RecuperacionClave, Llave, Aula, Usuario, Dispositivo
+        Incidente, EventoDispositivo, Prestamo, Reserva, Sesion, RecuperacionClave, Llave, Aula, Usuario,
+        Dispositivo,
     ):
         sesion.execute(delete(tabla))
 

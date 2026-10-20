@@ -1,6 +1,7 @@
 from sqlalchemy import select
 
-from app.modelos import Aula, EstadoLlave, Llave, Usuario
+from app.modelos import Aula, EstadoLlave, Incidente, Llave, Usuario
+from app.seed import borrar_todo
 
 
 def test_seed_carga_aulas_con_llave_disponible(sesion):
@@ -34,3 +35,14 @@ def test_seed_real_es_valido():
     assert len(set(slots)) == len(slots)
     # Ninguna llave en un slot reservado (el 0 es del tag HOME) ni fuera del disco
     assert all(0 <= s < equipo["slotsTotales"] and s not in equipo["slotsReservados"] for s in slots)
+
+
+def test_reiniciar_borra_todo_aunque_haya_incidentes(sesion):
+    # Un incidente apunta a un aula y a un usuario: hay que borrarlo antes que ellos
+    aula = sesion.scalars(select(Aula)).first()
+    usuario = sesion.scalars(select(Usuario)).first()
+    sesion.add(Incidente(device_id="equipo-01", tipo="MOTOR_NO_GIRA", aula_id=aula.id, usuario_id=usuario.id))
+    sesion.flush()
+    borrar_todo(sesion)
+    sesion.flush()
+    assert sesion.scalars(select(Aula)).all() == []
