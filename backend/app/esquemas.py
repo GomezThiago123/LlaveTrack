@@ -80,6 +80,17 @@ class CuentaBloqueada(Esquema):
     bloqueado_hasta: datetime
 
 
+
+class IncidenteSalida(Esquema):
+    id: int
+    ocurrido_en: datetime
+    tipo: str  # LLAVE_NO_ENCONTRADA, MOTOR_NO_GIRA, ...
+    descripcion: str  # para mostrar: "Llave no encontrada"
+    aula: str | None
+    docente: str | None  # "Ana Perez"
+    detalle: str | None
+
+
 class PedidoRecuperacion(Esquema):
     email: str = Field(max_length=120)
 

@@ -46,6 +46,7 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 - `Prestamo`: llaveId, usuarioId, reservaId, retiradoEn, devueltoEn (null = activo).
 - `Dispositivo`: deviceId, slots totales y reservados, online, ultimoContacto.
 - `EventoDispositivo`: eventId (único), tipo, payload, recibidoEn. Sirve de log y para descartar duplicados.
+- `Incidente` (US-05): deviceId, tipo (`LLAVE_NO_ENCONTRADA`, `MOTOR_NO_GIRA`), detalle, aulaId y usuarioId (de la reserva, si el equipo mandó el código), ocurridoEn. Lo crea cada evento `error`. Resolverlos es US-21 (V2): agregar `resueltoEn`.
 
 Reglas:
 - Una llave nunca puede quedar tomada dos veces: cada cambio de estado es un UPDATE condicional (`UPDATE llave SET estado = ... WHERE id = ? AND estado = 'DISPONIBLE'`, con SQLAlchemy) dentro de una transacción, verificando cuántas filas cambió. Test obligatorio con dos pedidos simultáneos.
@@ -66,7 +67,7 @@ Reglas:
 - `GET /api/aulas`: con login. Quién tiene cada llave, desde qué hora y su teléfono, visible para todos los usuarios logueados (US-02, decidido el 20/10/2026).
 - `POST /api/reservas` `{ aulaId }` → `{ codigo, expiraEn }` · `GET /api/reservas/activa` · `GET /api/reservas/:id` (cualquier estado: la web ve si ya se retiró) · `DELETE /api/reservas/:id`.
 - Login: `POST /api/auth/login` `{ email, clave }` · `POST /api/auth/logout` · `GET /api/auth/yo` · `POST /api/auth/recuperar` `{ email }` · `POST /api/auth/restablecer` `{ token, claveNueva }`.
-- Solo `PRECEPTOR`/`ADMIN` (US-07; si no, 403 `SIN_PERMISO`): `GET /api/usuarios/bloqueados` · `POST /api/usuarios/:id/desbloquear`. La web los muestra en el cuadro "Cuentas bloqueadas" arriba de la lista de aulas.
+- Solo `PRECEPTOR`/`ADMIN` (si no, 403 `SIN_PERMISO`): `GET /api/usuarios/bloqueados` · `POST /api/usuarios/:id/desbloquear` (US-07) · `GET /api/incidentes` (US-05: los de hoy, hora de Argentina). La web los muestra en los cuadros "Problemas del equipo hoy" y "Cuentas bloqueadas" arriba de la lista de aulas.
 - La web manda `X-Refresco-Automatico: 1` en los pedidos que hace sola cada 5 s: no renuevan la sesión (si no, con la web abierta nunca vencería por inactividad). Excepción: la pantalla del código no lo manda, así la sesión no se cierra mientras el docente va al equipo (la reserva igual vence sola).
 - Errores: `{ "error": { "codigo": "LLAVE_NO_DISPONIBLE", "mensaje": "..." } }`.
 
@@ -75,7 +76,7 @@ Reglas:
 1. El docente ve las aulas y pide una. El servidor reserva la llave y devuelve un código de 6 dígitos que vence en 2 min (US-03). La web lo muestra grande con cuenta regresiva (también si recarga la página).
 2. En el equipo: tecla `A`, ingresa el código (`*` borra, `#` confirma). 3 códigos erróneos seguidos bloquean el teclado 30 s.
 3. ESP32 → `solicitud_retiro`. El servidor valida y responde `slot`, `uid`, `aula`, `apellido`, o un `motivo` de rechazo.
-4. El ESP32 mueve el disco a ese slot y verifica que lee ESE UID. Si no: prueba ±1 slot; si tampoco, da una vuelta completa buscándolo. Mientras reintenta, LCD "Reposicionando...". Si no aparece: LCD "Pedi la llave" / "en porteria" y no entrega nada (US-05).
+4. El ESP32 mueve el disco a ese slot y verifica que lee ESE UID. Si no: prueba ±1 slot; si tampoco, da una vuelta completa buscándolo. Intento 1: el slot y sus vecinos; intento 2: homing de nuevo y otra búsqueda. Mientras reintenta, LCD "Reposicionando" / "Espere..." ("Reposicionando..." tiene 17 caracteres). Si no aparece: LCD "Pedi la llave" / "en porteria", no entrega nada y manda `error` `LLAVE_NO_ENCONTRADA` con el código (US-05).
 5. LCD "Aula 214 servida" / "RETIRE SU LLAVE" (US-04). Cuando ese UID deja de leerse de forma estable (~1,5 s) → `retiro_confirmado`, con el slot donde estaba realmente. El servidor marca la reserva `USADA`, la llave `PRESTADA` y crea el `Prestamo`. LCD "Gracias" / apellido. La ventana queda con un slot vacío (posición de reposo).
 6. Si nadie la retira en 60 s → `retiro_timeout` y el disco vuelve a dejar un slot vacío en la ventana. La reserva sigue vigente hasta que vence.
 7. Reservas vencidas → `VENCIDA` y la llave vuelve a `DISPONIBLE`.
@@ -98,7 +99,7 @@ El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Go
 - Equipo online (US-22, `app/servicios/conexion.py`): último `estado` online **y** contacto (evento o latido) hace menos de `EQUIPO_TIMEOUT_SEGUNDOS` (90). El servidor marca todos offline al conectarse y al desconectarse del broker; al suscribirse recupera el `estado` retenido. Keepalive del ESP32: 10 s (el broker publica el LWT a los ~15 s). Sin equipo online, `POST /api/reservas` → 409 `EQUIPO_DESCONECTADO`; una reserva PENDIENTE no se cancela si el equipo se cae (vence sola).
 - Servidor vivo (US-24): el servidor publica `llavetrack/v1/servidor/estado` retenido (`{"online":true}` al conectar, `false` al apagarse, LWT `false`). `servidor` es un deviceId reservado (el servidor ignora su propio estado en `+/estado`). LED de conexión del equipo: fijo si WiFi + broker + servidor online; si no, titila y el LCD dice "Sin conexion" con la causa (`WiFi`, `Broker`, `Servidor`). La ACL de cada equipo incluye lectura de ese tópico.
 - Faltantes (US-23): el servidor publica `faltantes` retenido `{"aulas":[...]}` con las llaves PRESTADAS (las reservadas siguen en el disco), al cambiar, al responder `inicio` y al conectarse al broker. El equipo prende el LED de faltantes y en reposo rota la línea 1 del LCD entre la hora y "Faltan: 105 114" (regla en `pantallas_reposo()` del simulador).
-- Eventos: `inicio` (informa su configuración de slots; el servidor responde `slotReposo`), `solicitud_retiro`, `retiro_confirmado`, `retiro_timeout`, `devolucion`, `error`. Comando del MVP: `recalibrar`.
+- Eventos: `inicio` (informa su configuración de slots; el servidor responde `slotReposo`), `solicitud_retiro`, `retiro_confirmado`, `retiro_timeout`, `devolucion`, `error` (con el `codigo` de la reserva si lo hay: crea un `Incidente`). Comando del MVP: `recalibrar`.
 - Cada evento lleva un `eventId` único aunque el ESP32 se reinicie (ej. `equipo-01-<random de arranque>-<contador>`). El servidor responde cada evento en `resp` con el mismo `eventId` y `ok: true`, o `ok: false` + `motivo` (`CODIGO_INVALIDO`, `CODIGO_VENCIDO`, `LLAVE_DESCONOCIDA`, `SIN_PRESTAMO_ACTIVO`, `ERROR_INTERNO`).
 - PubSubClient solo publica con QoS 0, así que la confiabilidad es de aplicación: el ESP32 reintenta el mismo evento hasta recibir respuesta y el servidor descarta duplicados por `eventId`. Sin respuesta en 5 s → LCD "Sin respuesta" y reintento.
 - `client.setBufferSize(512)`: el buffer por defecto (256 bytes) corta los JSON.

@@ -90,6 +90,7 @@ Los comandos se escriben en el prompt `equipo>`:
 | --- | --- |
 | `retirar 482913` | Ingresa el código de una reserva y retira la llave |
 | `timeout 482913` | Ingresa el código pero nadie retira la llave |
+| `falla 482913` | Ingresa el código pero el equipo no encuentra la llave: el preceptor lo ve en "Problemas del equipo hoy" (US-05) |
 | `devolver 04A00214` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
 | `desenchufar` | Corte de luz: deja de responder sin avisar. A los ~15 s el servidor lo ve desconectado |
 | `enchufar` | Vuelve a arrancar después de `desenchufar` |

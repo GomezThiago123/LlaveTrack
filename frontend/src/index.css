@@ -174,12 +174,15 @@ h1 {
   color: var(--primario);
 }
 
-/* Cuentas bloqueadas (US-07): arriba de la lista de aulas, solo para el preceptor */
+/* Problemas del equipo (US-05) y cuentas bloqueadas (US-07): arriba de la lista de aulas,
+   solo para el preceptor */
+.problemas,
 .bloqueadas {
   margin-bottom: 12px;
   border-color: var(--error);
 }
 
+.problemas h2,
 .bloqueadas h2 {
   margin: 0 0 10px;
   font-size: 1.1rem;

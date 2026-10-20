@@ -1,7 +1,12 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 
 from sqlalchemy import DateTime
 from sqlalchemy.types import TypeDecorator
+
+
+# Hora de Argentina: UTC-3 fijo (no hay horario de verano; el ESP32 usa la misma, TZ <-03>3).
+# Se usa para saber que es "hoy"; en la base todo se guarda en UTC.
+ZONA_ARGENTINA = timezone(timedelta(hours=-3), "ART")
 
 
 def ahora_utc() -> datetime:

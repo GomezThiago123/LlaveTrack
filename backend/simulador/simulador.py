@@ -41,6 +41,7 @@ DIAS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]  # sin tildes: el LCD n
 AYUDA = """Comandos:
   retirar CODIGO       ingresa el codigo en el teclado y retira la llave
   timeout CODIGO       ingresa el codigo pero nadie retira la llave
+  falla CODIGO         ingresa el codigo pero el equipo no encuentra la llave (US-05)
   devolver UID [SLOT]  cuelga la llave con ese UID (por defecto, en el slot de la ventana)
   desenchufar          corte de luz: se calla sin despedirse (el broker publica el LWT en ~15 s)
   enchufar             vuelve a arrancar despues de desenchufar
@@ -287,11 +288,17 @@ class Equipo:
             lcd("Codigo rechazado", res["motivo"].replace("_", " ").lower())
             return None
         print(f"  Disco: gira al slot {res['slot']} y verifica que lee el UID {res['uid']}")
-        lcd(f"Aula {res['aula']} servida", "RETIRE SU LLAVE")
+        return res
+
+    def _servir(self, codigo: str) -> dict | None:
+        """Pide la llave y la deja en la ventana (lee el UID esperado)."""
+        res = self._pedir_llave(codigo)
+        if res is not None:
+            lcd(f"Aula {res['aula']} servida", "RETIRE SU LLAVE")
         return res
 
     def retirar(self, codigo: str) -> None:
-        res = self._pedir_llave(codigo)
+        res = self._servir(codigo)
         if res is None:
             return
         print("  (el docente saca la llave: el UID deja de leerse)")
@@ -301,12 +308,25 @@ class Equipo:
             lcd("Gracias", res["apellido"])
 
     def timeout(self, codigo: str) -> None:
-        if self._pedir_llave(codigo) is None:
+        if self._servir(codigo) is None:
             return
         print("  (pasan 60 s y nadie retira la llave)")
         self.evento("retiro_timeout", codigo=codigo)
         print(f"  Disco: vuelve al slot {self.slot_reposo} (vacio)")
         lcd("Tiempo agotado", "La reserva sigue")
+
+    def falla(self, codigo: str) -> None:
+        """US-05: no encuentra la llave ni con los slots vecinos ni repitiendo el homing."""
+        res = self._pedir_llave(codigo)
+        if res is None:
+            return
+        print(f"  (intento 1: no lee el UID {res['uid']} en el slot {res['slot']} ni en los vecinos)")
+        lcd("Reposicionando", "Espere...")  # "Reposicionando..." no entra en 16 caracteres
+        print("  (intento 2: repite el homing y la vuelve a buscar: tampoco aparece)")
+        lcd("Pedi la llave", "en porteria")
+        detalle = f"uid {res['uid']}, slot {res['slot']}"
+        self.evento("error", error="LLAVE_NO_ENCONTRADA", codigo=codigo, detalle=detalle)
+        print(f"  Disco: vuelve al slot {self.slot_reposo} (vacio)")
 
     def devolver(self, uid: str, slot: int | None) -> None:
         slot = self.slot_reposo if slot is None else slot
@@ -353,11 +373,11 @@ def ejecutar(eq: Equipo, linea: str) -> bool:
         eq.desenchufar()
     elif comando == "pantalla":
         eq.mostrar_reposo()
-    elif comando in ("retirar", "timeout", "devolver") and eq.motivo_sin_conexion():
+    elif comando in ("retirar", "timeout", "falla", "devolver") and eq.motivo_sin_conexion():
         # Como el equipo real: sin conexion con el servidor no entrega ni recibe llaves
         lcd("Sin conexion", eq.motivo_sin_conexion())
         print("  (sin conexión el equipo no entrega ni recibe llaves)")
-    elif comando in ("retirar", "timeout") and len(args) == 1:
+    elif comando in ("retirar", "timeout", "falla") and len(args) == 1:
         getattr(eq, comando)(args[0])
     elif comando == "devolver" and len(args) in (1, 2):
         try:

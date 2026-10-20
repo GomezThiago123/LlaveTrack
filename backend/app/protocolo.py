@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modelos import EventoDispositivo
-from app.servicios import conexion, equipo
+from app.servicios import conexion, equipo, incidentes
 from app.servicios.equipo import RechazoEquipo
 from app.servicios.reservas import vencer_reservas
 
@@ -70,8 +70,9 @@ class Devolucion(ConUid):
 
 
 class ErrorDelEquipo(Evento):
-    error: str
-    detalle: str | None = None
+    error: str = Field(min_length=1, max_length=40)  # LLAVE_NO_ENCONTRADA, MOTOR_NO_GIRA, ...
+    codigo: str | None = Field(default=None, pattern=r"^\d{6}$")  # la reserva que se estaba entregando
+    detalle: str | None = Field(default=None, max_length=200)
 
 
 FORMATOS: dict[str, type[Evento]] = {
@@ -99,7 +100,9 @@ def _ejecutar(sesion: Session, device_id: str, tipo: str, evento) -> dict:
         case "devolucion":
             return equipo.devolucion(sesion, device_id, evento.uid, evento.slot)
         case "error":
+            # US-05: queda como incidente para el preceptor
             log.warning("Error informado por %s: %s (%s)", device_id, evento.error, evento.detalle)
+            incidentes.registrar(sesion, device_id, evento.error, evento.codigo, evento.detalle)
             return {}
     raise AssertionError(tipo)
 

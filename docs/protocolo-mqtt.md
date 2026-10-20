@@ -182,12 +182,20 @@ Se leyó un UID estable en el slot de la ventana después de apretar `B`.
 Si se acepta, el servidor cierra el préstamo activo de esa llave, la pasa a `DISPONIBLE` y actualiza su `slot`. El disco gira a `slotReposo`: el slot vacío más cercano al de la devolución. Es `null` si el disco está lleno.
 
 ### `error`
-Falla del equipo que el servidor tiene que registrar (ej. no encontró la llave pedida).
+Falla del equipo que el servidor registra como **incidente**: el preceptor la ve en la web (US-05).
+
+| Campo | Obligatorio | Qué es |
+| --- | --- | --- |
+| `error` | sí | `LLAVE_NO_ENCONTRADA` o `MOTOR_NO_GIRA` (el homing no encontró el tag HOME). Otro valor se muestra tal cual |
+| `codigo` | no | El de la reserva que se estaba entregando: así el servidor sabe el aula y el docente |
+| `detalle` | no | Texto libre, hasta 200 caracteres |
 
 ```json
-→ evt/error  {"eventId":"equipo-01-7f3a-0045","error":"LLAVE_NO_ENCONTRADA","detalle":"uid 04A1B2C3, slot 7"}
+→ evt/error  {"eventId":"equipo-01-7f3a-0045","error":"LLAVE_NO_ENCONTRADA","codigo":"482913","detalle":"uid 04A1B2C3, slot 7"}
 ← resp  {"eventId":"equipo-01-7f3a-0045","ok":true}
 ```
+
+Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el **intento 1** el disco va al slot y prueba los vecinos (±1); en el **intento 2** repite el homing y la vuelve a buscar. Si tampoco aparece, el LCD muestra "Pedi la llave" / "en porteria", el disco vuelve a un slot vacío y se manda el `error`. La reserva no se cancela: vence sola.
 
 ## Comandos (servidor → ESP32)
 

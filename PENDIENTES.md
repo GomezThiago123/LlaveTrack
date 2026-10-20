@@ -43,10 +43,10 @@ Esperan tu decisión. Después armo un plan y espero tu OK.
 - [ ] **US-01, sesión de 60 s** (hoy 15 min). Decidido: 60 s, salvo mientras está abierta la pantalla del código. Falta implementarlo.
 - [ ] **US-02, quién ve quién tiene la llave:** decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
 - [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
-- [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Decidido: un cuadro "Problemas del equipo" para el preceptor, sin el flujo completo de US-21 (abrir/resolver y bloquear el aula siguen en V2). Falta el plan.
+- [x] **US-05, incidente visible para el preceptor:** tabla `Incidente`, `GET /api/incidentes` y el cuadro "Problemas del equipo hoy" del preceptor. En el simulador: `falla <codigo>`. En el equipo se hace en la Fase 3.
 - [x] **US-06, "cuando confirmo":** decidido: automático, como ahora (alcanza con colgar la llave). Falta ajustar el criterio en Notion para que diga que el sistema confirma solo.
 - [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
-- [x] **Textos exactos de los criterios** (los del firmware quedan en el CLAUDE.md para la Fase 3): "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
+- [x] **Textos exactos de los criterios** (los del firmware quedan en el CLAUDE.md para la Fase 3): "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando / Espere...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
 
 ## 3. El servidor en la nube
 
@@ -72,6 +72,8 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 
 Ya están hechos, pero falta tu prueba.
 
+- [ ] **US-05:** como Ana pedí una llave; en el simulador `falla <codigo>`; como Carla tiene que aparecer "Problemas del equipo hoy" con la hora, el aula y la docente. Antes: `alembic upgrade head` (tabla nueva).
+- [ ] **US-07:** fallá 5 veces el login de Bruno y desbloquealo como Carla.
 - [ ] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
 - [ ] **Fase 2 en la compu:** pedir una llave como Ana, retirarla con el simulador y verla como Carla.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.

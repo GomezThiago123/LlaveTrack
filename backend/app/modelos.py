@@ -176,3 +176,24 @@ class EventoDispositivo(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     respuesta: Mapped[dict[str, Any] | None] = mapped_column(JSON)  # se reenvia si llega repetido
     recibido_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+
+
+class Incidente(Base):
+    """Falla del equipo al entregar una llave (US-05). El preceptor la ve en la web.
+
+    Para US-21 (V2) alcanza con agregar resuelto_en y marcar el aula "En revision".
+    """
+
+    __tablename__ = "incidente"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    device_id: Mapped[str] = mapped_column(String(40))
+    tipo: Mapped[str] = mapped_column(String(40))  # LLAVE_NO_ENCONTRADA, MOTOR_NO_GIRA, ...
+    detalle: Mapped[str | None] = mapped_column(String(200))
+    # Aula y docente de la reserva que se estaba entregando (null si el equipo no mando el codigo)
+    aula_id: Mapped[int | None] = mapped_column(ForeignKey("aula.id"))
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
+    ocurrido_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+
+    aula: Mapped[Aula | None] = relationship()
+    usuario: Mapped[Usuario | None] = relationship()

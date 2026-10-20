@@ -7,7 +7,7 @@ from app.config import config
 from app.db import SesionLocal
 from app.errores import registrar_manejadores
 from app.mqtt_cliente import ClienteMqtt
-from app.rutas import aulas, auth, reservas, usuarios
+from app.rutas import aulas, auth, incidentes, reservas, usuarios
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(message)s")
 
@@ -30,6 +30,7 @@ app.include_router(auth.router)
 app.include_router(aulas.router)
 app.include_router(reservas.router)
 app.include_router(usuarios.router)
+app.include_router(incidentes.router)
 
 
 @app.get("/api/salud")

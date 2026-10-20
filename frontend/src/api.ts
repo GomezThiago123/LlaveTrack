@@ -42,6 +42,16 @@ export interface CuentaBloqueada {
   bloqueadoHasta: string; // fecha ISO en UTC
 }
 
+export interface Incidente {
+  id: number;
+  ocurridoEn: string; // fecha ISO en UTC
+  tipo: string; // LLAVE_NO_ENCONTRADA, MOTOR_NO_GIRA, ...
+  descripcion: string; // para mostrar: "Llave no encontrada"
+  aula: string | null;
+  docente: string | null;
+  detalle: string | null;
+}
+
 /** Error que devuelve el servidor: { error: { codigo, mensaje } } */
 export class ErrorApi extends Error {
   status: number; // 0 = no se pudo conectar
@@ -114,7 +124,8 @@ export const api = {
   reserva: (id: number, automatico = false) => pedir<Reserva>(`/reservas/${id}`, { automatico }),
   cancelarReserva: (id: number) => pedir<null>(`/reservas/${id}`, { metodo: 'DELETE' }),
 
-  // Solo preceptor y admin (US-07)
+  // Solo preceptor y admin (US-07 y US-05)
   cuentasBloqueadas: (automatico = false) => pedir<CuentaBloqueada[]>('/usuarios/bloqueados', { automatico }),
   desbloquear: (usuarioId: number) => pedir<null>(`/usuarios/${usuarioId}/desbloquear`, { metodo: 'POST' }),
+  incidentes: (automatico = false) => pedir<Incidente[]>('/incidentes', { automatico }),
 };
