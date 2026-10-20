@@ -1,39 +1,33 @@
-/* Estilos base, pensados primero para el celular */
+/* Estilos de LlaveTrack, pensados primero para el celular.
+   Diseño: el prototipo de v0 (github.com/joel012930/llavetrack) con los colores de la UBA. */
+
 :root {
-  --fondo: #f5f7fa;
-  --superficie: #ffffff;
-  --borde: #d9dee6;
-  --texto: #1b2430;
-  --texto-suave: #5b6676;
-  --primario: #1f3a5f;
-  --primario-texto: #ffffff;
-  --ok: #1e7b45;
-  --ok-fondo: #e3f4ea;
+  /* Colores de la UBA */
+  --azul: #0b3a6b;
+  --azul-oscuro: #072a4f;
+  --celeste: #4aa3df;
+  --celeste-claro: #e5f2fb;
+  --blanco: #ffffff;
+
+  --fondo: #f3f7fb;
+  --superficie: var(--blanco);
+  --borde: #d5e1ec;
+  --texto: #0f2238;
+  --texto-suave: #5b6b80;
+
+  /* Estados de las llaves: verde, ambar y rojo se entienden solos, por eso no son de la UBA */
+  --ok: #17784a;
+  --ok-fondo: #e2f4ea;
   --aviso: #8a5a00;
-  --aviso-fondo: #fdf1d8;
-  --error: #b3261e;
-  --error-fondo: #fbe5e3;
+  --aviso-fondo: #fdf1d6;
+  --error: #b42318;
+  --error-fondo: #fde7e5;
+
+  --radio: 14px;
+  --mono: ui-monospace, 'Cascadia Mono', 'DejaVu Sans Mono', monospace;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--texto);
   background: var(--fondo);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fondo: #12161c;
-    --superficie: #1c222b;
-    --borde: #313946;
-    --texto: #e6e9ee;
-    --texto-suave: #9aa5b4;
-    --primario: #8fb4e3;
-    --primario-texto: #0e1a2b;
-    --ok: #5cc98a;
-    --ok-fondo: #173525;
-    --aviso: #f0c46a;
-    --aviso-fondo: #3a2d10;
-    --error: #f2857d;
-    --error-fondo: #3d1c1a;
-  }
 }
 
 * {
@@ -46,103 +40,307 @@ body {
 }
 
 a {
-  color: var(--primario);
+  color: var(--azul);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
 }
 
 .contenedor {
   max-width: 480px;
   margin: 0 auto;
-  padding: 16px 16px 40px;
+  padding: 16px 16px 100px; /* abajo deja lugar para la barra de navegacion */
+  display: grid;
+  gap: 14px;
 }
 
-h1 {
-  color: var(--primario);
-  margin: 8px 0 12px;
-  font-size: 1.6rem;
+.cargando,
+.vacio {
+  color: var(--texto-suave);
+  text-align: center;
+  padding: 24px 0;
 }
 
 .centrado {
   text-align: center;
 }
 
-.cargando {
-  color: var(--texto-suave);
-  text-align: center;
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
 
-/* --- Encabezado --- */
+.separado {
+  margin-top: 10px;
+}
+
+.crece {
+  flex: 1;
+  min-width: 0;
+}
+
+.texto-ok {
+  color: var(--ok);
+}
+
+.suave {
+  color: var(--texto-suave);
+}
+
+.chico {
+  font-size: 0.85rem;
+}
+
+/* --- Encabezado (franja azul) --- */
 
 .encabezado {
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+.encabezado-contenido {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  background: var(--superficie);
-  border-bottom: 1px solid var(--borde);
+  gap: 12px;
+}
+
+.encabezado h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.encabezado .rol {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.encabezado-derecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--blanco);
+  cursor: pointer;
 }
 
 .marca {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--blanco);
   font-weight: 700;
   font-size: 1.1rem;
-  color: var(--primario);
   text-decoration: none;
 }
 
-.encabezado-usuario {
-  display: flex;
+/* Si el equipo esta conectado (US-22) */
+.pildora {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pildora-online {
+  background: var(--celeste-claro);
+  color: var(--azul);
+}
+
+.pildora-offline {
+  background: var(--error-fondo);
+  color: var(--error);
+}
+
+.punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pildora-online .punto {
+  background: var(--ok);
+}
+
+/* --- Barra de navegacion de abajo --- */
+
+.barra-inferior {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  background: var(--blanco);
+  border-top: 1px solid var(--borde);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.barra-inferior ul {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+.barra-inferior li {
+  flex: 1;
+}
+
+.barra-inferior a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0 10px;
   color: var(--texto-suave);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.barra-inferior a.activo {
+  color: var(--azul);
+}
+
+.barra-inferior a.activo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--celeste);
 }
 
 /* --- Botones (grandes: se usan con el dedo) --- */
 
 .boton {
-  display: inline-block;
-  min-height: 48px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  background: var(--primario);
-  color: var(--primario-texto);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--azul);
+  border-radius: 12px;
+  background: var(--azul);
+  color: var(--blanco);
   font: inherit;
   font-weight: 600;
-  text-align: center;
   text-decoration: none;
   cursor: pointer;
 }
 
 .boton:disabled {
-  opacity: 0.6;
-  cursor: default;
+  border-color: var(--borde);
+  background: var(--borde);
+  color: var(--texto-suave);
+  cursor: not-allowed;
 }
 
 .boton-ancho {
-  display: block;
   width: 100%;
-  margin-top: 12px;
 }
 
-.boton-secundario {
-  background: transparent;
+.boton-chico {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.boton-claro {
+  background: var(--blanco);
+  color: var(--azul);
+  border-color: var(--borde);
+}
+
+.boton-peligro {
+  background: var(--blanco);
   color: var(--error);
-  border: 1px solid var(--error);
+  border-color: var(--error);
 }
 
 .boton-texto {
-  background: none;
+  padding: 4px;
   border: none;
-  padding: 8px;
-  color: var(--primario);
+  background: none;
+  color: var(--azul);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 
-/* --- Listas y tarjetas --- */
+/* --- Tarjetas --- */
+
+.tarjeta {
+  padding: 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.tarjeta h2 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.etiqueta-seccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 0;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.etiqueta-seccion span:last-child {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fila-izquierda {
+  justify-content: flex-start;
+}
 
 .lista {
   list-style: none;
@@ -152,112 +350,558 @@ h1 {
   gap: 10px;
 }
 
-.tarjeta {
-  display: block;
-  padding: 14px 16px;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+.lista-divisiones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.tarjeta-destacada {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 12px;
-  border-color: var(--primario);
-  border-width: 2px;
-  color: var(--texto);
-  text-decoration: none;
+.lista-divisiones > li {
+  padding: 10px 0;
+  border-top: 1px solid var(--borde);
 }
 
-.tarjeta-destacada span {
-  color: var(--primario);
+.lista-divisiones > li:first-child {
+  border-top: none;
+  padding-top: 0;
 }
 
-/* Problemas del equipo (US-05) y cuentas bloqueadas (US-07): arriba de la lista de aulas,
-   solo para el preceptor */
-.problemas,
-.bloqueadas {
-  margin-bottom: 12px;
-  border-color: var(--error);
-}
+/* --- Insignia de estado --- */
 
-.problemas h2,
-.bloqueadas h2 {
-  margin: 0 0 10px;
-  font-size: 1.1rem;
-  color: var(--error);
-}
-
-.fila {
-  display: flex;
+.insignia {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.aula-nombre {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-.telefono {
-  white-space: nowrap;
-}
-
-.tenedor {
-  margin: 8px 0 0;
-  color: var(--texto-suave);
-  font-size: 0.95rem;
-}
-
-.chip {
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 3px 9px;
   border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.chip-disponible {
+.insignia::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.insignia-disponible {
   background: var(--ok-fondo);
   color: var(--ok);
 }
 
-.chip-reservada {
+.insignia-reservada {
   background: var(--aviso-fondo);
   color: var(--aviso);
 }
 
-.chip-prestada,
-.chip-baja {
+.insignia-prestada,
+.insignia-baja {
   background: var(--error-fondo);
   color: var(--error);
 }
 
-/* --- Estado del equipo --- */
+.insignia-neutra {
+  background: var(--celeste-claro);
+  color: var(--azul);
+}
 
-.equipo {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0 0 12px;
+/* --- Filtros: buscador, segmentado e interruptor --- */
+
+.campo-busqueda {
+  position: relative;
+}
+
+.campo-busqueda svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+}
+
+.campo-busqueda input {
+  padding-left: 40px;
+}
+
+.segmentado {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--blanco);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.segmentado button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.punto {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.segmentado button[aria-checked='true'] {
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+.interruptor {
+  position: relative;
+  width: 42px;
+  height: 24px;
   flex-shrink: 0;
-  background: currentColor;
+  border: none;
+  border-radius: 999px;
+  background: var(--borde);
+  cursor: pointer;
 }
 
-.equipo-online {
+.interruptor::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--blanco);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+
+.interruptor[aria-checked='true'] {
+  background: var(--celeste);
+}
+
+.interruptor[aria-checked='true']::after {
+  transform: translateX(18px);
+}
+
+.interruptor:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Grilla de aulas --- */
+
+.grilla {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.aula {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 12px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.aula-prestada {
+  border-color: #f3c3be;
+}
+
+.aula-reservada {
+  border-color: #f0d79c;
+}
+
+.aula-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.aula-titulo small {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.aula-numero {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--azul);
+}
+
+.aula-numero-texto {
+  font-size: 1.05rem; /* "Laboratorio 1": no entra con la letra de los numeros */
+}
+
+.aula-tenedor {
+  margin-top: auto;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--texto-suave);
+}
+
+.aula .boton {
+  margin-top: auto;
+}
+
+/* --- Tarjeta de la reserva (US-03) y de la llave en tu poder (US-17) --- */
+
+.reserva {
+  padding: 16px;
+  border: 2px solid var(--celeste);
+  border-radius: 18px;
+  background: linear-gradient(to bottom, var(--celeste-claro), var(--blanco));
+}
+
+.reserva-titulo {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--azul);
+}
+
+.digitos {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.digitos span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 58px;
+  border: 1px solid var(--celeste);
+  border-radius: 12px;
+  background: var(--blanco);
+  font-family: var(--mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--azul);
+}
+
+.digitos span:nth-child(3) {
+  margin-right: 8px; /* 482 913: dos grupos de tres, mas facil de leer */
+}
+
+.progreso {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--borde);
+}
+
+.progreso div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--celeste);
+  transition: width 1s linear;
+}
+
+.progreso-poco div {
+  background: var(--error);
+}
+
+.cuenta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--azul);
+}
+
+.cuenta-poco {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.pasos {
+  margin: 12px 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.en-poder {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid var(--ok);
+  border-radius: 18px;
+  background: linear-gradient(to bottom, var(--ok-fondo), var(--blanco));
+}
+
+.en-poder .reserva-titulo {
   color: var(--ok);
 }
 
-.equipo-offline {
+.icono-llave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--ok-fondo);
+  color: var(--ok);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 5px;
+  border: 1px solid var(--borde);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  background: var(--blanco);
+  font-family: var(--mono);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* --- Faltantes y preceptoria --- */
+
+.contador {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.contador strong {
+  font-family: var(--mono);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.barra-llaves {
+  display: flex;
+  gap: 3px;
+  margin-top: 12px;
+}
+
+.barra-llaves span {
+  flex: 1;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--celeste);
+}
+
+.barra-llaves .reservada {
+  background: #f0b429;
+}
+
+.barra-llaves .prestada {
+  background: var(--error);
+}
+
+.cuadro-aula {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 48px;
+  padding: 0 6px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--celeste-claro);
+  color: var(--azul);
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.cuadro-aula-rojo {
+  background: var(--error-fondo);
+  color: var(--error);
+}
+
+.demora {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--aviso-fondo);
+  color: var(--aviso);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.demora-larga {
+  background: var(--error-fondo);
+  color: var(--error);
+}
+
+.contacto {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--borde);
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.contacto span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Historial (US-12/13): sin devolver en rojo */
+.movimiento-abierto {
+  color: var(--error);
+}
+
+/* Carrusel: los 32 slots en circulo, la ventana arriba */
+.carrusel {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 8px auto;
+}
+
+.carrusel-aro {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--borde);
+  border-radius: 50%;
+}
+
+.carrusel-slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: 1px solid var(--borde);
+  background: var(--blanco);
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+
+.carrusel-slot.disponible {
+  border-color: var(--celeste);
+  background: var(--celeste);
+  color: var(--blanco);
+}
+
+.carrusel-slot.reservada {
+  border-color: #f0b429;
+  background: #f0b429;
+  color: var(--texto);
+}
+
+.carrusel-slot.home {
+  border-color: var(--azul);
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+.carrusel-centro {
+  position: absolute;
+  inset: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--celeste-claro);
+  text-align: center;
+}
+
+.carrusel-centro strong {
+  font-family: var(--mono);
+  font-size: 1.8rem;
+  color: var(--azul);
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.leyenda span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.leyenda i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--borde);
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.datos div {
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+}
+
+.datos dt {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.datos dd {
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+/* Cuadros de alerta del preceptor: problemas del equipo (US-05) y cuentas bloqueadas (US-07) */
+.problemas,
+.bloqueadas {
+  border-color: #f3c3be;
+}
+
+.problemas h2,
+.bloqueadas h2 {
   color: var(--error);
 }
 
@@ -265,8 +909,8 @@ h1 {
 
 .alerta {
   padding: 12px 14px;
-  border-radius: 10px;
-  margin: 12px 0;
+  border-radius: 12px;
+  font-size: 0.95rem;
 }
 
 .alerta-error {
@@ -289,66 +933,102 @@ h1 {
 
 .formulario {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
-.formulario label {
+.formulario label,
+.campo {
   display: grid;
   gap: 6px;
+  font-size: 0.85rem;
   font-weight: 600;
-}
-
-.formulario input {
-  min-height: 48px;
-  padding: 10px 12px;
-  border: 1px solid var(--borde);
-  border-radius: 10px;
-  background: var(--superficie);
-  color: var(--texto);
-  font: inherit;
-  font-weight: 400;
-  font-size: 1rem; /* 16px o mas: el iPhone no hace zoom al tocar el campo */
-}
-
-/* --- Codigo de retiro --- */
-
-.codigo {
-  margin: 16px 0 4px;
-  font-family: ui-monospace, 'Cascadia Mono', 'DejaVu Sans Mono', monospace;
-  font-size: clamp(3rem, 16vw, 4.5rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-align: center;
-  color: var(--primario);
-}
-
-.cuenta {
-  margin: 0 0 16px;
-  text-align: center;
-  font-size: 1.2rem;
-  font-variant-numeric: tabular-nums;
   color: var(--texto-suave);
 }
 
-.cuenta-poco {
-  color: var(--error);
-  font-weight: 700;
-}
-
-.pasos {
-  padding-left: 22px;
-  line-height: 1.7;
-}
-
-kbd {
-  display: inline-block;
-  min-width: 1.6em;
-  padding: 0 6px;
+input,
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
   border: 1px solid var(--borde);
-  border-bottom-width: 3px;
-  border-radius: 6px;
-  background: var(--superficie);
-  font-family: inherit;
-  font-weight: 700;
+  border-radius: 12px;
+  background: var(--blanco);
+  color: var(--texto);
+  font: inherit;
+  font-size: 1rem; /* 16px o mas: el iPhone no hace zoom al tocar el campo */
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid var(--celeste);
+  outline-offset: 1px;
+  border-color: var(--celeste);
+}
+
+.campo-clave {
+  position: relative;
+}
+
+.campo-clave input {
+  padding-right: 44px;
+}
+
+.campo-clave button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 6px;
+  border: none;
+  background: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.dos-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* --- Pantallas sin login: login, recuperar y vista publica --- */
+
+.portada {
+  padding: 32px 16px 28px;
+  background: linear-gradient(to bottom, var(--azul), var(--azul-oscuro));
+  color: var(--blanco);
   text-align: center;
+}
+
+.portada .logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--blanco);
+  color: var(--azul);
+}
+
+.portada h1 {
+  margin-top: 14px;
+  font-size: 1.6rem;
+}
+
+.portada p {
+  margin-top: 4px;
+  color: #cfe6f7;
+}
+
+.portada .etiqueta {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

@@ -10,6 +10,7 @@ export interface Usuario {
   nombre: string;
   apellido: string;
   email: string;
+  telefono: string | null;
   rol: Rol;
 }
 
@@ -23,14 +24,15 @@ export interface Aula {
   nombre: string;
   estado: EstadoLlave;
   // Quien tiene (o reservo) la llave, desde que hora y su telefono (US-02: lo ven todos)
-  tenedor: { nombre: string; apellido: string; telefono: string | null; desde: string } | null;
+  tenedor: { usuarioId: number; nombre: string; apellido: string; telefono: string | null; desde: string } | null;
 }
 
 export interface Reserva {
   id: number;
   aula: string;
   codigo: string;
-  expiraEn: string; // fecha ISO en UTC
+  creadaEn: string; // fechas ISO en UTC
+  expiraEn: string;
   estado: EstadoReserva;
 }
 
@@ -52,6 +54,45 @@ export interface Incidente {
   detalle: string | null;
 }
 
+export interface Prestamo {
+  id: number;
+  aula: string;
+  docente: { id: number; nombre: string; apellido: string; email: string; telefono: string | null };
+  retiradoEn: string; // fechas ISO en UTC
+  devueltoEn: string | null; // null = todavia la tiene
+  recordatorioEnviadoEn: string | null;
+}
+
+export interface FiltrosHistorial {
+  aulaId?: number;
+  usuarioId?: number;
+  desde?: string; // AAAA-MM-DD, dia de Argentina
+  hasta?: string;
+  estado?: 'todos' | 'abiertos' | 'devueltos';
+}
+
+export interface UsuarioDetalle extends Usuario {
+  activo: boolean;
+  tieneClave: boolean; // false = todavia no uso el link del mail de alta
+}
+
+export interface LlaveEquipo {
+  id: number;
+  aula: string;
+  rfidUid: string;
+  slot: number | null; // null mientras esta prestada
+  estado: EstadoLlave;
+}
+
+export interface Equipo {
+  deviceId: string | null;
+  online: boolean;
+  ultimoContacto: string | null;
+  slotsTotales: number;
+  slotsReservados: number[];
+  llaves: LlaveEquipo[];
+}
+
 /** Error que devuelve el servidor: { error: { codigo, mensaje } } */
 export class ErrorApi extends Error {
   status: number; // 0 = no se pudo conectar
@@ -67,7 +108,7 @@ export class ErrorApi extends Error {
 }
 
 interface Opciones {
-  metodo?: 'GET' | 'POST' | 'DELETE';
+  metodo?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   cuerpo?: unknown;
   // true en los pedidos que la web hace sola cada 5 s: no cuentan como actividad del usuario,
   // asi la sesion igual vence tras 60 s sin uso (US-01)
@@ -103,6 +144,12 @@ async function pedir<T>(ruta: string, { metodo = 'GET', cuerpo, automatico }: Op
   return (texto ? JSON.parse(texto) : null) as T;
 }
 
+// { aulaId: 3, estado: 'todos' } -> "?aulaId=3&estado=todos" (sin los vacios)
+function parametros(filtros: object): string {
+  const pares = Object.entries(filtros).filter(([, v]) => v !== undefined && v !== '');
+  return pares.length ? `?${new URLSearchParams(pares.map(([k, v]) => [k, String(v)]))}` : '';
+}
+
 export const api = {
   // Sin login
   estadoPublico: (automatico = false) => pedir<EstadoPublico>('/publico/estado', { automatico }),
@@ -123,9 +170,22 @@ export const api = {
   reservaActiva: (automatico = false) => pedir<Reserva | null>('/reservas/activa', { automatico }),
   reserva: (id: number, automatico = false) => pedir<Reserva>(`/reservas/${id}`, { automatico }),
   cancelarReserva: (id: number) => pedir<null>(`/reservas/${id}`, { metodo: 'DELETE' }),
+  misPrestamos: (automatico = false) => pedir<Prestamo[]>('/prestamos/mios', { automatico }), // US-17
 
-  // Solo preceptor y admin (US-07 y US-05)
+  // Solo preceptor y admin
   cuentasBloqueadas: (automatico = false) => pedir<CuentaBloqueada[]>('/usuarios/bloqueados', { automatico }),
   desbloquear: (usuarioId: number) => pedir<null>(`/usuarios/${usuarioId}/desbloquear`, { metodo: 'POST' }),
-  incidentes: (automatico = false) => pedir<Incidente[]>('/incidentes', { automatico }),
+  incidentes: (automatico = false) => pedir<Incidente[]>('/incidentes', { automatico }), // US-05
+  historial: (filtros: FiltrosHistorial, automatico = false) => // US-12 y US-13
+    pedir<{ prestamos: Prestamo[]; enPoder: number | null }>(`/prestamos${parametros(filtros)}`, { automatico }),
+  recordatorio: (prestamoId: number) => // US-16
+    pedir<Prestamo>(`/prestamos/${prestamoId}/recordatorio`, { metodo: 'POST' }),
+  usuarios: (automatico = false) => pedir<UsuarioDetalle[]>('/usuarios', { automatico }), // US-09
+  altaDocente: (datos: { nombre: string; apellido: string; email: string; telefono: string }) =>
+    pedir<UsuarioDetalle>('/usuarios', { metodo: 'POST', cuerpo: datos }),
+  cambiarActivo: (usuarioId: number, activo: boolean) =>
+    pedir<UsuarioDetalle>(`/usuarios/${usuarioId}`, { metodo: 'PATCH', cuerpo: { activo } }),
+  equipo: (automatico = false) => pedir<Equipo>('/equipo', { automatico }),
+  cambiarRfid: (llaveId: number, rfidUid: string) => // US-10
+    pedir<LlaveEquipo>(`/llaves/${llaveId}/rfid`, { metodo: 'PUT', cuerpo: { rfidUid } }),
 };
