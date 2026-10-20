@@ -84,7 +84,7 @@ Reglas:
 En reposo siempre hay un slot vacío frente a la ventana. El RFID no puede "buscar" un lugar vacío (el tag está en la mano del docente), por eso el sistema tiene que conocer la posición del disco.
 1. Tecla `B` → LCD "Cuelgue la llave". El docente la cuelga en el slot de la ventana.
 2. Al leer un UID estable (~1 s) → `devolucion { uid, slot }`. El servidor cierra el préstamo activo de esa llave (queda asociado al docente que la retiró), la pasa a `DISPONIBLE`, actualiza su `slot` y responde aula, apellido y `slotReposo` (otro slot vacío).
-3. LCD "Llave de aula" / "214 recibida" (US-06) y el disco gira a `slotReposo`.
+3. LCD "Llave de aula" / "214 recibida" (US-06) y el disco gira a `slotReposo`. La devolución se confirma sola al leer el UID: el docente no aprieta nada (decidido el 20/10/2026).
 4. UID desconocido o sin préstamo activo: "Llave no reconocida" y no se registra nada.
 
 ### Autenticación (US-01, US-07, US-08): DECIDIDO, las dos opciones
@@ -135,7 +135,7 @@ llavetrack/v1/equipo-01/resp
 ## Pendientes (preguntame antes de asumir)
 Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al día al terminar cada historia). Las user stories con sus criterios están en `docs/user-stories.md`; US-22 a US-24 se agregaron al MVP el 20/10/2026 (en los commits viejos figuran como US-20 a US-22).
 - [x] Autenticación: las dos (email + contraseña primero, Google después). Ver "Autenticación".
-- [ ] Motor: el diagrama de bloques dice paso a paso, pero en las fotos parece un motorreductor de 2 cables. Confirmar con la etiqueta y la cantidad de cables antes de la Fase 3.
+- [ ] Motor: en la foto del equipo del 20/10/2026 se ve un motorreductor blanco (tipo electrodoméstico) con 2 cables, así que no es un paso a paso, aunque lo diga el diagrama de bloques. Falta la etiqueta: si es de continua (DC) o de 220 V alterna, y su tensión. Si es de 2 cables, hace falta un sensor que cuente las 32 pestañas del disco. Bloquea la Fase 3 (motor).
 - [ ] Motor: modelo, cantidad de cables, tensión nominal y reducción. Asumido: paso a paso bipolar de 4 cables. Si es un motor DC, frená y avisame: sin pasos que contar hace falta un sensor que cuente las pestañas del disco.
 - [x] Placa: NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32). Los pines 6–11 están expuestos pero son de la flash: no usarlos.
 - [x] LCD: 16x2 confirmado.

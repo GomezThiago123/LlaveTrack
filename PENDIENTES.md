@@ -7,7 +7,7 @@
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
 - [ ] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
-- [ ] **Motor:** modelo, cantidad de cables, tensión nominal y reducción (mirar la etiqueta). En las fotos parece un motorreductor de 2 cables y no un paso a paso: si es así, hace falta un sensor que cuente las pestañas del disco. *Bloquea: la Fase 3 (motor).*
+- [ ] **Motor:** en la foto del 20/10/2026 se ve un motorreductor blanco con 2 cables: no es un paso a paso. Falta una foto de cerca de la **etiqueta**: si es de continua (DC) o de 220 V alterna, y su tensión. Con 2 cables hace falta un sensor que cuente las 32 pestañas del disco. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
 - [ ] **WiFi para la demo:** la de la escuela es WPA2-Enterprise. ¿Router propio o hotspot del celular? El ESP32 puede conectarse a WPA2-Enterprise, pero necesita una cuenta de la escuela guardada en el equipo y la red puede bloquear el puerto 8883.
@@ -44,7 +44,7 @@ Esperan tu decisión. Después armo un plan y espero tu OK.
 - [ ] **US-02, quién ve quién tiene la llave:** decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
 - [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
 - [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Decidido: un cuadro "Problemas del equipo" para el preceptor, sin el flujo completo de US-21 (abrir/resolver y bloquear el aula siguen en V2). Falta el plan.
-- [ ] **US-06, "cuando confirmo":** ¿el docente aprieta `#` para confirmar la devolución, o alcanza con colgar la llave (como ahora)?
+- [x] **US-06, "cuando confirmo":** decidido: automático, como ahora (alcanza con colgar la llave). Falta ajustar el criterio en Notion para que diga que el sistema confirma solo.
 - [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
 - [x] **Textos exactos de los criterios** (los del firmware quedan en el CLAUDE.md para la Fase 3): "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
 
