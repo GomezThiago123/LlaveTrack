@@ -57,6 +57,8 @@ Esperan tu decisión. Después armo un plan y espero tu OK.
 Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4:
 
 - [ ] **Elegir proveedor:** tiene que poder correr el servidor de Python **y** Mosquitto, que necesita un puerto TCP propio. Los hostings que solo sirven páginas web no alcanzan.
+  - **En la misma región que Supabase (us-east-1, Virginia).** Medido el 20/10/2026 con el servidor en Argentina: cada consulta a Supabase tarda ~170 ms, y un evento del equipo hace 10–12, así que la respuesta tarda 2–5 s y el equipo llega a mostrar "Sin respuesta" (espera 5 s). En la misma región baja a milisegundos.
+  - Para desarrollar desde casa conviene SQLite local (comentar `DATABASE_URL` en el `.env`).
 - [ ] **Dominio con HTTPS** para la web y la API.
 - [ ] **Mosquitto expuesto a internet:** TLS en el puerto 8883, usuario y contraseña por equipo y una ACL por prefijo. Nunca el 1883 abierto. El ESP32 se conecta con `WiFiClientSecure` y el certificado raíz.
 - [x] **Base persistente:** PostgreSQL de Supabase (`DATABASE_URL` en `backend/.env`, ver `.env.example`). Solo como base: la web y el ESP32 siguen pasando por el servidor. RLS activado en todas las tablas.
