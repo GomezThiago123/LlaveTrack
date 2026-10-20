@@ -130,6 +130,7 @@ llavetrack/v1/equipo-01/resp
 - Proponé el mapa de pines (`config.h` + tabla en `docs/cableado.md`) y esperá mi confirmación antes de usarlo.
 
 ## Pendientes (preguntame antes de asumir)
+Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al día al terminar cada historia).
 - [x] Autenticación: las dos (email + contraseña primero, Google después). Ver "Autenticación".
 - [ ] Motor: en las fotos parece un motorreductor de 2 cables, no un paso a paso. Confirmar con la etiqueta antes de la Fase 3.
 - [ ] Motor: modelo, cantidad de cables, tensión nominal y reducción. Asumido: paso a paso bipolar de 4 cables. Si es un motor DC, frená y avisame: sin pasos que contar hace falta un sensor que cuente las pestañas del disco.
@@ -137,6 +138,8 @@ llavetrack/v1/equipo-01/resp
 - [ ] LCD: 16x2 (asumido) y su dirección I2C.
 - [ ] Referencia de cero: qué sensor, o el tag HOME provisorio.
 - [ ] Cantidad de slots del disco y de llaves para la demo.
+- [ ] LEDs (US-21 faltantes, US-22 conexión): uno bicolor o dos, colores, GPIO y resistencias. Proponerlos en la Fase 3 (`config.h` + `docs/cableado.md`) y esperar confirmación.
+- [ ] Aula 105: qué significa el asterisco de la lista de aulas de la escuela.
 - [ ] Dónde corre el servidor en la demo (notebook en la misma red o nube). Ver si el WiFi de la escuela tiene portal cautivo o WPA2-Enterprise: si es así, usar el router propio del diagrama o un hotspot.
 
 ## Fases
