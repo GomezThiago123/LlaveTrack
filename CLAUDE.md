@@ -66,6 +66,7 @@ Reglas:
 - `GET /api/aulas`: con login. Quién tiene cada llave, desde qué hora y su teléfono, visible para todos los usuarios logueados (US-02, decidido el 20/10/2026).
 - `POST /api/reservas` `{ aulaId }` → `{ codigo, expiraEn }` · `GET /api/reservas/activa` · `GET /api/reservas/:id` (cualquier estado: la web ve si ya se retiró) · `DELETE /api/reservas/:id`.
 - Login: `POST /api/auth/login` `{ email, clave }` · `POST /api/auth/logout` · `GET /api/auth/yo` · `POST /api/auth/recuperar` `{ email }` · `POST /api/auth/restablecer` `{ token, claveNueva }`.
+- Solo `PRECEPTOR`/`ADMIN` (US-07; si no, 403 `SIN_PERMISO`): `GET /api/usuarios/bloqueados` · `POST /api/usuarios/:id/desbloquear`. La web los muestra en el cuadro "Cuentas bloqueadas" arriba de la lista de aulas.
 - La web manda `X-Refresco-Automatico: 1` en los pedidos que hace sola cada 5 s: no renuevan la sesión (si no, con la web abierta nunca vencería por inactividad). Excepción: la pantalla del código no lo manda, así la sesión no se cierra mientras el docente va al equipo (la reserva igual vence sola).
 - Errores: `{ "error": { "codigo": "LLAVE_NO_DISPONIBLE", "mensaje": "..." } }`.
 

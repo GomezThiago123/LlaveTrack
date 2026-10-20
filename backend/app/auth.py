@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import config
 from app.db import obtener_sesion
 from app.errores import ErrorNegocio
-from app.modelos import Usuario
+from app.modelos import Rol, Usuario
 from app.servicios import auth
 
 COOKIE_SESION = "llavetrack_sesion"
@@ -39,6 +39,13 @@ def usuario_actual(
     usuario = auth.usuario_de_sesion(sesion, token, renovar=refresco_automatico is None)
     if usuario is None:
         raise ErrorNegocio(401, "SESION_VENCIDA", "Tu sesión venció. Volvé a ingresar.")
+    return usuario
+
+
+def preceptor_actual(usuario: Annotated[Usuario, Depends(usuario_actual)]) -> Usuario:
+    """Como usuario_actual, pero solo deja pasar a preceptores y administradores."""
+    if usuario.rol not in (Rol.PRECEPTOR, Rol.ADMIN):
+        raise ErrorNegocio(403, "SIN_PERMISO", "Solo el preceptor puede hacer esto.")
     return usuario
 
 

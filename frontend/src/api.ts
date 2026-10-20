@@ -34,6 +34,14 @@ export interface Reserva {
   estado: EstadoReserva;
 }
 
+export interface CuentaBloqueada {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  bloqueadoHasta: string; // fecha ISO en UTC
+}
+
 /** Error que devuelve el servidor: { error: { codigo, mensaje } } */
 export class ErrorApi extends Error {
   status: number; // 0 = no se pudo conectar
@@ -105,4 +113,8 @@ export const api = {
   reservaActiva: (automatico = false) => pedir<Reserva | null>('/reservas/activa', { automatico }),
   reserva: (id: number, automatico = false) => pedir<Reserva>(`/reservas/${id}`, { automatico }),
   cancelarReserva: (id: number) => pedir<null>(`/reservas/${id}`, { metodo: 'DELETE' }),
+
+  // Solo preceptor y admin (US-07)
+  cuentasBloqueadas: (automatico = false) => pedir<CuentaBloqueada[]>('/usuarios/bloqueados', { automatico }),
+  desbloquear: (usuarioId: number) => pedir<null>(`/usuarios/${usuarioId}/desbloquear`, { metodo: 'POST' }),
 };

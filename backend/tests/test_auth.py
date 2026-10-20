@@ -164,6 +164,61 @@ def test_un_login_correcto_reinicia_el_contador(sesion):
     auth.login(sesion, ANA, CLAVE)  # no se bloqueo: los fallidos no eran seguidos
 
 
+
+# --- Desbloqueo manual por el preceptor (US-07) ---
+
+BRUNO = "bruno.gomez@example.com"
+CARLA_PRECEPTORA = "carla.diaz@example.com"
+
+
+def bloquear(cliente, email):
+    for _ in range(5):
+        login(cliente, email=email, clave="mal")
+    assert login(cliente, email=email).json()["error"]["codigo"] == "CUENTA_BLOQUEADA"
+
+
+def test_preceptor_ve_las_cuentas_bloqueadas_y_las_desbloquea(cliente, ingresar):
+    bloquear(cliente, BRUNO)
+    ingresar(CARLA_PRECEPTORA)
+
+    bloqueadas = cliente.get("/api/usuarios/bloqueados").json()
+    assert [c["email"] for c in bloqueadas] == [BRUNO]
+    assert bloqueadas[0]["apellido"] == "Gomez" and bloqueadas[0]["bloqueadoHasta"]
+
+    assert cliente.post(f"/api/usuarios/{bloqueadas[0]['id']}/desbloquear").status_code == 204
+    assert cliente.get("/api/usuarios/bloqueados").json() == []
+    # Bruno entra enseguida, sin esperar los 15 min
+    assert login(cliente, email=BRUNO).status_code == 200
+
+
+def test_desbloqueado_vuelve_a_tener_5_intentos(sesion):
+    for _ in range(5):
+        with pytest.raises(ErrorNegocio):
+            auth.login(sesion, ANA, "mal")
+    auth.desbloquear(sesion, usuario(sesion, ANA).id)
+    for _ in range(4):
+        with pytest.raises(ErrorNegocio) as error:
+            auth.login(sesion, ANA, "mal")
+        assert error.value.codigo == "CREDENCIALES_INVALIDAS"
+
+
+def test_docente_no_puede_desbloquear(cliente, ingresar, fabrica_sesiones):
+    bloquear(cliente, BRUNO)
+    ingresar(ANA)
+    assert cliente.get("/api/usuarios/bloqueados").status_code == 403
+    with fabrica_sesiones() as s:
+        id_bruno = usuario(s, BRUNO).id
+    res = cliente.post(f"/api/usuarios/{id_bruno}/desbloquear")
+    assert res.status_code == 403 and res.json()["error"]["codigo"] == "SIN_PERMISO"
+    assert login(cliente, email=BRUNO).status_code == 429  # sigue bloqueado
+
+
+def test_desbloquear_usuario_inexistente_da_404(cliente, ingresar):
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post("/api/usuarios/9999/desbloquear")
+    assert res.status_code == 404 and res.json()["error"]["codigo"] == "USUARIO_NO_ENCONTRADO"
+
+
 # --- Recuperacion de contrasena (US-08) ---
 
 

@@ -71,6 +71,15 @@ class UsuarioSalida(Esquema):
     rol: Rol
 
 
+
+class CuentaBloqueada(Esquema):
+    id: int
+    nombre: str
+    apellido: str
+    email: str
+    bloqueado_hasta: datetime
+
+
 class PedidoRecuperacion(Esquema):
     email: str = Field(max_length=120)
 

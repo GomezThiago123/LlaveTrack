@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api, type Aula, type Reserva } from '../api';
 import { Alerta, ChipEstado, EstadoEquipo, Pagina } from '../componentes/Comunes';
+import CuentasBloqueadas from '../componentes/CuentasBloqueadas';
 import { useSesion } from '../sesion';
 import { delAula, hora, nombreAula, REFRESCO_MS, useIntervalo } from '../utiles';
 
 export default function Aulas() {
-  const { manejarError } = useSesion();
+  const { usuario, manejarError } = useSesion();
   const navegar = useNavigate();
   const [aulas, setAulas] = useState<Aula[] | null>(null);
   const [equipoOnline, setEquipoOnline] = useState<boolean | null>(null);
@@ -58,6 +59,7 @@ export default function Aulas() {
     <Pagina>
       <h1>Aulas</h1>
       <EstadoEquipo online={equipoOnline} />
+      {usuario && usuario.rol !== 'DOCENTE' && <CuentasBloqueadas />}
 
       {activa && (
         <Link to="/codigo" className="tarjeta tarjeta-destacada">

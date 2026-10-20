@@ -45,7 +45,7 @@ Esperan tu decisión. Después armo un plan y espero tu OK.
 - [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
 - [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Hoy el evento `error` se guarda, pero nadie lo ve. La sección "Incidentes" completa es US-21 (V2): ¿qué parte entra en el MVP?
 - [ ] **US-06, "cuando confirmo":** ¿el docente aprieta `#` para confirmar la devolución, o alcanza con colgar la llave (como ahora)?
-- [ ] **US-07, desbloqueo manual por el preceptor:** no existe. Hay que agregarlo.
+- [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
 - [ ] **Textos exactos de los criterios:** "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
 
 ## 3. El servidor en la nube

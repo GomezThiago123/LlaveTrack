@@ -133,6 +133,30 @@ def _credenciales_invalidas() -> ErrorNegocio:
     return ErrorNegocio(401, "CREDENCIALES_INVALIDAS", "Email o contraseña incorrectos.")
 
 
+# --- Desbloqueo manual por el preceptor (US-07) ---
+
+
+def cuentas_bloqueadas(sesion: Session, ahora: datetime | None = None) -> list[Usuario]:
+    """Usuarios con el login bloqueado por intentos fallidos, ordenados por apellido."""
+    ahora = ahora or ahora_utc()
+    return list(
+        sesion.scalars(
+            select(Usuario)
+            .where(Usuario.bloqueado_hasta > ahora)
+            .order_by(Usuario.apellido, Usuario.nombre)
+        )
+    )
+
+
+def desbloquear(sesion: Session, usuario_id: int) -> None:
+    """Levanta el bloqueo antes de los 15 min. Si la cuenta no estaba bloqueada, no cambia nada."""
+    usuario = sesion.get(Usuario, usuario_id)
+    if usuario is None:
+        raise ErrorNegocio(404, "USUARIO_NO_ENCONTRADO", "El usuario no existe.")
+    usuario.bloqueado_hasta = None
+    usuario.intentos_fallidos = 0
+
+
 # --- Recuperacion de contrasena ---
 
 
