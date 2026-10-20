@@ -51,7 +51,7 @@ def crear_reserva(
     if aula is None:
         raise ErrorNegocio(404, "AULA_NO_ENCONTRADA", "El aula no existe.")
 
-    # US-20: sin equipo no hay como retirar la llave; no tiene sentido reservarla
+    # US-22: sin equipo no hay como retirar la llave; no tiene sentido reservarla
     if not equipo_online(sesion, ahora):
         raise ErrorNegocio(
             409,

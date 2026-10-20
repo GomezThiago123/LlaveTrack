@@ -41,7 +41,7 @@ El servidor considera **online** a un equipo solo si se cumplen las dos cosas:
 1. Su último mensaje de `estado` dice `{"online":true}`.
 2. Tuvo contacto (cualquier evento o un `latido`) hace menos de `EQUIPO_TIMEOUT_SEGUNDOS` (90 s por defecto: 3 latidos perdidos).
 
-Con el equipo desconectado, la web no deja pedir llaves: `POST /api/reservas` responde `409 EQUIPO_DESCONECTADO` (US-20). Una reserva que ya estaba pendiente no se cancela: vence sola y, si el equipo vuelve antes, el código sirve.
+Con el equipo desconectado, la web no deja pedir llaves: `POST /api/reservas` responde `409 EQUIPO_DESCONECTADO` (US-22). Una reserva que ya estaba pendiente no se cancela: vence sola y, si el equipo vuelve antes, el código sirve.
 
 | Situación | Qué pasa | En cuánto se entera el servidor |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ client.publish(topicoEstado, "{\"online\":true}", true);   // retenido
 
 El `latido` no lleva `eventId`, no tiene respuesta y no se guarda en el log de eventos (`EventoDispositivo`): solo actualiza el último contacto del equipo.
 
-## Llaves faltantes (US-21)
+## Llaves faltantes (US-23)
 
 El servidor publica en `faltantes` (retenido, QoS 1) la lista de aulas cuya llave está **PRESTADA**, ordenada por nombre:
 
@@ -87,7 +87,7 @@ Qué hace el equipo con la lista:
 [A:Retirar B:Dev.]   [A:Retirar B:Dev.]   [A:Retirar B:Dev.]
 ```
 
-## LED de conexión (US-22)
+## LED de conexión (US-24)
 
 El equipo sabe que el servidor está vivo por `llavetrack/v1/servidor/estado` (retenido):
 

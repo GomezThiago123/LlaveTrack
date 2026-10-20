@@ -1,4 +1,4 @@
-"""Tests del armado de pantallas del LCD del simulador (la regla que copia el firmware, US-21)."""
+"""Tests del armado de pantallas del LCD del simulador (la regla que copia el firmware, US-23)."""
 
 from simulador.simulador import LCD_ANCHO, pantallas_reposo
 

@@ -33,7 +33,7 @@ pytestmark = pytest.mark.skipif(not broker_disponible(), reason="Mosquitto no es
 
 def test_retiro_por_mqtt_de_punta_a_punta(fabrica_sesiones):
     # Se reserva antes de conectar el servidor: al conectarse marca los equipos offline
-    # hasta recibir su `estado` (US-20), y este test no publica `estado`
+    # hasta recibir su `estado` (US-22), y este test no publica `estado`
     with fabrica_sesiones() as s:
         ana = s.scalar(select(Usuario).where(Usuario.email == "ana.perez@example.com"))
         aula_id = s.scalar(select(Aula.id).where(Aula.nombre == "214"))
@@ -75,7 +75,7 @@ def test_retiro_por_mqtt_de_punta_a_punta(fabrica_sesiones):
         servidor.detener()
 
 
-# --- US-20: el servidor sabe si el equipo esta conectado ---
+# --- US-22: el servidor sabe si el equipo esta conectado ---
 
 
 def esperar(condicion, segundos: float) -> bool:
@@ -138,7 +138,7 @@ def test_lwt_y_estado_retenido(fabrica_sesiones):
         limpieza.loop_stop()
 
 
-# --- US-21: faltantes retenido ---
+# --- US-23: faltantes retenido ---
 
 
 def test_faltantes_retenido_despues_del_retiro(fabrica_sesiones):
@@ -206,7 +206,7 @@ def test_faltantes_retenido_despues_del_retiro(fabrica_sesiones):
         limpieza.loop_stop()
 
 
-# --- US-22: estado del servidor ---
+# --- US-24: estado del servidor ---
 
 
 def test_estado_del_servidor_y_su_lwt(fabrica_sesiones, monkeypatch):

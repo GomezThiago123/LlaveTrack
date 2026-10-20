@@ -147,7 +147,7 @@ def devolucion(sesion: Session, device_id: str, uid: str, slot: int) -> dict:
 
 
 def aulas_faltantes(sesion: Session) -> list[str]:
-    """Aulas cuya llave no esta en el disco (US-21): las PRESTADAS, ordenadas por nombre.
+    """Aulas cuya llave no esta en el disco (US-23): las PRESTADAS, ordenadas por nombre.
 
     Las RESERVADAS no cuentan: siguen colgadas hasta que el docente las retira.
     El equipo enciende el LED de faltantes y las muestra en el LCD (topico `faltantes`).

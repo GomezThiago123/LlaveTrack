@@ -264,7 +264,7 @@ def test_rechazo_deshace_los_cambios_a_medias_pero_no_el_vencimiento(fabrica_ses
         assert s.scalar(select(Reserva.estado).where(Reserva.codigo == vieja)) == EstadoReserva.VENCIDA
 
 
-# --- US-20: latido y perdida del broker ---
+# --- US-22: latido y perdida del broker ---
 
 
 def test_latido_actualiza_el_ultimo_contacto(fabrica_sesiones):
@@ -291,7 +291,7 @@ def test_sin_broker_todos_los_equipos_quedan_offline(fabrica_sesiones):
         assert not conexion.equipo_online(s)
 
 
-# --- US-21: aulas faltantes ---
+# --- US-23: aulas faltantes ---
 
 
 def faltantes(fabrica_sesiones) -> list[str]:

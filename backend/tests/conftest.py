@@ -37,7 +37,7 @@ def fabrica_sesiones(tmp_path):
     fabrica = sessionmaker(engine, expire_on_commit=False)
     with fabrica() as sesion:
         cargar_datos(sesion, json.loads(DATOS_PRUEBA.read_text(encoding="utf-8")))
-        # El equipo arranca conectado: sin equipo no se puede reservar (US-20).
+        # El equipo arranca conectado: sin equipo no se puede reservar (US-22).
         # Los tests de equipo desconectado lo cambian a mano.
         sesion.execute(update(Dispositivo).values(online=True, ultimo_contacto=ahora_utc()))
         sesion.commit()

@@ -98,7 +98,7 @@ Los comandos se escriben en el prompt `equipo>`:
 
 Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json`: por ahora son inventados, `04A0` + el número de aula (la del 214 es `04A00214`).
 
-Mientras el equipo está desconectado, la web no deja pedir llaves (US-20). El simulador también muestra los LEDs: el de faltantes se prende cuando hay llaves prestadas (US-21) y el de conexión titila si se cae el broker o el servidor; en ese caso no deja retirar ni devolver (US-22).
+Mientras el equipo está desconectado, la web no deja pedir llaves (US-22). El simulador también muestra los LEDs: el de faltantes se prende cuando hay llaves prestadas (US-23) y el de conexión titila si se cae el broker o el servidor; en ese caso no deja retirar ni devolver (US-24).
 
 Para ver todos los mensajes del broker: `mosquitto_sub -v -t 'llavetrack/#'` o MQTTX.
 

@@ -5,7 +5,7 @@ lo que haria el LCD con cada respuesta. Sirve para probar todo sin hardware.
 
 Como el equipo real, queda prendido hasta que lo apagues: al arrancar se conecta
 (con LWT), manda `inicio` y despues un latido cada 30 s. Los comandos se escriben
-en el prompt. Muestra los dos LEDs: faltantes (US-21) y conexion con el servidor (US-22).
+en el prompt. Muestra los dos LEDs: faltantes (US-23) y conexion con el servidor (US-24).
 
 Uso (desde backend/, con el .venv activado):
     python simulador/simulador.py
@@ -28,7 +28,7 @@ import threading
 import paho.mqtt.client as mqtt
 
 PREFIJO = "llavetrack/v1"
-TOPICO_SERVIDOR = f"{PREFIJO}/servidor/estado"  # US-22: el servidor esta vivo (retenido, con LWT)
+TOPICO_SERVIDOR = f"{PREFIJO}/servidor/estado"  # US-24: el servidor esta vivo (retenido, con LWT)
 ESPERA_RESPUESTA = 5  # segundos, igual que el equipo real
 REINTENTOS = 3
 # Iguales a los del firmware (config.h): con keepalive de 10 s el broker publica el LWT
@@ -54,7 +54,7 @@ def lcd(linea1: str, linea2: str = "") -> None:
 
 
 def pantallas_reposo(hora: str, faltantes: list[str]) -> list[str]:
-    """Las pantallas que rota la linea 1 del LCD en reposo (US-21), cada LCD_ROTACION_MS.
+    """Las pantallas que rota la linea 1 del LCD en reposo (US-23), cada LCD_ROTACION_MS.
 
     Primero la hora; despues "Faltan: 105 114" con todas las aulas que entren en 16
     caracteres. Un nombre que no entra ni solo ("Laboratorio 1") va en su propia pantalla,
@@ -99,7 +99,7 @@ class Equipo:
         self.enchufado = False
         self.parar_latido = threading.Event()
         self.faltantes: list[str] | None = None  # aulas sin llave en el disco (llega del servidor)
-        # US-22: el LED de conexion se enciende solo con broker conectado y servidor online
+        # US-24: el LED de conexion se enciende solo con broker conectado y servidor online
         self.broker_conectado = False
         self.servidor_online: bool | None = None  # None = todavia no llego su estado
         self.conectado = threading.Event()

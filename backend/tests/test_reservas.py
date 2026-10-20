@@ -202,7 +202,7 @@ def test_api_datos_invalidos(cliente, ingresar):
     assert res.json()["error"]["codigo"] == "DATOS_INVALIDOS"
 
 
-# --- US-20: sin equipo no se reserva ---
+# --- US-22: sin equipo no se reserva ---
 
 
 def test_no_se_reserva_con_el_equipo_desconectado(sesion):
@@ -233,7 +233,7 @@ def test_api_reservar_con_equipo_desconectado(cliente, ingresar, fabrica_sesione
 
 
 def test_la_reserva_pendiente_sigue_valiendo_si_el_equipo_se_cae(sesion):
-    """Decision de US-20: no se cancela; vence sola y si el equipo vuelve antes, el codigo sirve."""
+    """Decision de US-22: no se cancela; vence sola y si el equipo vuelve antes, el codigo sirve."""
     reserva = reservas.crear_reserva(sesion, usuario(sesion, ANA), aula(sesion, "214").id)
     sesion.execute(update(Dispositivo).values(online=False))
     reservas.vencer_reservas(sesion)

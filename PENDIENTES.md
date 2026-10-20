@@ -1,6 +1,6 @@
 # Pendientes de LlaveTrack
 
-Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-20, US-21 y US-22 en el servidor y el simulador, la base en Supabase y el seed con las 30 aulas.
+Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-22, US-23 y US-24 en el servidor y el simulador, la base en Supabase y el seed con las 30 aulas.
 
 ## 1. Respuestas que necesito de vos
 
@@ -29,21 +29,21 @@ Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada u
 
 En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
-- [x] **US-21: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
-- [x] **US-22: LED de conexión con el servidor.** Hecho en el servidor y el simulador (el LED titila mientras no hay conexión); en el equipo se hace en la Fase 3.
+- [x] **US-23: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
+- [x] **US-24: LED de conexión con el servidor.** Hecho en el servidor y el simulador (el LED titila mientras no hay conexión); en el equipo se hace en la Fase 3.
 - [x] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315): `slotsTotales: 32`, slot 0 para HOME, aulas en los slots 1 a 30 y UID inventados (`04A0` + aula, ej. `04A00214`) hasta el modo diagnóstico. El simulador usa `--slots 32` por defecto. Los tests usan sus propios datos (`tests/datos_prueba.json`) y un test valida el seed real.
-- [x] **Documentación de US-20 a US-22:** tópicos nuevos (`latido`, `faltantes`, `servidor/estado`), `EQUIPO_TIMEOUT_SEGUNDOS` y reglas de los LEDs en el CLAUDE.md, `docs/protocolo-mqtt.md` y el README.
+- [x] **Documentación de US-22 a US-24:** tópicos nuevos (`latido`, `faltantes`, `servidor/estado`), `EQUIPO_TIMEOUT_SEGUNDOS` y reglas de los LEDs en el CLAUDE.md, `docs/protocolo-mqtt.md` y el README.
 - [x] **Revisar lo construido contra los criterios de aceptación.** Las diferencias están en la sección 2b.
 
 ## 2b. Diferencias con las user stories (`docs/user-stories.md`)
 
 Esperan tu decisión. Después armo un plan y espero tu OK.
 
-- [ ] **Numeración:** en Notion, US-20 es "Devolver una llave retirada por otro" y US-21 es "Registrar incidentes" (las dos V2). En el código y en los commits, US-20/21/22 son equipo desconectado, LED de faltantes y LED de conexión, y no figuran en Notion. Propuesta: cargarlas en Notion como US-22, US-23 y US-24 y renombrarlas en el código y en la documentación (los commits viejos quedan como están).
+- [x] **Numeración:** las historias del equipo conectado, las llaves faltantes y la conexión del equipo se cargaron en Notion como US-22, US-23 y US-24 (MVP) y se renombraron en el código y la documentación. Los commits viejos dicen US-20/21/22.
 - [ ] **US-01, sesión de 60 s** (hoy 15 min). Decidido: 60 s, salvo mientras está abierta la pantalla del código. Falta implementarlo.
 - [ ] **US-02, quién ve quién tiene la llave:** decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
 - [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
-- [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Hoy el evento `error` se guarda, pero nadie lo ve. La sección "Incidentes" completa es US-21 (V2): ¿qué parte entra en el MVP?
+- [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Decidido: un cuadro "Problemas del equipo" para el preceptor, sin el flujo completo de US-21 (abrir/resolver y bloquear el aula siguen en V2). Falta el plan.
 - [ ] **US-06, "cuando confirmo":** ¿el docente aprieta `#` para confirmar la devolución, o alcanza con colgar la llave (como ahora)?
 - [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
 - [x] **Textos exactos de los criterios** (los del firmware quedan en el CLAUDE.md para la Fase 3): "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
@@ -76,8 +76,8 @@ Ya están hechos, pero falta tu prueba.
 - [ ] **Fase 2 en la compu:** pedir una llave como Ana, retirarla con el simulador y verla como Carla.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.
 - [ ] **Sesión vencida (US-01):** sin tocar nada durante 60 s, la web vuelve sola al login; en la pantalla del código, no.
-- [ ] **US-20:** `desenchufar` y `enchufar` en el simulador; los botones de la web se deshabilitan y se habilitan solos.
-- [ ] **US-21 y US-22:** en el simulador, retirar y devolver una llave mirando el LED de faltantes y el LCD (`pantalla`). Frenar el backend y ver que el LED de conexión titila y no deja devolver; levantarlo de nuevo.
+- [ ] **US-22:** `desenchufar` y `enchufar` en el simulador; los botones de la web se deshabilitan y se habilitan solos.
+- [ ] **US-23 y US-24:** en el simulador, retirar y devolver una llave mirando el LED de faltantes y el LCD (`pantalla`). Frenar el backend y ver que el LED de conexión titila y no deja devolver; levantarlo de nuevo.
 
 ## 6. Fase 3: firmware
 

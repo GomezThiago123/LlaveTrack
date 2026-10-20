@@ -37,7 +37,7 @@ class Config(BaseSettings):
     mqtt_usuario: str | None = None
     mqtt_clave: str | None = None
 
-    # US-20: el equipo se considera desconectado si pasa este tiempo sin ningun mensaje suyo
+    # US-22: el equipo se considera desconectado si pasa este tiempo sin ningun mensaje suyo
     # (manda un latido cada 30 s, asi que 90 s = 3 latidos perdidos)
     equipo_timeout_segundos: int = 90
 

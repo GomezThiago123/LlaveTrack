@@ -57,7 +57,7 @@ def test_estado_publico_muestra_equipo_offline_por_lwt(cliente, fabrica_sesiones
 
 
 def test_estado_publico_muestra_equipo_offline_sin_latidos(cliente, fabrica_sesiones):
-    """US-20: aunque el ultimo `estado` diga online, sin contacto en 90 s esta desconectado."""
+    """US-22: aunque el ultimo `estado` diga online, sin contacto en 90 s esta desconectado."""
     with fabrica_sesiones() as s:
         s.execute(update(Dispositivo).values(ultimo_contacto=ahora_utc() - timedelta(seconds=91)))
         s.commit()

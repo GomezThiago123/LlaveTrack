@@ -4,8 +4,8 @@ paho-mqtt corre en su propio hilo: recibe los mensajes del equipo, los pasa a
 app/protocolo.py (una sesion de base por mensaje) y publica la respuesta.
 Si el broker no esta, el servidor arranca igual y paho reintenta conectarse solo.
 
-Tambien publica la lista de aulas faltantes de cada equipo (US-21), retenida: el equipo
-la recibe sola al conectarse, sin pedirla. Y su propio estado en `servidor/estado` (US-22),
+Tambien publica la lista de aulas faltantes de cada equipo (US-23), retenida: el equipo
+la recibe sola al conectarse, sin pedirla. Y su propio estado en `servidor/estado` (US-24),
 con LWT: si el servidor se cae, el broker avisa a los equipos y apagan el LED de conexion.
 """
 
@@ -41,7 +41,7 @@ class ClienteMqtt:
         self.keepalive = keepalive
         self.topico_estado = f"{prefijo}/{SERVIDOR}/estado"
         self.cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
-        # LWT (US-22): si el servidor se corta sin despedirse, el broker publica que quedo offline
+        # LWT (US-24): si el servidor se corta sin despedirse, el broker publica que quedo offline
         self.cliente.will_set(self.topico_estado, json.dumps({"online": False}), qos=1, retain=True)
         if config.mqtt_usuario:
             self.cliente.username_pw_set(config.mqtt_usuario, config.mqtt_clave)

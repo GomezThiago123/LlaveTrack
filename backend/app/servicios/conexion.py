@@ -1,4 +1,4 @@
-"""Si el equipo esta conectado o no (US-20).
+"""Si el equipo esta conectado o no (US-22).
 
 El servidor considera online a un equipo solo si:
 1. el ultimo mensaje retenido de `estado` dice online (lo pone el equipo al conectar,

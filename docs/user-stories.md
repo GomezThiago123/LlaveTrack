@@ -2,7 +2,7 @@
 
 Copiadas de Notion el 20/10/2026, tal cual están ahí. La numeración y el release (MVP / V2) son los de Notion.
 
-> **Ojo con la numeración:** en Notion, US-20 es "Devolver una llave retirada por otro" y US-21 es "Registrar incidentes del equipo" (las dos V2). En el código y en los commits, "US-20", "US-21" y "US-22" se usaron para otra cosa: equipo desconectado, LED de faltantes y LED de conexión con el servidor. Eso está pendiente de resolver (ver `PENDIENTES.md`).
+> **Ojo con la numeración en los commits viejos:** hasta el 20/10/2026, en el código y en los commits se usaron "US-20", "US-21" y "US-22" para lo que hoy son **US-22, US-23 y US-24** (equipo conectado, llaves faltantes y conexión del equipo). Esas tres se cargaron en Notion el 20/10/2026; US-20 y US-21 son las de Notion (V2).
 
 | US | Nombre | Release |
 | --- | --- | --- |
@@ -27,6 +27,9 @@ Copiadas de Notion el 20/10/2026, tal cual están ahí. La numeración y el rele
 | US-19 | Exportar reportes | V2 |
 | US-20 | Devolver una llave retirada por otro | V2 |
 | US-21 | Registrar incidentes del equipo | V2 |
+| US-22 | Ver si el equipo está conectado | MVP |
+| US-23 | Ver en el equipo qué llaves faltan | MVP |
+| US-24 | Ver en el equipo si está conectado | MVP |
 
 ---
 
@@ -255,3 +258,35 @@ Copiadas de Notion el 20/10/2026, tal cual están ahí. La numeración y el rele
 - En la sección "Incidentes", el preceptor ve los incidentes abiertos, del más reciente al más antiguo.
 - Mientras el incidente esté abierto, esa aula no se puede reservar desde la app y figura como "En revisión".
 - El preceptor puede marcar el incidente como "Resuelto" y el aula vuelve a Disponible.
+
+## Agregadas el 20/10/2026 (ya construidas en el servidor y el simulador)
+
+### US-22 — Ver si el equipo está conectado (MVP)
+
+**Como** profesor **deseo** saber desde la web si el equipo está conectado **para** no ir hasta el equipo cuando no me puede entregar la llave.
+
+**Criterios de aceptación**
+- Si el equipo está desconectado, la web muestra "El equipo está desconectado" y el botón "Pedir llave" queda deshabilitado con el texto "Equipo desconectado".
+- Cuando el equipo vuelve a conectarse, el botón se habilita solo en 5 segundos o menos, sin recargar la página.
+- El equipo se considera desconectado si pierde la conexión (se detecta en unos 15 segundos) o si pasan 90 segundos sin ningún mensaje suyo.
+- Si el equipo se desconecta con una reserva pendiente, la reserva no se cancela: sigue vigente hasta que vence.
+
+### US-23 — Ver en el equipo qué llaves faltan (MVP)
+
+**Como** preceptor **deseo** que el equipo muestre qué llaves no están en el carrusel **para** saber de un vistazo qué aulas siguen sin devolver.
+
+**Criterios de aceptación**
+- Mientras haya llaves retiradas sin devolver, el LED de faltantes del equipo está prendido; si no falta ninguna, está apagado.
+- En reposo, la primera línea del LCD alterna entre la hora y "Faltan: 105 114" con las aulas cuyas llaves no están.
+- Las llaves reservadas que todavía no se retiraron no cuentan como faltantes (siguen en el carrusel).
+- Cuando se retira o se devuelve una llave, el equipo actualiza el LED y el LCD enseguida.
+
+### US-24 — Ver en el equipo si está conectado (MVP)
+
+**Como** profesor **deseo** ver en el equipo si está conectado con el sistema **para** saber si puedo retirar o devolver una llave.
+
+**Criterios de aceptación**
+- Si el equipo tiene WiFi y está conectado con el servidor, el LED de conexión queda fijo.
+- Si falta algo, el LED titila y el LCD muestra "Sin conexion" con la causa: WiFi, Broker o Servidor.
+- Sin conexión, el equipo no entrega ni recibe llaves.
+- Cuando vuelve la conexión, el LED queda fijo y el equipo vuelve a funcionar solo.

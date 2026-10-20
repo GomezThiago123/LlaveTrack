@@ -96,7 +96,7 @@ export default function Aulas() {
             )}
 
             {aula.estado === 'DISPONIBLE' && !activa && (
-              // US-20: sin equipo no se puede retirar la llave. Se reactiva solo con el refresco
+              // US-22: sin equipo no se puede retirar la llave. Se reactiva solo con el refresco
               <button
                 type="button"
                 className="boton boton-ancho"
