@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 
+import pytest
 from sqlalchemy import select, update
 
 from app.modelos import Aula, Dispositivo, EstadoLlave, EstadoReserva, Llave, Prestamo, Reserva, Usuario
@@ -84,17 +85,11 @@ def test_reserva_vencida_aparece_disponible(cliente, fabrica_sesiones):
     assert aulas["214"]["estado"] == "DISPONIBLE"
 
 
-def test_docente_no_ve_quien_tiene_las_llaves(cliente, ingresar, fabrica_sesiones):
+@pytest.mark.parametrize("email", [ANA, CARLA_PRECEPTORA])
+def test_todos_ven_quien_tiene_cada_llave_y_su_telefono(cliente, ingresar, fabrica_sesiones, email):
+    # US-02: docentes y preceptores por igual
     preparar(fabrica_sesiones)
-    ingresar(ANA)
-    res = cliente.get("/api/aulas")
-    assert res.status_code == 200
-    assert all(aula["tenedor"] is None for aula in res.json())
-
-
-def test_preceptor_ve_quien_tiene_cada_llave_y_su_telefono(cliente, ingresar, fabrica_sesiones):
-    preparar(fabrica_sesiones)
-    ingresar(CARLA_PRECEPTORA)
+    ingresar(email)
     aulas = por_nombre(cliente.get("/api/aulas").json())
 
     assert aulas["214"]["tenedor"]["apellido"] == "Perez"  # reservada

@@ -22,7 +22,7 @@ export interface Aula {
   id: number;
   nombre: string;
   estado: EstadoLlave;
-  // Quien tiene (o reservo) la llave: solo llega para preceptores y administradores
+  // Quien tiene (o reservo) la llave, desde que hora y su telefono (US-02: lo ven todos)
   tenedor: { nombre: string; apellido: string; telefono: string | null; desde: string } | null;
 }
 

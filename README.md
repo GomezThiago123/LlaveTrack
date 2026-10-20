@@ -69,7 +69,7 @@ Los de `seed/datos.json`, todos con la contraseña `llavetrack`:
 | --- | --- |
 | `ana.perez@example.com` | Docente |
 | `bruno.gomez@example.com` | Docente |
-| `carla.diaz@example.com` | Preceptora (ve quién tiene cada llave) |
+| `carla.diaz@example.com` | Preceptora |
 | `admin@example.com` | Administrador |
 
 5 contraseñas incorrectas seguidas bloquean la cuenta 15 minutos. Para "Olvidé mi contraseña": si no configuraste un servidor de mail (`SMTP_*` en `.env`), el link de recuperación aparece en la terminal del servidor.

@@ -11,14 +11,10 @@ from app.modelos import (
     Llave,
     Prestamo,
     Reserva,
-    Rol,
     Usuario,
 )
 from app.servicios.conexion import equipo_online
 from app.servicios.reservas import vencer_reservas
-
-ROLES_QUE_VEN_TENEDOR = {Rol.PRECEPTOR, Rol.ADMIN}
-
 
 def _llaves_en_uso(sesion: Session) -> list[Llave]:
     """Una llave por aula (MVP), sin las dadas de baja, ordenadas por nombre de aula."""
@@ -41,16 +37,16 @@ def estado_publico(sesion: Session) -> EstadoPublico:
     )
 
 
-def aulas_para(sesion: Session, usuario: Usuario) -> list[AulaDetalle]:
-    """Lista de aulas para un usuario logueado. Preceptor y admin ven quien tiene cada llave."""
+def aulas_con_tenedor(sesion: Session) -> list[AulaDetalle]:
+    """Lista de aulas para cualquier usuario logueado, con quien tiene cada llave,
+    desde que hora y su telefono (US-02: lo ven todos los roles)."""
     vencer_reservas(sesion)
-    ve_tenedor = usuario.rol in ROLES_QUE_VEN_TENEDOR
     return [
         AulaDetalle(
             id=llave.aula.id,
             nombre=llave.aula.nombre,
             estado=llave.estado,
-            tenedor=_tenedor(sesion, llave) if ve_tenedor else None,
+            tenedor=_tenedor(sesion, llave),
         )
         for llave in _llaves_en_uso(sesion)
     ]

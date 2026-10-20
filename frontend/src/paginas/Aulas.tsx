@@ -1,5 +1,5 @@
 // Lista de aulas con login (US-02): pedir una llave (US-03). Se actualiza cada 5 s.
-// Preceptores y administradores ven ademas quien tiene cada llave y su telefono.
+// Todos ven quien tiene cada llave, desde que hora y su telefono.
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api, type Aula, type Reserva } from '../api';

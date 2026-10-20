@@ -26,9 +26,9 @@ def estado_publico(sesion: SesionDep) -> EstadoPublico:
 
 @router.get("/aulas")
 def listar_aulas(
-    sesion: SesionDep, usuario: Annotated[Usuario, Depends(usuario_actual)]
+    sesion: SesionDep, _usuario: Annotated[Usuario, Depends(usuario_actual)]
 ) -> list[AulaDetalle]:
-    """Con login. Preceptores y administradores ven además quién tiene cada llave y su teléfono."""
-    lista = aulas.aulas_para(sesion, usuario)
+    """Con login. Además del estado, quién tiene cada llave, desde qué hora y su teléfono."""
+    lista = aulas.aulas_con_tenedor(sesion)
     sesion.commit()
     return lista
