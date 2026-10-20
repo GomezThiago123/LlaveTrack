@@ -1,12 +1,12 @@
 # Pendientes de LlaveTrack
 
-Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-20, y US-21 y US-22 en el servidor y el simulador.
+Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-20, US-21 y US-22 en el servidor y el simulador, y la base en Supabase.
 
 ## 1. Respuestas que necesito de vos
 
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
-- [ ] **OK para el seed con las 30 aulas** (sección 2), y quién recarga la base de desarrollo: `python -m app.seed --reiniciar` borra los datos de prueba actuales.
+- [ ] **OK para el seed con las 30 aulas** (sección 2), y quién recarga la base: `python -m app.seed --reiniciar` borra los datos actuales. Ahora la base de Supabase es compartida, así que el reinicio afecta a todo el grupo.
 - [ ] **User stories completas:** el texto y los criterios de aceptación de cada una, sobre todo las del MVP (US-01 a US-08). Hoy solo conozco el número y una línea de cada una. Con eso reviso si lo construido cumple cada criterio y las guardo en `docs/` para no tener que pedirlas de nuevo.
 - [ ] **Motor:** modelo, cantidad de cables, tensión nominal y reducción (mirar la etiqueta). En las fotos parece un motorreductor de 2 cables y no un paso a paso: si es así, hace falta un sensor que cuente las pestañas del disco. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs (US-21 y US-22):** ¿uno bicolor o dos? ¿Qué colores? Se decide en la Fase 3: ahí propongo GPIO y resistencias y los confirmás vos.
@@ -28,7 +28,7 @@ En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
 - [x] **US-21: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
 - [x] **US-22: LED de conexión con el servidor.** Hecho en el servidor y el simulador (el LED titila mientras no hay conexión); en el equipo se hace en la Fase 3.
-- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315). Plan listo, espera tu OK: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto.
+- [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315). Plan listo, espera tu OK: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto. La lista de aulas con su posición ya está en `backend/seed/aulas_reales.json`, rescatada de las tablas viejas de Supabase.
 - [x] **Documentación de US-20 a US-22:** tópicos nuevos (`latido`, `faltantes`, `servidor/estado`), `EQUIPO_TIMEOUT_SEGUNDOS` y reglas de los LEDs en el CLAUDE.md, `docs/protocolo-mqtt.md` y el README.
 - [ ] **Revisar lo construido contra los criterios de aceptación**, cuando me mandes las user stories.
 
@@ -39,7 +39,10 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 - [ ] **Elegir proveedor:** tiene que poder correr el servidor de Python **y** Mosquitto, que necesita un puerto TCP propio. Los hostings que solo sirven páginas web no alcanzan.
 - [ ] **Dominio con HTTPS** para la web y la API.
 - [ ] **Mosquitto expuesto a internet:** TLS en el puerto 8883, usuario y contraseña por equipo y una ACL por prefijo. Nunca el 1883 abierto. El ESP32 se conecta con `WiFiClientSecure` y el certificado raíz.
-- [ ] **Base persistente:** SQLite en un disco que no se borre al reiniciar, o pasar a PostgreSQL (el proyecto ya está preparado con SQLAlchemy + Alembic).
+- [x] **Base persistente:** PostgreSQL de Supabase (`DATABASE_URL` en `backend/.env`, ver `.env.example`). Solo como base: la web y el ESP32 siguen pasando por el servidor. RLS activado en todas las tablas.
+- [x] **Conexión a Supabase:** migraciones, seed y RLS aplicados; login, reservas y conexión del simulador andan contra la base real (20/10/2026). Se borraron las tablas y funciones del diseño viejo, y el trigger sobre `auth.users`.
+- [ ] **Terminar el ciclo con Supabase:** `retirar <codigo>` y `devolver 04A1B2C3` en el simulador, y ver en **Table Editor → prestamo** la fila con `devuelto_en`.
+- [ ] **Pasarles la conexión a tus compañeros:** la URL con la contraseña va por privado (nunca al repo). Cada uno la pone en su `backend/.env`; para desarrollar sin pisarse pueden seguir con SQLite local.
 - [ ] **Configurar el `.env` de producción:** `COOKIE_SEGURA=true`, `WEB_URL` con el dominio y `SMTP_*`.
 
 ## 4. Web: lo que falta
@@ -82,7 +85,7 @@ Lo único que falta del hardware es el motor (sección 1); lo demás ya se puede
 Estos documentos los presentaste en clase y no coinciden con lo que está construido.
 
 - [ ] **CU-01:** el sistema usa código de **6 dígitos** que vence a los **10 min** (el documento dice 4 dígitos y 5 min). La devolución **no se pide desde la app**: se toca `B` en el equipo y se cuelga la llave. El ESP32 no consulta solicitudes cada 2 s: el código lo valida el servidor por MQTT.
-- [ ] **Documentos de "Servicios", "Vinculación del ESP32" y "Base de datos":** describen Supabase (API REST, polling, heartbeat por HTTP, RLS). Lo construido es FastAPI + SQLite + Mosquitto. Hay que actualizarlos o explicar el cambio en la defensa.
+- [ ] **Documentos de "Servicios", "Vinculación del ESP32" y "Base de datos":** describen Supabase (API REST, polling, heartbeat por HTTP, RLS). Lo construido es FastAPI + Mosquitto, con Supabase solo como base PostgreSQL (sin su API REST: la web y el ESP32 hablan con el servidor). Hay que actualizarlos o explicar el cambio en la defensa.
 - [ ] **Diagrama de bloques:**
   - Corregir "Relugador" por "Regulador".
   - Hoy el celular va directo a la Base de Datos: tiene que ir al Servidor, porque la web nunca toca la base.

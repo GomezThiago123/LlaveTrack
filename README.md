@@ -45,6 +45,8 @@ python -m app.seed
 
 El archivo `.env` es opcional: sin él se usan los valores por defecto. Para cambiarlos, copiá `.env.example` a `.env`.
 
+**Base en Supabase (opcional):** por defecto la base es un archivo SQLite local. Para usar la de Supabase, en el dashboard tocá **Connect** → **Session pooler**, copiá la URL y ponela en `backend/.env` como `DATABASE_URL`, cambiando `postgresql://` por `postgresql+psycopg://` (ejemplo en `.env.example`). Después corré `alembic upgrade head` y `python -m app.seed` como arriba. Ojo: es una sola base para todo el grupo, así que cualquier `--reiniciar` o migración afecta a todos.
+
 ### Cada vez
 
 Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts\Activate.ps1` en Windows). Vas a ver `(.venv)` al principio de la línea. Después:

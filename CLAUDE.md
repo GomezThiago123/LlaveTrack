@@ -31,7 +31,7 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 
 ## Stack
 - `firmware/`: ESP32 con framework Arduino sobre PlatformIO (extensión de VS Code + CLI `pio`, para compilar desde la terminal). Librerías: MFRC522, LiquidCrystal_I2C, Keypad, AccelStepper, PubSubClient, ArduinoJson 7.
-- `backend/`: Python 3.11+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo, se puede pasar a PostgreSQL después), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`.
+- `backend/`: Python 3.11+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo; PostgreSQL de Supabase para la demo y la base compartida, vía `DATABASE_URL` con el Session pooler y el driver `psycopg`. Supabase es solo la base: no se usa su API, su Auth ni su cliente JS, y toda tabla nueva activa RLS sin políticas en su migración para que la API de Supabase no la exponga), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`.
 - `backend/` y `frontend/` son independientes: cada uno se instala y se levanta en su propia terminal, sin nada compartido en la raíz.
 - `frontend/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP. Se corre desde `frontend/`: `npm install`, `npm run dev` (puerto 5173; Vite reenvía `/api` al backend en :8000). Node 20.19+ (recomendado 24).
 - Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.
@@ -143,7 +143,7 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [x] Disco de 32 slots. El 0 es del tag HOME: quedan 31 lugares, entran las 30 aulas reales y sobra 1.
 - [ ] LEDs (US-21 faltantes, US-22 conexión): uno bicolor o dos, colores, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
-- [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, y base persistente (ver `PENDIENTES.md`).
+- [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, (ver `PENDIENTES.md`). Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`).
 - [ ] WiFi de la escuela: el ESP32 igual tiene que salir a internet. Si tiene portal cautivo o WPA2-Enterprise, usar el router propio del diagrama o un hotspot.
 
 ## Fases

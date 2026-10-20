@@ -10,7 +10,11 @@ class Base(DeclarativeBase):
 
 def crear_engine(url: str) -> Engine:
     if not url.startswith("sqlite"):
-        return create_engine(url)
+        # PostgreSQL (ej. Supabase). pool_pre_ping: el pooler de Supabase corta las conexiones
+        # que quedan quietas; asi se detecta antes de usarlas y se abre otra.
+        # Ahi no hace falta BEGIN IMMEDIATE: el UPDATE condicional bloquea la fila y el
+        # segundo pedido espera al primero.
+        return create_engine(url, pool_pre_ping=True)
 
     # check_same_thread=False: FastAPI y el cliente MQTT usan la base desde varios hilos
     # timeout=10: si otro pedido esta escribiendo, espera hasta 10 s en lugar de fallar

@@ -9,6 +9,7 @@ sqlalchemy==2.1.1
 alembic==1.20.0
 paho-mqtt==2.1.0
 bcrypt==5.0.0
+psycopg[binary]==3.3.6  # driver de PostgreSQL (Supabase)
 
 # Tests
 pytest==9.1.1
