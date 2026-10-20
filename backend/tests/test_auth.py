@@ -84,29 +84,30 @@ def test_logout_cierra_la_sesion(cliente):
     assert cliente.get("/api/auth/yo").status_code == 401
 
 
-def test_sesion_vence_tras_15_minutos_sin_actividad(sesion):
+def test_sesion_vence_tras_60_segundos_sin_actividad(sesion):
     ahora = ahora_utc()
     _, token = auth.login(sesion, ANA, CLAVE, ahora)
     sesion.flush()
-    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=16)) is None
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=59), renovar=False) is not None
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=61)) is None
 
 
 def test_cada_uso_renueva_la_sesion(sesion):
     ahora = ahora_utc()
     _, token = auth.login(sesion, ANA, CLAVE, ahora)
     sesion.flush()
-    # Usarla cada 10 minutos la mantiene viva aunque pase mas de 15 desde el login
-    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=10)) is not None
-    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=20)) is not None
-    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=36)) is None
+    # Usarla cada 40 s la mantiene viva aunque pase mas de 60 s desde el login
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=40)) is not None
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=80)) is not None
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=141)) is None
 
 
 def test_los_refrescos_automaticos_no_renuevan_la_sesion(sesion):
     ahora = ahora_utc()
     _, token = auth.login(sesion, ANA, CLAVE, ahora)
     sesion.flush()
-    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=10), renovar=False)
-    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(minutes=16), renovar=False) is None
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=40), renovar=False)
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=61), renovar=False) is None
 
 
 def test_encabezado_de_refresco_automatico(cliente, fabrica_sesiones):

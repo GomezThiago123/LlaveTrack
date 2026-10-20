@@ -52,7 +52,7 @@ interface Opciones {
   metodo?: 'GET' | 'POST' | 'DELETE';
   cuerpo?: unknown;
   // true en los pedidos que la web hace sola cada 5 s: no cuentan como actividad del usuario,
-  // asi la sesion igual vence tras 15 min sin uso (US-01)
+  // asi la sesion igual vence tras 60 s sin uso (US-01)
   automatico?: boolean;
 }
 

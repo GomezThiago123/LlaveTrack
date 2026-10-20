@@ -42,7 +42,7 @@ class Config(BaseSettings):
     equipo_timeout_segundos: int = 90
 
     # Login (US-01 y US-07)
-    sesion_minutos: int = 15  # la sesion se cierra tras estos minutos sin actividad
+    sesion_segundos: int = 60  # la sesion se cierra tras estos segundos sin actividad
     login_intentos_max: int = 5  # intentos fallidos seguidos antes de bloquear la cuenta
     login_bloqueo_minutos: int = 15
     bcrypt_rondas: int = 12  # costo del hash de contrasenas (los tests usan menos, para ir rapido)

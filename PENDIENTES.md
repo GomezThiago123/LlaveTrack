@@ -75,7 +75,7 @@ Ya están hechos, pero falta tu prueba.
 - [ ] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
 - [ ] **Fase 2 en la compu:** pedir una llave como Ana, retirarla con el simulador y verla como Carla.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.
-- [ ] **Sesión vencida:** con `SESION_MINUTOS=1` en `backend/.env`, la web vuelve sola al login.
+- [ ] **Sesión vencida (US-01):** sin tocar nada durante 60 s, la web vuelve sola al login; en la pantalla del código, no.
 - [ ] **US-20:** `desenchufar` y `enchufar` en el simulador; los botones de la web se deshabilitan y se habilitan solos.
 - [ ] **US-21 y US-22:** en el simulador, retirar y devolver una llave mirando el LED de faltantes y el LCD (`pantalla`). Frenar el backend y ver que el LED de conexión titila y no deja devolver; levantarlo de nuevo.
 

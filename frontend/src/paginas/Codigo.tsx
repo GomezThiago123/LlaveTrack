@@ -24,11 +24,13 @@ export default function Codigo() {
   }, [manejarError]);
 
   // Mientras esta pendiente, pregunta al servidor si cambio (ej. el equipo acepto el codigo)
-  // y si el equipo sigue conectado (US-20: si se cae, la reserva sigue valiendo hasta que vence)
+  // y si el equipo sigue conectado (US-20: si se cae, la reserva sigue valiendo hasta que vence).
+  // Este pedido NO va como automatico: renueva la sesion, para que no se cierre (60 s, US-01)
+  // mientras el docente va al equipo. Deja de renovarla cuando la reserva se usa o vence.
   const actualizar = useCallback(() => {
     if (reserva?.estado !== 'PENDIENTE') return;
     api
-      .reserva(reserva.id, true)
+      .reserva(reserva.id)
       .then(setReserva)
       .catch((err) => setError(manejarError(err)));
     api

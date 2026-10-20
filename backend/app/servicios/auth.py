@@ -107,7 +107,7 @@ def usuario_de_sesion(
 ) -> Usuario | None:
     """El usuario dueno de la sesion, o None si no existe o vencio por inactividad.
 
-    Cada uso renueva la sesion: vence tras SESION_MINUTOS *sin actividad* (US-01).
+    Cada uso renueva la sesion: vence tras SESION_SEGUNDOS *sin actividad* (US-01).
     renovar=False para los refrescos automaticos de la web: no son actividad del usuario.
     """
     ahora = ahora or ahora_utc()
@@ -125,7 +125,7 @@ def cerrar_sesion(sesion: Session, token: str) -> None:
 
 def _limite(ahora: datetime) -> datetime:
     """Una sesion sin actividad desde antes de este momento esta vencida."""
-    return ahora - timedelta(minutes=config.sesion_minutos)
+    return ahora - timedelta(seconds=config.sesion_segundos)
 
 
 def _credenciales_invalidas() -> ErrorNegocio:
