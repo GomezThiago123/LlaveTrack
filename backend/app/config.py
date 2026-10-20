@@ -23,8 +23,8 @@ class Config(BaseSettings):
     # Base de datos. Por defecto, un archivo SQLite en backend/llavetrack.db
     database_url: str = f"sqlite:///{CARPETA_BACKEND / 'llavetrack.db'}"
 
-    # Minutos que tiene el docente para ir al equipo con su codigo
-    reserva_minutos: int = 10
+    # Minutos que tiene el docente para ir al equipo con su codigo (US-03: 2 min)
+    reserva_minutos: int = 2
 
     # Cuando el equipo acepta un codigo, la reserva se extiende al menos estos segundos,
     # para que no venza mientras el disco gira y el docente retira la llave

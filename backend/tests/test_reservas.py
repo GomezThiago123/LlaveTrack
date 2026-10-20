@@ -6,6 +6,7 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import select, update
 
+from app.config import config
 from app.errores import ErrorNegocio
 from app.modelos import Aula, Dispositivo, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
 from app.servicios import reservas
@@ -34,7 +35,7 @@ def test_reservar_devuelve_codigo_y_reserva_la_llave(sesion):
 
     assert len(reserva.codigo) == 6 and reserva.codigo.isdigit()
     minutos = (reserva.expira_en - reserva.creada_en) / timedelta(minutes=1)
-    assert minutos == 10
+    assert minutos == 2  # US-03
     assert reserva.estado == EstadoReserva.PENDIENTE
     assert estado_llave(sesion, "214") == EstadoLlave.RESERVADA
 
@@ -86,9 +87,9 @@ def test_un_docente_tiene_como_maximo_una_reserva_pendiente(sesion):
 
 
 def test_reserva_vencida_libera_la_llave(sesion):
-    hace_11_min = ahora_utc() - timedelta(minutes=11)
+    ya_vencida = ahora_utc() - timedelta(minutes=config.reserva_minutos + 1)
     reserva = reservas.crear_reserva(
-        sesion, usuario(sesion, ANA), aula(sesion, "214").id, ahora=hace_11_min
+        sesion, usuario(sesion, ANA), aula(sesion, "214").id, ahora=ya_vencida
     )
     sesion.commit()
 

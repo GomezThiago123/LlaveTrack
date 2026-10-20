@@ -22,6 +22,7 @@ from app.modelos import (
     Reserva,
     Usuario,
 )
+from app.config import config
 from app.mqtt_cliente import ClienteMqtt
 from app.servicios import conexion, equipo, reservas
 from app.tipos import ahora_utc
@@ -101,7 +102,8 @@ def test_codigo_vencido(fabrica_sesiones):
 
 def test_codigo_aceptado_extiende_la_reserva_para_que_no_venza_durante_el_retiro(fabrica_sesiones):
     # Reserva a la que le quedan ~30 segundos
-    codigo = reservar(fabrica_sesiones, ahora=ahora_utc() - timedelta(minutes=9, seconds=30))
+    duracion = timedelta(minutes=config.reserva_minutos)
+    codigo = reservar(fabrica_sesiones, ahora=ahora_utc() - duracion + timedelta(seconds=30))
     enviar(fabrica_sesiones, "solicitud_retiro", codigo=codigo)
     with fabrica_sesiones() as s:
         reserva = s.scalar(select(Reserva).where(Reserva.codigo == codigo))

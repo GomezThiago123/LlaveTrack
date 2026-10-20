@@ -101,7 +101,7 @@ Lo único que falta del hardware es el motor (sección 1); lo demás ya se puede
 
 Estos documentos los presentaste en clase y no coinciden con lo que está construido.
 
-- [ ] **CU-01:** el sistema usa código de **6 dígitos** que vence a los **10 min** (el documento dice 4 dígitos y 5 min). La devolución **no se pide desde la app**: se toca `B` en el equipo y se cuelga la llave. El ESP32 no consulta solicitudes cada 2 s: el código lo valida el servidor por MQTT.
+- [ ] **CU-01:** el sistema usa código de **6 dígitos** que vence a los **2 min** (el documento dice 4 dígitos y 5 min). La devolución **no se pide desde la app**: se toca `B` en el equipo y se cuelga la llave. El ESP32 no consulta solicitudes cada 2 s: el código lo valida el servidor por MQTT.
 - [ ] **Documentos de "Servicios", "Vinculación del ESP32" y "Base de datos":** describen Supabase (API REST, polling, heartbeat por HTTP, RLS). Lo construido es FastAPI + Mosquitto, con Supabase solo como base PostgreSQL (sin su API REST: la web y el ESP32 hablan con el servidor). Hay que actualizarlos o explicar el cambio en la defensa.
 - [ ] **Diagrama de bloques:**
   - Corregir "Relugador" por "Regulador".
