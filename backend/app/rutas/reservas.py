@@ -22,6 +22,7 @@ def _salida(reserva: Reserva) -> ReservaSalida:
         id=reserva.id,
         aula=reserva.llave.aula.nombre,
         codigo=reserva.codigo,
+        creada_en=reserva.creada_en,
         expira_en=reserva.expira_en,
         estado=reserva.estado,
     )

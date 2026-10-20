@@ -25,6 +25,7 @@ class ReservaSalida(Esquema):
     id: int
     aula: str
     codigo: str
+    creada_en: datetime  # la web la usa para la barra de tiempo
     expira_en: datetime
     estado: EstadoReserva
 

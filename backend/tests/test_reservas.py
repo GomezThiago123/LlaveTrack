@@ -155,7 +155,7 @@ def test_api_ciclo_reservar_consultar_cancelar(cliente, ingresar, fabrica_sesion
     res = cliente.post("/api/reservas", json={"aulaId": aula_id})
     assert res.status_code == 201
     reserva = res.json()
-    assert set(reserva) == {"id", "aula", "codigo", "expiraEn", "estado"}
+    assert set(reserva) == {"id", "aula", "codigo", "creadaEn", "expiraEn", "estado"}
     assert reserva["aula"] == "214"
 
     activa = cliente.get("/api/reservas/activa")
