@@ -35,7 +35,7 @@ export function hora(fechaIso: string): string {
 export const TEXTO_ESTADO: Record<EstadoLlave, string> = {
   DISPONIBLE: 'Disponible',
   RESERVADA: 'Reservada',
-  PRESTADA: 'Prestada',
+  PRESTADA: 'Ocupada', // US-02: en la base sigue siendo PRESTADA
   BAJA: 'De baja',
 };
 

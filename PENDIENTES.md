@@ -46,7 +46,7 @@ Esperan tu decisión. Después armo un plan y espero tu OK.
 - [ ] **US-05, incidente visible para el preceptor** después de 2 fallas seguidas. Hoy el evento `error` se guarda, pero nadie lo ve. La sección "Incidentes" completa es US-21 (V2): ¿qué parte entra en el MVP?
 - [ ] **US-06, "cuando confirmo":** ¿el docente aprieta `#` para confirmar la devolución, o alcanza con colgar la llave (como ahora)?
 - [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
-- [ ] **Textos exactos de los criterios:** "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
+- [x] **Textos exactos de los criterios** (los del firmware quedan en el CLAUDE.md para la Fase 3): "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
 
 ## 3. El servidor en la nube
 

@@ -287,7 +287,7 @@ class Equipo:
             lcd("Codigo rechazado", res["motivo"].replace("_", " ").lower())
             return None
         print(f"  Disco: gira al slot {res['slot']} y verifica que lee el UID {res['uid']}")
-        lcd(f"Aula {res['aula']}", "Retire la llave")
+        lcd(f"Aula {res['aula']} servida", "RETIRE SU LLAVE")
         return res
 
     def retirar(self, codigo: str) -> None:
@@ -298,7 +298,7 @@ class Equipo:
         confirmado = self.evento("retiro_confirmado", codigo=codigo, uid=res["uid"], slot=res["slot"])
         if confirmado and confirmado["ok"]:
             self.slot_reposo = res["slot"]  # el slot que quedo vacio queda frente a la ventana
-            lcd("Hasta luego", res["apellido"])
+            lcd("Gracias", res["apellido"])
 
     def timeout(self, codigo: str) -> None:
         if self._pedir_llave(codigo) is None:
@@ -322,7 +322,7 @@ class Equipo:
             lcd("Llave no", "reconocida")
             return
         self.slot_reposo = res["slotReposo"]
-        lcd(f"Aula {res['aula']}", f"Gracias {res['apellido']}")
+        lcd("Llave de aula", f"{res['aula']} recibida")
         print(f"  Disco: gira al slot {res['slotReposo']} (vacio)")
 
 

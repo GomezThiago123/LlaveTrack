@@ -71,7 +71,7 @@ def recuperar(pedido: PedidoRecuperacion, sesion: SesionDep) -> Mensaje:
         except Exception:
             # No se avisa a la web: revelaria que el email esta registrado
             log.exception("No se pudo mandar el mail de recuperacion a %s", usuario.email)
-    return Mensaje(mensaje="Si el email está registrado, te mandamos un link para elegir una contraseña nueva.")
+    return Mensaje(mensaje="Si el email está registrado, te enviamos un link.")
 
 
 @router.post("/restablecer", status_code=204)

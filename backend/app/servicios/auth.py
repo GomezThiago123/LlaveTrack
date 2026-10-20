@@ -80,7 +80,7 @@ def login(
         raise ErrorNegocio(
             429,
             "CUENTA_BLOQUEADA",
-            f"Demasiados intentos fallidos. Probá de nuevo en {minutos} min "
+            f"Cuenta bloqueada temporalmente. Probá de nuevo en {minutos} min "
             "o recuperá tu contraseña.",
         )
 
@@ -130,7 +130,7 @@ def _limite(ahora: datetime) -> datetime:
 
 def _credenciales_invalidas() -> ErrorNegocio:
     # Mismo mensaje si el email no existe o si la contrasena esta mal: no se revela cual fue
-    return ErrorNegocio(401, "CREDENCIALES_INVALIDAS", "Email o contraseña incorrectos.")
+    return ErrorNegocio(401, "CREDENCIALES_INVALIDAS", "Usuario o contraseña incorrectos.")
 
 
 # --- Desbloqueo manual por el preceptor (US-07) ---

@@ -75,8 +75,8 @@ Reglas:
 1. El docente ve las aulas y pide una. El servidor reserva la llave y devuelve un código de 6 dígitos que vence en 2 min (US-03). La web lo muestra grande con cuenta regresiva (también si recarga la página).
 2. En el equipo: tecla `A`, ingresa el código (`*` borra, `#` confirma). 3 códigos erróneos seguidos bloquean el teclado 30 s.
 3. ESP32 → `solicitud_retiro`. El servidor valida y responde `slot`, `uid`, `aula`, `apellido`, o un `motivo` de rechazo.
-4. El ESP32 mueve el disco a ese slot y verifica que lee ESE UID. Si no: prueba ±1 slot; si tampoco, da una vuelta completa buscándolo. Si no aparece: error en el LCD y no entrega nada.
-5. LCD "Retire la llave". Cuando ese UID deja de leerse de forma estable (~1,5 s) → `retiro_confirmado`, con el slot donde estaba realmente. El servidor marca la reserva `USADA`, la llave `PRESTADA` y crea el `Prestamo`. La ventana queda con un slot vacío (posición de reposo).
+4. El ESP32 mueve el disco a ese slot y verifica que lee ESE UID. Si no: prueba ±1 slot; si tampoco, da una vuelta completa buscándolo. Mientras reintenta, LCD "Reposicionando...". Si no aparece: LCD "Pedi la llave" / "en porteria" y no entrega nada (US-05).
+5. LCD "Aula 214 servida" / "RETIRE SU LLAVE" (US-04). Cuando ese UID deja de leerse de forma estable (~1,5 s) → `retiro_confirmado`, con el slot donde estaba realmente. El servidor marca la reserva `USADA`, la llave `PRESTADA` y crea el `Prestamo`. LCD "Gracias" / apellido. La ventana queda con un slot vacío (posición de reposo).
 6. Si nadie la retira en 60 s → `retiro_timeout` y el disco vuelve a dejar un slot vacío en la ventana. La reserva sigue vigente hasta que vence.
 7. Reservas vencidas → `VENCIDA` y la llave vuelve a `DISPONIBLE`.
 
@@ -84,7 +84,7 @@ Reglas:
 En reposo siempre hay un slot vacío frente a la ventana. El RFID no puede "buscar" un lugar vacío (el tag está en la mano del docente), por eso el sistema tiene que conocer la posición del disco.
 1. Tecla `B` → LCD "Cuelgue la llave". El docente la cuelga en el slot de la ventana.
 2. Al leer un UID estable (~1 s) → `devolucion { uid, slot }`. El servidor cierra el préstamo activo de esa llave (queda asociado al docente que la retiró), la pasa a `DISPONIBLE`, actualiza su `slot` y responde aula, apellido y `slotReposo` (otro slot vacío).
-3. El LCD confirma y el disco gira a `slotReposo`.
+3. LCD "Llave de aula" / "214 recibida" (US-06) y el disco gira a `slotReposo`.
 4. UID desconocido o sin préstamo activo: "Llave no reconocida" y no se registra nada.
 
 ### Autenticación (US-01, US-07, US-08): DECIDIDO, las dos opciones

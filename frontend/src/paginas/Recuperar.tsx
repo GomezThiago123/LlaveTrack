@@ -40,7 +40,7 @@ export function PedirLink() {
         </>
       ) : (
         <form onSubmit={enviar} className="formulario">
-          <p>Ingresá tu email y te mandamos un link para elegir una contraseña nueva.</p>
+          <p>Ingresá tu email y te enviamos un link para elegir una contraseña nueva.</p>
           <label>
             Email
             <input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
