@@ -12,7 +12,7 @@ from app.servicios import auth
 from app.tipos import ahora_utc
 
 ANA = "ana.perez@example.com"
-CLAVE = "llavetrack"  # la de seed/datos.json
+CLAVE = "llavetrack"  # la de tests/datos_prueba.json
 
 
 def usuario(sesion, email) -> Usuario:

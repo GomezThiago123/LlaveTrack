@@ -37,7 +37,7 @@ pip install -r requirements.txt
 ```
 Si PowerShell no deja activar el entorno, corré una sola vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Después, con el entorno activado, creá la base de datos y cargá los datos de prueba (aulas, llaves y usuarios de `seed/datos.json`):
+Después, con el entorno activado, creá la base de datos y cargá los datos iniciales (las 30 aulas con su llave y los usuarios de prueba de `seed/datos.json`):
 ```sh
 alembic upgrade head
 python -m app.seed
@@ -54,7 +54,7 @@ Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts
 | Comando | Qué hace |
 | --- | --- |
 | `python run.py` | Levanta el servidor en `http://localhost:8000`. Se reinicia solo cuando cambiás el código |
-| `pytest` | Corre los tests (usan una base temporal, no tocan `llavetrack.db`) |
+| `pytest` | Corre los tests (usan una base temporal con `tests/datos_prueba.json` e ignoran tu `.env`: nunca tocan `llavetrack.db` ni Supabase) |
 | `alembic upgrade head` | Aplica las migraciones pendientes a la base (correrlo después de cada `git pull`) |
 | `python -m app.seed --reiniciar` | **Borra todos los datos** y vuelve a cargar `seed/datos.json` |
 | `python simulador/simulador.py` | Simulador del equipo (ver abajo) |
@@ -90,13 +90,13 @@ Los comandos se escriben en el prompt `equipo>`:
 | --- | --- |
 | `retirar 482913` | Ingresa el código de una reserva y retira la llave |
 | `timeout 482913` | Ingresa el código pero nadie retira la llave |
-| `devolver 04A1B2C3` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
+| `devolver 04A00214` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
 | `desenchufar` | Corte de luz: deja de responder sin avisar. A los ~15 s el servidor lo ve desconectado |
 | `enchufar` | Vuelve a arrancar después de `desenchufar` |
 | `pantalla` | Muestra los dos LEDs (conexión y faltantes) y cómo rota el LCD en reposo |
 | `salir` | Se apaga prolijo (también con Ctrl+C) y queda desconectado enseguida |
 
-Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json`.
+Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json`: por ahora son inventados, `04A0` + el número de aula (la del 214 es `04A00214`).
 
 Mientras el equipo está desconectado, la web no deja pedir llaves (US-20). El simulador también muestra los LEDs: el de faltantes se prende cuando hay llaves prestadas (US-21) y el de conexión titila si se cae el broker o el servidor; en ese caso no deja retirar ni devolver (US-22).
 

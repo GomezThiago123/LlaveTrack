@@ -139,7 +139,7 @@ El servidor responde **cada** evento en `resp`:
 Se publica al arrancar y en cada reconexión. Informa la configuración del disco.
 
 ```json
-→ evt/inicio  {"eventId":"equipo-01-7f3a-0001","slotsTotales":24,"slotsReservados":[0]}
+→ evt/inicio  {"eventId":"equipo-01-7f3a-0001","slotsTotales":32,"slotsReservados":[0]}
 ← resp        {"eventId":"equipo-01-7f3a-0001","ok":true,"slotReposo":5}
 ```
 `slotsReservados`: slots que nunca llevan llave (ej. el del tag HOME). `slotReposo`: el slot vacío más cercano al 0 (donde queda el disco después del homing), contando que el disco es circular.

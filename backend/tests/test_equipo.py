@@ -27,7 +27,7 @@ from app.servicios import conexion, equipo, reservas
 from app.tipos import ahora_utc
 
 EQUIPO = "equipo-01"
-UID_214 = "04A1B2C3"  # llave del aula 214, en el slot 1 (seed/datos.json)
+UID_214 = "04A1B2C3"  # llave del aula 214, en el slot 1 (tests/datos_prueba.json)
 _contador = itertools.count(1)
 
 

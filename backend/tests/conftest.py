@@ -1,14 +1,17 @@
 """Configuracion compartida de los tests.
 
-Cada test usa una base SQLite nueva en una carpeta temporal, cargada con seed/datos.json
+Cada test usa una base SQLite nueva en una carpeta temporal, cargada con tests/datos_prueba.json
 y con el equipo online.
 Nunca toca backend/llavetrack.db.
 """
 
 import json
 import os
+from pathlib import Path
 
-# Antes de importar la app: hashes de contrasena baratos, para que los tests vayan rapido
+# Antes de importar la app: sin el .env de cada uno (valores por defecto) y
+# hashes de contrasena baratos, para que los tests vayan rapido
+os.environ["LLAVETRACK_TESTS"] = "1"
 os.environ["BCRYPT_RONDAS"] = "4"
 
 import pytest
@@ -19,8 +22,11 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base, crear_engine, obtener_sesion
 from app.main import app
 from app.modelos import Dispositivo
-from app.seed import ARCHIVO_DATOS, cargar_datos
+from app.seed import cargar_datos
 from app.tipos import ahora_utc
+
+# Datos fijos de los tests: no cambian cuando se edita el seed real (seed/datos.json)
+DATOS_PRUEBA = Path(__file__).parent / "datos_prueba.json"
 
 
 @pytest.fixture
@@ -30,7 +36,7 @@ def fabrica_sesiones(tmp_path):
     Base.metadata.create_all(engine)
     fabrica = sessionmaker(engine, expire_on_commit=False)
     with fabrica() as sesion:
-        cargar_datos(sesion, json.loads(ARCHIVO_DATOS.read_text(encoding="utf-8")))
+        cargar_datos(sesion, json.loads(DATOS_PRUEBA.read_text(encoding="utf-8")))
         # El equipo arranca conectado: sin equipo no se puede reservar (US-20).
         # Los tests de equipo desconectado lo cambian a mano.
         sesion.execute(update(Dispositivo).values(online=True, ultimo_contacto=ahora_utc()))
@@ -59,7 +65,7 @@ def cliente(fabrica_sesiones):
 
 
 
-CLAVE_DE_PRUEBA = "llavetrack"  # la de seed/datos.json
+CLAVE_DE_PRUEBA = "llavetrack"  # la de tests/datos_prueba.json
 
 
 @pytest.fixture

@@ -1,8 +1,13 @@
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 CARPETA_BACKEND = Path(__file__).parent.parent
+
+# Los tests ponen LLAVETRACK_TESTS=1 (conftest.py) para no leer el .env de cada uno:
+# asi siempre usan los valores por defecto y nunca la base de Supabase.
+ARCHIVO_ENV = None if os.environ.get("LLAVETRACK_TESTS") else CARPETA_BACKEND / ".env"
 
 
 class Config(BaseSettings):
@@ -11,7 +16,7 @@ class Config(BaseSettings):
     Cada campo se puede cambiar en el .env con su nombre en mayusculas (ej. RESERVA_MINUTOS=5).
     """
 
-    model_config = SettingsConfigDict(env_file=CARPETA_BACKEND / ".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ARCHIVO_ENV, extra="ignore")
 
     port: int = 8000
 

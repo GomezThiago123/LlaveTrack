@@ -10,10 +10,10 @@ en el prompt. Muestra los dos LEDs: faltantes (US-21) y conexion con el servidor
 Uso (desde backend/, con el .venv activado):
     python simulador/simulador.py
     equipo> retirar 482913
-    equipo> devolver 04A1B2C3
+    equipo> devolver 04A00214
     equipo> desenchufar
     equipo> salir
-Opciones: --equipo equipo-01  --host localhost  --puerto 1883  --slots 24  --repetir
+Opciones: --equipo equipo-01  --host localhost  --puerto 1883  --slots 32  --repetir
 """
 
 import argparse
@@ -374,7 +374,7 @@ def main() -> None:
     parser.add_argument("--equipo", default="equipo-01", help="deviceId (default: equipo-01)")
     parser.add_argument("--host", default="localhost", help="broker MQTT (default: localhost)")
     parser.add_argument("--puerto", type=int, default=1883)
-    parser.add_argument("--slots", type=int, default=24, help="slots totales del disco (default: 24)")
+    parser.add_argument("--slots", type=int, default=32, help="slots totales del disco (default: 32)")
     parser.add_argument("--repetir", action="store_true", help="manda cada evento dos veces (prueba de duplicados)")
     args = parser.parse_args()
 
