@@ -5,7 +5,8 @@ app/protocolo.py (una sesion de base por mensaje) y publica la respuesta.
 Si el broker no esta, el servidor arranca igual y paho reintenta conectarse solo.
 
 Tambien publica la lista de aulas faltantes de cada equipo (US-21), retenida: el equipo
-la recibe sola al conectarse, sin pedirla.
+la recibe sola al conectarse, sin pedirla. Y su propio estado en `servidor/estado` (US-22),
+con LWT: si el servidor se cae, el broker avisa a los equipos y apagan el LED de conexion.
 """
 
 import json
@@ -23,6 +24,8 @@ from app.servicios import conexion, equipo
 log = logging.getLogger(__name__)
 
 PREFIJO = "llavetrack/v1"
+# deviceId reservado: `{prefijo}/servidor/estado` es el estado del servidor, no de un equipo
+SERVIDOR = "servidor"
 
 
 class ClienteMqtt:
@@ -31,10 +34,15 @@ class ClienteMqtt:
         fabrica_sesiones: sessionmaker,
         client_id: str = "llavetrack-servidor",
         prefijo: str = PREFIJO,  # los tests usan otro, para no cruzarse con un servidor en marcha
+        keepalive: int = 15,  # si el servidor se cae, el broker publica su LWT en ~1,5 x keepalive
     ):
         self.fabrica_sesiones = fabrica_sesiones
         self.prefijo = prefijo
+        self.keepalive = keepalive
+        self.topico_estado = f"{prefijo}/{SERVIDOR}/estado"
         self.cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
+        # LWT (US-22): si el servidor se corta sin despedirse, el broker publica que quedo offline
+        self.cliente.will_set(self.topico_estado, json.dumps({"online": False}), qos=1, retain=True)
         if config.mqtt_usuario:
             self.cliente.username_pw_set(config.mqtt_usuario, config.mqtt_clave)
         self.cliente.reconnect_delay_set(min_delay=1, max_delay=30)
@@ -45,11 +53,15 @@ class ClienteMqtt:
         self.faltantes_publicados: dict[str, list[str]] = {}
 
     def iniciar(self, host: str = config.mqtt_host, puerto: int = config.mqtt_puerto) -> None:
-        # keepalive 15 s: si el broker se cae sin cerrar la conexion, paho lo nota en ~20 s
-        self.cliente.connect_async(host, puerto, keepalive=15)
+        # El keepalive sirve para los dos lados: paho nota si se cae el broker, y el broker
+        # nota si se cae el servidor (y publica su LWT)
+        self.cliente.connect_async(host, puerto, keepalive=self.keepalive)
         self.cliente.loop_start()  # arranca el hilo de paho
 
     def detener(self) -> None:
+        # Apagado prolijo: el LWT solo se publica si se corta, asi que avisa a mano
+        if self.cliente.is_connected():
+            self.cliente.publish(self.topico_estado, json.dumps({"online": False}), qos=1, retain=True).wait_for_publish(5)
         self.cliente.disconnect()
         self.cliente.loop_stop()
 
@@ -58,6 +70,7 @@ class ClienteMqtt:
             log.error("No se pudo conectar al broker MQTT: %s", codigo)
             return
         log.info("Conectado al broker MQTT")
+        cliente.publish(self.topico_estado, json.dumps({"online": True}), qos=1, retain=True)
         # Mientras estuvo desconectado no supo nada de los equipos: los marca offline y al
         # suscribirse a `estado` el broker le manda el ultimo mensaje retenido de cada uno.
         # Asi tambien recupera el estado real cuando se reinicia el servidor.
@@ -105,6 +118,8 @@ class ClienteMqtt:
         # Topico: {prefijo}/{deviceId}/evt/{tipo}, {prefijo}/{deviceId}/estado o {prefijo}/{deviceId}/latido
         partes = mensaje.topic.removeprefix(self.prefijo + "/").split("/")
         device_id = partes[0]
+        if device_id == SERVIDOR:  # su propio estado: coincide con el patron "+/estado" de los equipos
+            return
         try:
             with self.fabrica_sesiones() as sesion:
                 if partes[1] == "estado":

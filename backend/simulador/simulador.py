@@ -5,7 +5,7 @@ lo que haria el LCD con cada respuesta. Sirve para probar todo sin hardware.
 
 Como el equipo real, queda prendido hasta que lo apagues: al arrancar se conecta
 (con LWT), manda `inicio` y despues un latido cada 30 s. Los comandos se escriben
-en el prompt.
+en el prompt. Muestra los dos LEDs: faltantes (US-21) y conexion con el servidor (US-22).
 
 Uso (desde backend/, con el .venv activado):
     python simulador/simulador.py
@@ -28,6 +28,7 @@ import threading
 import paho.mqtt.client as mqtt
 
 PREFIJO = "llavetrack/v1"
+TOPICO_SERVIDOR = f"{PREFIJO}/servidor/estado"  # US-22: el servidor esta vivo (retenido, con LWT)
 ESPERA_RESPUESTA = 5  # segundos, igual que el equipo real
 REINTENTOS = 3
 # Iguales a los del firmware (config.h): con keepalive de 10 s el broker publica el LWT
@@ -98,14 +99,64 @@ class Equipo:
         self.enchufado = False
         self.parar_latido = threading.Event()
         self.faltantes: list[str] | None = None  # aulas sin llave en el disco (llega del servidor)
+        # US-22: el LED de conexion se enciende solo con broker conectado y servidor online
+        self.broker_conectado = False
+        self.servidor_online: bool | None = None  # None = todavia no llego su estado
+        self.conectado = threading.Event()
 
         self.cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"sim-{self.device_id}")
         # LWT: si el equipo se corta sin despedirse, el broker publica que quedo offline
         self.cliente.will_set(self.topico("estado"), json.dumps({"online": False}), qos=1, retain=True)
         self.cliente.on_message = self._al_recibir
+        self.cliente.on_connect = self._al_conectar
+        self.cliente.on_disconnect = self._al_desconectar
 
     def topico(self, sufijo: str) -> str:
         return f"{PREFIJO}/{self.device_id}/{sufijo}"
+
+    def _al_conectar(self, cliente, _userdata, _flags, codigo, _props) -> None:
+        if codigo.is_failure:
+            return
+        reconexion = self.enchufado and not self.broker_conectado
+        self.broker_conectado = True
+        # En cada conexion (tambien al reconectar): suscripciones y estado online retenido.
+        # Primero el estado del servidor, asi su mensaje retenido llega antes que los faltantes
+        cliente.subscribe(TOPICO_SERVIDOR, qos=1)
+        cliente.subscribe(self.topico("resp"), qos=1)
+        cliente.subscribe(self.topico("faltantes"), qos=1)
+        cliente.publish(self.topico("estado"), json.dumps({"online": True}), qos=1, retain=True)
+        self.conectado.set()
+        if reconexion:
+            self._avisar("Reconectado al broker.")
+
+    def _al_desconectar(self, _cliente, _userdata, _flags, _codigo, _props) -> None:
+        self.broker_conectado = False
+        self.conectado.clear()
+        if self.enchufado:  # se cayo el broker (no fue "salir" ni "desenchufar")
+            self._avisar("Se perdio el broker: paho reintenta solo.")
+
+    def _avisar(self, texto: str) -> None:
+        """Algo que pasa solo (llega del broker) mientras el prompt espera un comando."""
+        print(f"\n  {texto}")
+        self.mostrar_leds()
+        motivo = self.motivo_sin_conexion()
+        if motivo:
+            lcd("Sin conexion", motivo)
+        print("equipo> ", end="", flush=True)
+
+    def motivo_sin_conexion(self) -> str | None:
+        """None si hay conexion; si no, que falta (va en la linea 2 del LCD)."""
+        if not self.broker_conectado:
+            return "Broker"
+        if not self.servidor_online:
+            return "Servidor"
+        return None
+
+    def mostrar_leds(self) -> None:
+        motivo = self.motivo_sin_conexion()
+        conexion = "ENCENDIDO" if motivo is None else f"TITILANDO (falta: {motivo.lower()})"
+        print(f"  LED conexion: {conexion}")
+        print(f"  LED faltantes: {'ENCENDIDO' if self.faltantes else 'apagado'}")
 
     def _al_recibir(self, _cliente, _userdata, mensaje) -> None:
         try:
@@ -120,12 +171,19 @@ class Equipo:
             print(f"\n  ← faltantes {json.dumps(datos)}")
             self.mostrar_reposo()
             print("equipo> ", end="", flush=True)
+        elif mensaje.topic == TOPICO_SERVIDOR:
+            # Retenido: llega al conectarse. Si el servidor se cae, llega su LWT
+            self.servidor_online = bool(datos.get("online"))
+            self._avisar(f"← servidor/estado {json.dumps(datos)}")
 
     def mostrar_reposo(self) -> None:
         """Como quedan los LEDs y el LCD en reposo."""
         faltantes = self.faltantes or []
-        led = "ENCENDIDO" if faltantes else "apagado"
-        print(f"  LED faltantes: {led}")
+        self.mostrar_leds()
+        motivo = self.motivo_sin_conexion()
+        if motivo:
+            lcd("Sin conexion", motivo)
+            return
         print("  LCD en reposo, la linea 1 rota:")
         for pantalla in pantallas_reposo(hora_lcd(), faltantes):
             print(f"       [{pantalla:<{LCD_ANCHO}}]")
@@ -143,9 +201,9 @@ class Equipo:
         except OSError as error:
             sys.exit(f"No se pudo conectar al broker MQTT en {self.host}:{self.puerto} ({error}). ¿Está Mosquitto?")
         self.cliente.loop_start()
-        self.cliente.subscribe(self.topico("resp"), qos=1)
-        self.cliente.subscribe(self.topico("faltantes"), qos=1)
-        self.publicar_estado(True)
+        # _al_conectar se suscribe y publica el estado online (tambien en cada reconexion)
+        if not self.conectado.wait(5):
+            sys.exit("El broker no respondió a la conexión.")
         self.enchufado = True
 
         res = self.evento("inicio", slotsTotales=self.slots, slotsReservados=[0])
@@ -167,7 +225,11 @@ class Equipo:
         self.parar_latido.set()
         self.cliente.loop_stop()
         self.enchufado = False
-        print(f"  (sin luz) El broker va a publicar el LWT en ~{KEEPALIVE * 3 // 2} s.")
+        self.broker_conectado = False
+        self.servidor_online = None
+        self.conectado.clear()
+        print("  (sin luz) LEDs y LCD apagados.")
+        print(f"  El broker va a publicar el LWT en ~{KEEPALIVE * 3 // 2} s.")
         print("  Mirá la web: en el próximo refresco el equipo aparece desconectado.")
 
     def apagar(self) -> None:
@@ -175,6 +237,7 @@ class Equipo:
         self.parar_latido.set()
         if self.enchufado:
             self.publicar_estado(False)
+            self.enchufado = False  # para que _al_desconectar no lo tome como una caida del broker
             self.cliente.disconnect()
             self.cliente.loop_stop()
 
@@ -290,6 +353,10 @@ def ejecutar(eq: Equipo, linea: str) -> bool:
         eq.desenchufar()
     elif comando == "pantalla":
         eq.mostrar_reposo()
+    elif comando in ("retirar", "timeout", "devolver") and eq.motivo_sin_conexion():
+        # Como el equipo real: sin conexion con el servidor no entrega ni recibe llaves
+        lcd("Sin conexion", eq.motivo_sin_conexion())
+        print("  (sin conexión el equipo no entrega ni recibe llaves)")
     elif comando in ("retirar", "timeout") and len(args) == 1:
         getattr(eq, comando)(args[0])
     elif comando == "devolver" and len(args) in (1, 2):

@@ -15,6 +15,7 @@ import pytest
 from sqlalchemy import select
 
 from app.modelos import Aula, Usuario
+from app import protocolo
 from app.mqtt_cliente import ClienteMqtt
 from app.servicios import conexion, reservas
 
@@ -87,6 +88,12 @@ def esperar(condicion, segundos: float) -> bool:
     return condicion()
 
 
+def cortar_sin_despedirse(cliente: mqtt.Client) -> None:
+    """Como un corte de luz: la conexion se cae sin mandar DISCONNECT, asi el broker publica el LWT."""
+    cliente.loop_stop()
+    cliente.socket().close()
+
+
 def equipo_online(fabrica_sesiones) -> bool:
     with fabrica_sesiones() as s:
         return conexion.equipo_online(s)
@@ -104,7 +111,7 @@ def test_lwt_y_estado_retenido(fabrica_sesiones):
 
     equipo = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"test-equipo-{secrets.token_hex(4)}")
     equipo.will_set(topico_estado, json.dumps({"online": False}), qos=1, retain=True)
-    equipo.connect("localhost", 1883, keepalive=1)  # keepalive corto: el LWT llega en ~1,5 s
+    equipo.connect("localhost", 1883)
     equipo.loop_start()
     equipo.publish(topico_estado, json.dumps({"online": True}), qos=1, retain=True).wait_for_publish(5)
 
@@ -114,9 +121,11 @@ def test_lwt_y_estado_retenido(fabrica_sesiones):
         # Reinicio del servidor: recupera el estado del mensaje retenido
         assert esperar(lambda: equipo_online(fabrica_sesiones), 5)
 
-        # Corte de luz: deja de mandar pings sin desconectarse. El broker publica el LWT
-        equipo.loop_stop()
-        assert esperar(lambda: not equipo_online(fabrica_sesiones), 6)
+        # Se corta sin despedirse (sin DISCONNECT): el broker publica el LWT.
+        # Se cierra el socket en vez de esperar el keepalive, que depende de cada cuanto
+        # lo revisa Mosquitto y hacia el test inestable
+        cortar_sin_despedirse(equipo)
+        assert esperar(lambda: not equipo_online(fabrica_sesiones), 5)
     finally:
         equipo.disconnect()
         servidor.detener()
@@ -193,5 +202,52 @@ def test_faltantes_retenido_despues_del_retiro(fabrica_sesiones):
         limpieza.connect("localhost", 1883)
         limpieza.loop_start()
         limpieza.publish(topico_faltantes, b"", retain=True).wait_for_publish(5)
+        limpieza.disconnect()
+        limpieza.loop_stop()
+
+
+# --- US-22: estado del servidor ---
+
+
+def test_estado_del_servidor_y_su_lwt(fabrica_sesiones, monkeypatch):
+    prefijo = f"llavetrack-test-{secrets.token_hex(4)}/v1"
+    topico = f"{prefijo}/servidor/estado"
+    estados: queue.Queue = queue.Queue()
+    # Espia: a que deviceId le procesa el `estado` el servidor
+    procesados = []
+    monkeypatch.setattr(protocolo, "procesar_estado", lambda _s, device_id, _crudo: procesados.append(device_id))
+    observador = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"test-obs-{secrets.token_hex(4)}")
+    observador.on_message = lambda _c, _u, msg: msg.payload and estados.put(json.loads(msg.payload))
+    observador.connect("localhost", 1883)
+    observador.loop_start()
+    observador.subscribe(topico, qos=1)
+
+    def nuevo_servidor() -> ClienteMqtt:
+        servidor = ClienteMqtt(fabrica_sesiones, client_id=f"test-servidor-{secrets.token_hex(4)}", prefijo=prefijo)
+        servidor.iniciar("localhost", 1883)
+        return servidor
+
+    try:
+        # Arranca: publica que esta online. Se apaga prolijo: publica que no
+        servidor = nuevo_servidor()
+        assert estados.get(timeout=5) == {"online": True}
+        servidor.detener()
+        assert estados.get(timeout=5) == {"online": False}
+
+        # Se cae: el broker publica su LWT
+        servidor = nuevo_servidor()
+        assert estados.get(timeout=5) == {"online": True}
+        cortar_sin_despedirse(servidor.cliente)
+        assert estados.get(timeout=5) == {"online": False}
+
+        # Su propio estado coincide con el patron "+/estado" de los equipos, pero lo ignora
+        assert "servidor" not in procesados
+    finally:
+        observador.disconnect()
+        observador.loop_stop()
+        limpieza = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        limpieza.connect("localhost", 1883)
+        limpieza.loop_start()
+        limpieza.publish(topico, b"", retain=True).wait_for_publish(5)
         limpieza.disconnect()
         limpieza.loop_stop()

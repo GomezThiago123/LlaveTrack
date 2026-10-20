@@ -25,7 +25,7 @@ Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada u
 En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 
 - [x] **US-21: LED y LCD de llaves faltantes.** Hecho en el servidor y el simulador; en el equipo se hace en la Fase 3.
-- [ ] **US-22: LED de conexión con el servidor.** Mi propuesta: el servidor publica `llavetrack/v1/servidor/estado` (retenido, con su propio LWT). Falta decidir si el LED titila mientras reintenta.
+- [x] **US-22: LED de conexión con el servidor.** Hecho en el servidor y el simulador (el LED titila mientras no hay conexión); en el equipo se hace en la Fase 3.
 - [ ] **Seed con las 30 aulas reales** (101–105, 111–115, 201–205, 211–215, 301–305, 311–315), ya desbloqueado: `slotsTotales: 32`, slot 0 reservado para HOME y las aulas en los slots 1 a 30 (UID inventados hasta el modo diagnóstico). El simulador pasa a `--slots 32` por defecto.
 - [ ] **Documentación:** actualizar el CLAUDE.md y `docs/` con los tópicos nuevos, las variables de `.env` y los LEDs.
 
@@ -53,6 +53,7 @@ Ya están hechos, pero falta tu prueba.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.
 - [ ] **Sesión vencida:** con `SESION_MINUTOS=1` en `backend/.env`, la web vuelve sola al login.
 - [ ] **US-20:** `desenchufar` y `enchufar` en el simulador; los botones de la web se deshabilitan y se habilitan solos.
+- [ ] **US-21 y US-22:** en el simulador, retirar y devolver una llave mirando el LED de faltantes y el LCD (`pantalla`). Frenar el backend y ver que el LED de conexión titila y no deja devolver; levantarlo de nuevo.
 
 ## 6. Fase 3: firmware
 

@@ -24,6 +24,14 @@ Prefijo: `llavetrack/v1/{deviceId}/` (ej. `llavetrack/v1/equipo-01/`).
 | `latido` | ESP32 | no | `{}` cada 30 s: "sigo vivo" (ver [Conexión del equipo](#conexión-del-equipo)) |
 | `resp` | servidor | no | Respuesta a cada evento, con el mismo `eventId` |
 | `faltantes` | servidor | **sí** | Aulas cuya llave no está en el disco (ver [Llaves faltantes](#llaves-faltantes-us-21)) |
+
+El servidor publica además su propio estado, fuera del prefijo de los equipos:
+
+| Tópico | Quién publica | Retenido | Para qué |
+| --- | --- | --- | --- |
+| `llavetrack/v1/servidor/estado` | servidor | **sí** | `{"online":true}` al conectar. LWT: `{"online":false}` (ver [LED de conexión](#led-de-conexión-us-22)) |
+
+`servidor` es un deviceId **reservado**: como `servidor/estado` coincide con el patrón `+/estado` de los equipos, el servidor ignora ese nombre. Ningún equipo puede llamarse así.
 | `cmd` | servidor | no | Comandos al equipo |
 
 ## Conexión del equipo
@@ -78,6 +86,25 @@ Qué hace el equipo con la lista:
 [Mar 20/10  14:32]   [Faltan: 105 114 ]   [Faltan: 204     ]
 [A:Retirar B:Dev.]   [A:Retirar B:Dev.]   [A:Retirar B:Dev.]
 ```
+
+## LED de conexión (US-22)
+
+El equipo sabe que el servidor está vivo por `llavetrack/v1/servidor/estado` (retenido):
+
+- El servidor publica `{"online":true}` al conectarse al broker y `{"online":false}` antes de apagarse prolijo.
+- Si se cae sin despedirse, el broker publica su LWT `{"online":false}` en ~22 s (1,5 × keepalive de 15 s).
+- Como es retenido, el equipo lo recibe al suscribirse. Conviene suscribirse a este tópico **antes** que a `faltantes`, así el estado del servidor llega primero.
+
+| WiFi | Broker | Servidor | LED de conexión | LCD | Entrega y recibe llaves |
+| --- | --- | --- | --- | --- | --- |
+| sí | sí | online | encendido fijo | reposo normal | sí |
+| sí | sí | offline | titila | `Sin conexion` / `Servidor` | no |
+| sí | no | — | titila | `Sin conexion` / `Broker` | no |
+| no | — | — | titila | `Sin conexion` / `WiFi` | no |
+
+Titila (en vez de apagarse) para distinguir "prendido pero sin conexión" de "sin luz". El equipo reintenta solo en todos los casos.
+
+**ACL de Mosquitto:** cada equipo necesita, además de su prefijo, permiso de **lectura** sobre `llavetrack/v1/servidor/estado`.
 
 ## eventId
 

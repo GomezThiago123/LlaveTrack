@@ -91,11 +91,12 @@ Los comandos se escriben en el prompt `equipo>`:
 | `devolver 04A1B2C3` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
 | `desenchufar` | Corte de luz: deja de responder sin avisar. A los ~15 s el servidor lo ve desconectado |
 | `enchufar` | Vuelve a arrancar después de `desenchufar` |
+| `pantalla` | Muestra los dos LEDs (conexión y faltantes) y cómo rota el LCD en reposo |
 | `salir` | Se apaga prolijo (también con Ctrl+C) y queda desconectado enseguida |
 
 Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json`.
 
-Mientras el equipo está desconectado, la web no deja pedir llaves (US-20).
+Mientras el equipo está desconectado, la web no deja pedir llaves (US-20). El simulador también muestra los LEDs: el de faltantes se prende cuando hay llaves prestadas (US-21) y el de conexión titila si se cae el broker o el servidor; en ese caso no deja retirar ni devolver (US-22).
 
 Para ver todos los mensajes del broker: `mosquitto_sub -v -t 'llavetrack/#'` o MQTTX.
 
