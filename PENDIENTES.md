@@ -6,7 +6,9 @@
 
 - [x] **Rediseño de la web** con el [prototipo de Joel](https://github.com/joel012930/llavetrack) y los colores de la UBA (azul, celeste y blanco): todas las pantallas, probadas con capturas en tamaño de celular (21/10/2026).
 - [x] **V2 en el servidor** (en `main`): US-17 mis préstamos, US-12/13 historial, US-16 recordatorio (a mano: el sistema no conoce los turnos), US-09 alta y desactivar docentes, US-10 cambiar el tag RFID (a mano hasta el modo alta del equipo). Supabase ya tiene las migraciones.
-- [ ] **Vite 8.3.2 tiene una falla de seguridad** (`npm audit`): actualizarlo.
+- [x] **Vite actualizado a 8.3.3** (la 8.3.2 tenía una falla de seguridad). `npm audit`: 0 fallas.
+- [x] **Las listas del servidor ya no hacen una consulta por fila** (con Supabase, `/api/aulas` tardaba 6,7 s y la web se quedaba en "Cargando…"; ahora 1,6 s). Hay un test que lo controla.
+- [x] **Probado en el entorno real** (servidor + Supabase + simulador + web, 21/10/2026): ciclo retiro → devolución, bloqueo y desbloqueo de Bruno (US-07) y todas las pantallas.
 
 ## 1. Respuestas que necesito de vos
 
@@ -54,7 +56,7 @@ Esperan tu decisión. Después armo un plan y espero tu OK.
 - [ ] **US-02, quién ve quién tiene la llave:** decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
 - [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
 - [x] **US-05, incidente visible para el preceptor:** tabla `Incidente`, `GET /api/incidentes` y el cuadro "Problemas del equipo hoy" del preceptor. En el simulador: `falla <codigo>`. En el equipo se hace en la Fase 3.
-- [x] **US-06, "cuando confirmo":** decidido: automático, como ahora (alcanza con colgar la llave). Falta ajustar el criterio en Notion para que diga que el sistema confirma solo.
+- [x] **US-06, "cuando confirmo":** decidido: automático, como ahora (alcanza con colgar la llave). El criterio ya se ajustó en Notion y en `docs/user-stories.md` (21/10/2026).
 - [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
 - [x] **Textos exactos de los criterios** (los del firmware quedan en el CLAUDE.md para la Fase 3): "Usuario o contraseña incorrectos" (hoy "Email o…"), "Ocupada" (hoy "Prestada"), "Cuenta bloqueada temporalmente", "Si el email está registrado, te enviamos un link", y en el LCD "Aula X servida / RETIRE SU LLAVE", "Gracias X" al retirar, "Reposicionando / Espere...", "Pedi la llave / en porteria" y "Llave de aula X recibida" (todo de 16 caracteres por línea y sin tildes).
 
@@ -70,7 +72,7 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 - [x] **Base persistente:** PostgreSQL de Supabase (`DATABASE_URL` en `backend/.env`, ver `.env.example`). Solo como base: la web y el ESP32 siguen pasando por el servidor. RLS activado en todas las tablas.
 - [x] **Conexión a Supabase:** migraciones, seed y RLS aplicados; login, reservas y conexión del simulador andan contra la base real (20/10/2026). Se borraron las tablas y funciones del diseño viejo, y el trigger sobre `auth.users`.
 - [ ] **Cargar el seed nuevo en Supabase:** `python -m app.seed --reiniciar` (borra los datos de prueba que hay ahora) y reiniciar el simulador (ahora usa 32 slots).
-- [ ] **Terminar el ciclo con Supabase:** `retirar <codigo>` y `devolver 04A00214` en el simulador, y ver en **Table Editor → prestamo** la fila con `devuelto_en`.
+- [x] **Terminar el ciclo con Supabase** (hecho el 21/10/2026): `retirar <codigo>` y `devolver 04A00214` en el simulador, y ver en **Table Editor → prestamo** la fila con `devuelto_en`.
 - [ ] **Pasarles la conexión a tus compañeros:** la URL con la contraseña va por privado (nunca al repo). Cada uno la pone en su `backend/.env`; para desarrollar sin pisarse pueden seguir con SQLite local.
 - [ ] **Configurar el `.env` de producción:** `COOKIE_SEGURA=true`, `WEB_URL` con el dominio y `SMTP_*`.
 
@@ -86,7 +88,7 @@ Ya están hechos, pero falta tu prueba.
 
 - [ ] **Web nueva:** recorrerla en el celular como Ana (Aulas, pedir una llave, Mis llaves, Cuenta) y como Carla (Faltantes con "Enviar recordatorio", Historial con filtros, Equipo con el cambio de tag, Docentes con alta y desactivar). Antes: `alembic upgrade head` si tu base no está al día.
 - [ ] **US-05:** como Ana pedí una llave; en el simulador `falla <codigo>`; como Carla tiene que aparecer "Problemas del equipo hoy" con la hora, el aula y la docente. Antes: `alembic upgrade head` (tabla nueva).
-- [ ] **US-07:** fallá 5 veces el login de Bruno y desbloquealo como Carla.
+- [x] **US-07:** Bruno bloqueado tras 5 intentos y desbloqueado por Carla (probado en el entorno real el 21/10/2026).
 - [ ] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
 - [ ] **Fase 2 en la compu:** pedir una llave como Ana, retirarla con el simulador y verla como Carla.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.

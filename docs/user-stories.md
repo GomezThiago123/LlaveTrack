@@ -97,8 +97,10 @@ Copiadas de Notion el 20/10/2026, tal cual están ahí. La numeración y el rele
 
 **Criterios de aceptación**
 - Dado que tengo una llave retirada, cuando la coloco en el equipo, entonces el LCD muestra "Llave de aula X recibida".
-- Cuando confirmo, se registra la devolución con fecha y hora y el aula pasa a Disponible.
-- Al confirmar la recepción de la llave, se debe girar el carrusel a una posición vacía.
+- Cuando el lector reconoce la llave (no hace falta apretar ninguna tecla), se registra la devolución con fecha y hora y el aula pasa a Disponible.
+- Al registrar la devolución, el carrusel gira a una posición vacía.
+
+*Ajustado el 21/10/2026, también en Notion: antes decía "cuando confirmo"; se decidió que la devolución se confirma sola.*
 - Si coloco una llave desconocida o que no figura como retirada, el LCD muestra "Llave no reconocida" y no se registra nada.
 
 **Para conversar:** ¿puede un docente devolver una llave que retiró otro?
