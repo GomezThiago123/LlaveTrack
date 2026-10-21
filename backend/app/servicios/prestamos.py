@@ -11,7 +11,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Literal
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, contains_eager, joinedload
 
 from app.errores import ErrorNegocio
 from app.modelos import Llave, Prestamo, Usuario
@@ -25,6 +25,7 @@ def mis_prestamos(sesion: Session, usuario: Usuario, limite: int = 50) -> list[P
     return list(
         sesion.scalars(
             select(Prestamo)
+            .options(joinedload(Prestamo.llave).joinedload(Llave.aula))
             .where(Prestamo.usuario_id == usuario.id)
             .order_by(Prestamo.devuelto_en.is_not(None), Prestamo.retirado_en.desc())
             .limit(limite)
@@ -45,7 +46,17 @@ def historial(
 
     desde y hasta son dias de Argentina e incluyen el dia completo.
     """
-    consulta = select(Prestamo).join(Llave).order_by(Prestamo.retirado_en.desc()).limit(limite)
+    # Docente, llave y aula en la misma consulta: si no, serian tres consultas mas por prestamo
+    consulta = (
+        select(Prestamo)
+        .join(Llave)
+        .options(
+            joinedload(Prestamo.usuario),
+            contains_eager(Prestamo.llave).joinedload(Llave.aula),
+        )
+        .order_by(Prestamo.retirado_en.desc())
+        .limit(limite)
+    )
     if aula_id is not None:
         consulta = consulta.where(Llave.aula_id == aula_id)
     if usuario_id is not None:

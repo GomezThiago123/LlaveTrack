@@ -10,7 +10,7 @@ Como el resto de app/servicios, no hace commit: lo hace quien la llama.
 import re
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, contains_eager
 
 from app.errores import ErrorNegocio
 from app.modelos import Aula, Dispositivo, EstadoLlave, Llave
@@ -23,7 +23,11 @@ def estado_equipo(sesion: Session) -> tuple[Dispositivo | None, bool, list[Llave
     vencer_reservas(sesion)
     dispositivo = sesion.scalars(select(Dispositivo).order_by(Dispositivo.id)).first()
     llaves = sesion.scalars(
-        select(Llave).join(Aula).where(Llave.estado != EstadoLlave.BAJA).order_by(Llave.slot, Aula.nombre)
+        select(Llave)
+        .join(Aula)
+        .options(contains_eager(Llave.aula))  # el aula en la misma consulta (ver servicios/aulas.py)
+        .where(Llave.estado != EstadoLlave.BAJA)
+        .order_by(Llave.slot, Aula.nombre)
     ).all()
     return dispositivo, equipo_online(sesion), list(llaves)
 

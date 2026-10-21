@@ -1,7 +1,7 @@
 """Consulta de aulas y disponibilidad de llaves (US-02)."""
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, contains_eager, joinedload
 
 from app.esquemas import AulaDetalle, AulaPublica, EstadoPublico, Tenedor
 from app.modelos import (
@@ -17,10 +17,18 @@ from app.servicios.conexion import equipo_online
 from app.servicios.reservas import vencer_reservas
 
 def _llaves_en_uso(sesion: Session) -> list[Llave]:
-    """Una llave por aula (MVP), sin las dadas de baja, ordenadas por nombre de aula."""
+    """Una llave por aula (MVP), sin las dadas de baja, ordenadas por nombre de aula.
+
+    contains_eager: el aula viene en la misma consulta. Sin eso, SQLAlchemy la pide aparte
+    para cada llave (30 consultas mas); con Supabase lejos, eso son segundos.
+    """
     return list(
         sesion.scalars(
-            select(Llave).join(Aula).where(Llave.estado != EstadoLlave.BAJA).order_by(Aula.nombre)
+            select(Llave)
+            .join(Aula)
+            .options(contains_eager(Llave.aula))
+            .where(Llave.estado != EstadoLlave.BAJA)
+            .order_by(Aula.nombre)
         )
     )
 
@@ -55,15 +63,17 @@ def aulas_con_tenedor(sesion: Session) -> list[AulaDetalle]:
 def _tenedor(sesion: Session, llave: Llave) -> Tenedor | None:
     if llave.estado == EstadoLlave.PRESTADA:
         prestamo = sesion.scalar(
-            select(Prestamo).where(Prestamo.llave_id == llave.id, Prestamo.devuelto_en.is_(None))
+            select(Prestamo)
+            .options(joinedload(Prestamo.usuario))
+            .where(Prestamo.llave_id == llave.id, Prestamo.devuelto_en.is_(None))
         )
         if prestamo:
             return _datos_tenedor(prestamo.usuario, prestamo.retirado_en)
     if llave.estado == EstadoLlave.RESERVADA:
         reserva = sesion.scalar(
-            select(Reserva).where(
-                Reserva.llave_id == llave.id, Reserva.estado == EstadoReserva.PENDIENTE
-            )
+            select(Reserva)
+            .options(joinedload(Reserva.usuario))
+            .where(Reserva.llave_id == llave.id, Reserva.estado == EstadoReserva.PENDIENTE)
         )
         if reserva:
             return _datos_tenedor(reserva.usuario, reserva.creada_en)

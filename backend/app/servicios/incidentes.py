@@ -7,7 +7,7 @@ Como el resto de app/servicios, no hace commit: lo hace quien la llama.
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.modelos import Incidente, Reserva
 from app.tipos import ZONA_ARGENTINA, ahora_utc
@@ -48,6 +48,7 @@ def de_hoy(sesion: Session, ahora: datetime | None = None) -> list[Incidente]:
     return list(
         sesion.scalars(
             select(Incidente)
+            .options(joinedload(Incidente.aula), joinedload(Incidente.usuario))
             .where(Incidente.ocurrido_en >= medianoche)
             .order_by(Incidente.ocurrido_en.desc(), Incidente.id.desc())
         )
