@@ -55,11 +55,11 @@ export default function CuentasBloqueadas() {
                 {cuenta.nombre} {cuenta.apellido}
               </strong>
               <br />
-              <span className="tenedor">Bloqueada hasta las {hora(cuenta.bloqueadoHasta)}</span>
+              <span className="suave chico">Bloqueada hasta las {hora(cuenta.bloqueadoHasta)}</span>
             </span>
             <button
               type="button"
-              className="boton"
+              className="boton boton-chico"
               disabled={desbloqueando !== null}
               onClick={() => desbloquear(cuenta)}
             >

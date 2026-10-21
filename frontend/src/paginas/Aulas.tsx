@@ -43,8 +43,9 @@ export default function Aulas() {
       a.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()),
   );
   // US-22: sin equipo no se puede retirar la llave. Se reactiva solo con el refresco
-  const motivo =
-    equipoOnline === null ? 'Cargando…' : !equipoOnline ? 'Equipo desconectado' : tieneReserva ? 'Ya tenés una reserva' : null;
+  // Por que no se puede pedir. Sin equipo, el boton lo dice (US-22: "Equipo desconectado");
+  // con una reserva activa, lo dice un solo aviso arriba de la grilla.
+  const motivo = equipoOnline === null ? 'Cargando…' : !equipoOnline ? 'Equipo desconectado' : null;
 
   async function pedir(aula: Aula) {
     setPidiendo(aula.id);
@@ -106,6 +107,9 @@ export default function Aulas() {
       </div>
 
       <Alerta>{error ?? aulas.error}</Alerta>
+      {tieneReserva && equipoOnline && (
+        <Alerta tipo="aviso">Ya tenés una reserva: usala o cancelala para pedir otra llave.</Alerta>
+      )}
       <EtiquetaSeccion derecha={`${filtradas.length} resultados`}>Aulas</EtiquetaSeccion>
       {!aulas.datos && !aulas.error && <p className="cargando">Cargando…</p>}
       {aulas.datos && filtradas.length === 0 && <p className="vacio">No hay aulas que coincidan.</p>}
@@ -116,6 +120,7 @@ export default function Aulas() {
               aula={aula}
               esMia={aula.tenedor?.usuarioId === usuario?.id}
               motivo={motivo}
+              bloqueada={tieneReserva}
               pidiendo={pidiendo === aula.id}
               alPedir={() => pedir(aula)}
             />
@@ -130,12 +135,14 @@ function TarjetaAula({
   aula,
   esMia,
   motivo,
+  bloqueada,
   pidiendo,
   alPedir,
 }: {
   aula: Aula;
   esMia: boolean;
-  motivo: string | null; // por que no se puede pedir (null = se puede)
+  motivo: string | null; // por que no se puede pedir, para mostrar en el boton
+  bloqueada: boolean; // ya tiene una reserva: el boton queda deshabilitado sin texto extra
   pidiendo: boolean;
   alPedir: () => void;
 }) {
@@ -152,7 +159,7 @@ function TarjetaAula({
       </div>
       <Insignia estado={aula.estado} />
       {aula.estado === 'DISPONIBLE' ? (
-        <button type="button" className="boton boton-chico" disabled={motivo !== null || pidiendo} onClick={alPedir}>
+        <button type="button" className="boton boton-chico" disabled={motivo !== null || bloqueada || pidiendo} onClick={alPedir}>
           {pidiendo ? 'Pidiendo…' : (motivo ?? 'Pedir llave')}
         </button>
       ) : (

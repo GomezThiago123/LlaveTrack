@@ -2,9 +2,9 @@
 
 Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-22, US-23 y US-24 en el servidor y el simulador, la base en Supabase y el seed con las 30 aulas.
 
-## 0. En curso (20/10/2026)
+## 0. Lo último (20 y 21/10/2026)
 
-- [ ] **Rediseño de la web** con el [prototipo de Joel](https://github.com/joel012930/llavetrack) y los colores de la UBA (azul, celeste y blanco), en la rama `rediseno-web` (todavía no compila: no mergear). Hecho: estilos, componentes, Aulas (buscador, pisos, grilla, código), Mis llaves, Cuenta, Faltantes, Historial, Equipo y Docentes. Falta: rutas, Login, Recuperar, Inicio, probar con capturas y mergear a `main`.
+- [x] **Rediseño de la web** con el [prototipo de Joel](https://github.com/joel012930/llavetrack) y los colores de la UBA (azul, celeste y blanco): todas las pantallas, probadas con capturas en tamaño de celular (21/10/2026).
 - [x] **V2 en el servidor** (en `main`): US-17 mis préstamos, US-12/13 historial, US-16 recordatorio (a mano: el sistema no conoce los turnos), US-09 alta y desactivar docentes, US-10 cambiar el tag RFID (a mano hasta el modo alta del equipo). Supabase ya tiene las migraciones.
 - [ ] **Vite 8.3.2 tiene una falla de seguridad** (`npm audit`): actualizarlo.
 
@@ -84,6 +84,7 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 
 Ya están hechos, pero falta tu prueba.
 
+- [ ] **Web nueva:** recorrerla en el celular como Ana (Aulas, pedir una llave, Mis llaves, Cuenta) y como Carla (Faltantes con "Enviar recordatorio", Historial con filtros, Equipo con el cambio de tag, Docentes con alta y desactivar). Antes: `alembic upgrade head` si tu base no está al día.
 - [ ] **US-05:** como Ana pedí una llave; en el simulador `falla <codigo>`; como Carla tiene que aparecer "Problemas del equipo hoy" con la hora, el aula y la docente. Antes: `alembic upgrade head` (tabla nueva).
 - [ ] **US-07:** fallá 5 veces el login de Bruno y desbloquealo como Carla.
 - [ ] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
@@ -112,6 +113,8 @@ Lo único que falta del hardware es el motor (sección 1); lo demás ya se puede
 - [ ] Cambiar las contraseñas de prueba del seed (`llavetrack`) antes de la demo.
 
 ## 8. Documentación de clase y defensa
+
+- [ ] **Avisarle a Joel qué corregir en el prototipo**, para que coincida con lo construido: código de **6 dígitos** (no 4), reserva de **2 min** (no 5), la devolución **no se pide desde la app** (tecla B en el equipo), las etiquetas "US-20" y "US-21" (ahora son US-22 a US-24) y un disco de **32 slots** (no 30).
 
 Estos documentos los presentaste en clase y no coinciden con lo que está construido.
 

@@ -55,11 +55,11 @@ export default function Equipo() {
               <Carrusel equipo={datos} />
               <div className="leyenda">
                 <span>
-                  <i style={{ background: 'var(--celeste)' }} />
+                  <i className="disponible" />
                   Llave en el disco
                 </span>
                 <span>
-                  <i style={{ background: '#f0b429' }} />
+                  <i className="reservada" />
                   Reservada
                 </span>
                 <span>
@@ -67,7 +67,7 @@ export default function Equipo() {
                   Vacío
                 </span>
                 <span>
-                  <i style={{ background: 'var(--azul)' }} />
+                  <i className="home" />
                   HOME
                 </span>
               </div>
@@ -175,10 +175,10 @@ function FilaLlave({ llave, alGuardar }: { llave: LlaveEquipo; alGuardar: () => 
   return (
     <li>
       <div className="fila">
-        <span className="mono" style={{ width: 40 }}>
+        <span className="mono col-aula">
           <strong>{llave.aula}</strong>
         </span>
-        <span className="mono suave chico" style={{ width: 32 }}>
+        <span className="mono suave chico col-slot">
           {llave.slot === null ? '—' : `#${String(llave.slot).padStart(2, '0')}`}
         </span>
         {editando ? (

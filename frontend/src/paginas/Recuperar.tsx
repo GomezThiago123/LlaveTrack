@@ -2,7 +2,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { api, ErrorApi } from '../api';
-import { Alerta, Pagina } from '../componentes/Comunes';
+import { Alerta, PaginaSimple } from '../componentes/Comunes';
 
 const CLAVE_MIN = 8;
 
@@ -31,15 +31,14 @@ export function PedirLink() {
   }
 
   return (
-    <Pagina>
-      <h1>Recuperar contraseña</h1>
+    <PaginaSimple subtitulo="Recuperar contraseña">
       {listo ? (
         <>
           <Alerta tipo="ok">{listo}</Alerta>
           <p>Revisá tu correo (también la carpeta de spam). El link vence en 30 minutos.</p>
         </>
       ) : (
-        <form onSubmit={enviar} className="formulario">
+        <form onSubmit={enviar} className="tarjeta formulario">
           <p>Ingresá tu email y te enviamos un link para elegir una contraseña nueva.</p>
           <label>
             Email
@@ -54,7 +53,7 @@ export function PedirLink() {
       <p className="centrado">
         <Link to="/login">Volver a ingresar</Link>
       </p>
-    </Pagina>
+    </PaginaSimple>
   );
 }
 
@@ -87,8 +86,7 @@ export function Restablecer() {
   }
 
   return (
-    <Pagina>
-      <h1>Contraseña nueva</h1>
+    <PaginaSimple subtitulo="Elegí tu contraseña">
       {!token ? (
         <Alerta>El link está incompleto. Copialo entero desde el mail o pedí uno nuevo.</Alerta>
       ) : listo ? (
@@ -99,7 +97,7 @@ export function Restablecer() {
           </Link>
         </>
       ) : (
-        <form onSubmit={enviar} className="formulario">
+        <form onSubmit={enviar} className="tarjeta formulario">
           <label>
             Contraseña nueva (mínimo {CLAVE_MIN} caracteres)
             <input
@@ -132,6 +130,6 @@ export function Restablecer() {
           <Link to="/recuperar">Pedir un link nuevo</Link>
         </p>
       )}
-    </Pagina>
+    </PaginaSimple>
   );
 }

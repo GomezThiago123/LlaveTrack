@@ -18,7 +18,7 @@ export default function MisLlaves() {
 
       {datos && (
         <>
-          <EtiquetaSeccion>En tu poder</EtiquetaSeccion>
+          <EtiquetaSeccion>Llaves que tenés</EtiquetaSeccion>
           {enPoder.length === 0 ? (
             <p className="tarjeta vacio">No tenés llaves en tu poder.</p>
           ) : (

@@ -1,6 +1,6 @@
 // Docentes, para el preceptor: cuentas bloqueadas (US-07), dar de alta un docente y
 // activarlo o desactivarlo (US-09). Un docente desactivado no puede iniciar sesion.
-import { useState, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { UserPlus } from 'lucide-react';
 import { api, type UsuarioDetalle } from '../api';
 import { Alerta, EtiquetaSeccion, Interruptor, PaginaApp } from '../componentes/Comunes';
@@ -61,7 +61,7 @@ function FormularioAlta({ alCrear }: { alCrear: () => void }) {
 
   const campo = (clave: keyof typeof VACIO) => ({
     value: datos[clave],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setDatos({ ...datos, [clave]: e.target.value }),
+    onChange: (e: ChangeEvent<HTMLInputElement>) => setDatos({ ...datos, [clave]: e.target.value }),
   });
 
   if (!abierto) {

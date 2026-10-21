@@ -42,7 +42,7 @@ export default function ProblemasEquipo() {
               {hora(incidente.ocurridoEn)} · {incidente.descripcion}
             </strong>
             {(incidente.aula || incidente.docente) && (
-              <span className="tenedor">
+              <span className="suave chico">
                 {' '}
                 {[incidente.aula && nombreAula(incidente.aula), incidente.docente].filter(Boolean).join(' · ')}
               </span>

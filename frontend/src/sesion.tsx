@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { api, ErrorApi, type Usuario } from './api';
+import { esPreceptor } from './utiles';
 
 interface Sesion {
   usuario: Usuario | null;
@@ -67,4 +68,15 @@ export function RutaPrivada({ children }: { children: ReactNode }) {
   if (cargando) return <p className="cargando">Cargando…</p>;
   if (!usuario) return <Navigate to="/login" replace state={{ desde: ubicacion.pathname }} />;
   return <>{children}</>;
+}
+
+/** Pantallas del preceptor y el admin. Un docente que entra por la direccion vuelve a las aulas
+ *  (igual el servidor no le da los datos: responde 403). */
+export function RutaPreceptor({ children }: { children: ReactNode }) {
+  const { usuario } = useSesion();
+  return (
+    <RutaPrivada>
+      {usuario && !esPreceptor(usuario.rol) ? <Navigate to="/aulas" replace /> : children}
+    </RutaPrivada>
+  );
 }

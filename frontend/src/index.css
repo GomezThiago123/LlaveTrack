@@ -57,6 +57,11 @@ p {
   gap: 14px;
 }
 
+/* Sin esto, un texto largo estira la columna de la grilla y se sale de la pantalla */
+.contenedor > * {
+  min-width: 0;
+}
+
 .cargando,
 .vacio {
   color: var(--texto-suave);
@@ -326,7 +331,7 @@ p {
   color: var(--texto-suave);
 }
 
-.etiqueta-seccion span:last-child {
+.etiqueta-seccion span + span {
   letter-spacing: 0;
   text-transform: none;
 }
@@ -356,6 +361,10 @@ p {
   padding: 0;
 }
 
+.tarjeta.lista-divisiones {
+  padding: 4px 14px;
+}
+
 .lista-divisiones > li {
   padding: 10px 0;
   border-top: 1px solid var(--borde);
@@ -363,7 +372,6 @@ p {
 
 .lista-divisiones > li:first-child {
   border-top: none;
-  padding-top: 0;
 }
 
 /* --- Insignia de estado --- */
@@ -559,6 +567,10 @@ p {
 
 .aula .boton {
   margin-top: auto;
+}
+
+.aula .insignia {
+  align-self: flex-start; /* que no se estire a todo el ancho de la tarjeta */
 }
 
 /* --- Tarjeta de la reserva (US-03) y de la llave en tu poder (US-17) --- */
@@ -865,6 +877,29 @@ kbd {
   height: 10px;
   border-radius: 3px;
   border: 1px solid var(--borde);
+}
+
+.leyenda i.disponible {
+  background: var(--celeste);
+}
+
+.leyenda i.reservada {
+  background: #f0b429;
+}
+
+.leyenda i.home {
+  background: var(--azul);
+}
+
+/* Columnas fijas de la lista de tags RFID */
+.col-aula {
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.col-slot {
+  width: 32px;
+  flex-shrink: 0;
 }
 
 .datos {

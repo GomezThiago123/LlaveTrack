@@ -115,18 +115,23 @@ npm install        # solo la primera vez, o cuando cambie package.json
 npm run dev
 ```
 
-La web queda en `http://localhost:5173` y se actualiza sola cuando cambiás el código. Todo lo que empieza con `/api` lo reenvía al backend (puerto 8000), así que **el backend tiene que estar levantado en otra terminal**.
+La web queda en `http://localhost:5173` y se actualiza sola cuando cambiás el código. Todo lo que empieza con `/api` lo reenvía al backend (puerto 8000), así que **el backend tiene que estar levantado en otra terminal**. Si el backend corre en otro puerto: `LLAVETRACK_API=http://localhost:8001 npm run dev` (en PowerShell: `$env:LLAVETRACK_API="http://localhost:8001"; npm run dev`).
 
 Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a `http://<IP-de-la-compu>:5173`. Vite muestra la IP en la terminal, en la línea `Network`. Si vas a probar "Olvidé mi contraseña" desde el celular, poné esa misma dirección en `WEB_URL` del `backend/.env`, así el link del mail apunta a la compu.
 
 | Pantalla | Qué hay |
 | --- | --- |
 | `/` | Sin login: estado de cada aula y si el equipo está en línea |
-| `/login`, `/recuperar`, `/restablecer` | Ingresar y recuperar la contraseña |
-| `/aulas` | Con login: pedir una llave. Preceptores y admin ven quién tiene cada una y su teléfono |
-| `/codigo` | El código para el equipo, con cuenta regresiva. Avisa cuando se retiró la llave |
+| `/login`, `/recuperar`, `/restablecer` | Ingresar, recuperar la contraseña y crearla (el docente nuevo llega por el link del mail) |
+| `/aulas` | Con login: buscador, pisos y "solo disponibles"; quién tiene cada llave. Pedir una llave muestra el código arriba, con cuenta regresiva |
+| `/mis-llaves` | Las llaves que tengo y mis préstamos anteriores (US-17) |
+| `/cuenta` | Mis datos y cerrar sesión |
+| `/faltantes` | Preceptor: llaves fuera del carrusel, contacto del docente y "Enviar recordatorio" (US-16) |
+| `/historial` | Preceptor: retiros y devoluciones por aula, docente, fechas y estado (US-12/13) |
+| `/equipo` | Preceptor: estado del equipo, carrusel, problemas de hoy (US-05) y tags RFID (US-10) |
+| `/docentes` | Preceptor: cuentas bloqueadas (US-07), alta y desactivar docentes (US-09) |
 
-Las pantallas de aulas y del código se actualizan solas cada 5 segundos.
+Las pantallas se actualizan solas cada 5 segundos. El diseño sale del [prototipo de Joel](https://github.com/joel012930/llavetrack), con los colores de la UBA.
 
 | Comando | Qué hace |
 | --- | --- |
