@@ -2,6 +2,12 @@
 
 Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-22, US-23 y US-24 en el servidor y el simulador, la base en Supabase y el seed con las 30 aulas.
 
+## 0. En curso (20/10/2026)
+
+- [ ] **Rediseño de la web** con el [prototipo de Joel](https://github.com/joel012930/llavetrack) y los colores de la UBA (azul, celeste y blanco), en la rama `rediseno-web` (todavía no compila: no mergear). Hecho: estilos, componentes, Aulas (buscador, pisos, grilla, código), Mis llaves, Cuenta, Faltantes, Historial, Equipo y Docentes. Falta: rutas, Login, Recuperar, Inicio, probar con capturas y mergear a `main`.
+- [x] **V2 en el servidor** (en `main`): US-17 mis préstamos, US-12/13 historial, US-16 recordatorio (a mano: el sistema no conoce los turnos), US-09 alta y desactivar docentes, US-10 cambiar el tag RFID (a mano hasta el modo alta del equipo). Supabase ya tiene las migraciones.
+- [ ] **Vite 8.3.2 tiene una falla de seguridad** (`npm audit`): actualizarlo.
+
 ## 1. Respuestas que necesito de vos
 
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
