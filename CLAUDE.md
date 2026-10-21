@@ -16,6 +16,7 @@ Proyecto escolar (metodologías ágiles + IoT). Prioridades: que funcione en la 
 - Secretos fuera del repo: `.env` y `firmware/include/secrets.h` en `.gitignore`, con `.env.example` y `secrets.example.h`.
 - Tiempos y límites siempre configurables (`.env` / `config.h`); los valores de este archivo son iniciales.
 - Si cambia una decisión, actualizá este archivo y `docs/`.
+- Al terminar cada historia, actualizá `PENDIENTES.md` **y** `documentacion.md` (qué es, cómo funciona, estado de cada US y decisiones, escrito para el grupo y los profes; no repite el README ni este archivo).
 
 ## Arquitectura
 ```

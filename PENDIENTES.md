@@ -8,6 +8,7 @@
 - [x] **V2 en el servidor** (en `main`): US-17 mis préstamos, US-12/13 historial, US-16 recordatorio (a mano: el sistema no conoce los turnos), US-09 alta y desactivar docentes, US-10 cambiar el tag RFID (a mano hasta el modo alta del equipo). Supabase ya tiene las migraciones.
 - [x] **Vite actualizado a 8.3.3** (la 8.3.2 tenía una falla de seguridad). `npm audit`: 0 fallas.
 - [x] **Las listas del servidor ya no hacen una consulta por fila** (con Supabase, `/api/aulas` tardaba 6,7 s y la web se quedaba en "Cargando…"; ahora 1,6 s). Hay un test que lo controla.
+- [x] **`documentacion.md`** con qué es el sistema, cómo se conectan las partes, cómo se asocia cada llave con su tag, el estado de cada US y las decisiones. Se actualiza junto con este archivo.
 - [x] **Probado en el entorno real** (servidor + Supabase + simulador + web, 21/10/2026): ciclo retiro → devolución, bloqueo y desbloqueo de Bruno (US-07) y todas las pantallas.
 
 ## 1. Respuestas que necesito de vos
@@ -97,6 +98,9 @@ Ya están hechos, pero falta tu prueba.
 - [ ] **US-23 y US-24:** en el simulador, retirar y devolver una llave mirando el LED de faltantes y el LCD (`pantalla`). Frenar el backend y ver que el LED de conexión titila y no deja devolver; levantarlo de nuevo.
 
 ## 6. Fase 3: firmware
+
+- [ ] **Cargar los UID reales de los 30 llaveros** (ver `documentacion.md`, sección 4): marcarlos, leerlos con un Android con NFC Tools o con el modo diagnóstico, y cargarlos en Equipo → Tags RFID o en el seed.
+- [ ] **Mosquitto para el equipo real**: hoy solo acepta conexiones de la misma compu. Para el ESP32, agregar `listener 1883` y `allow_anonymous true` a `mosquitto.conf` y abrir el puerto en el firewall (solo en desarrollo).
 
 Lo único que falta del hardware es el motor (sección 1); lo demás ya se puede arrancar. Va un módulo por vez, cada uno con su programa de prueba:
 

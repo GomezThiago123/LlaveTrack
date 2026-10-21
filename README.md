@@ -1,5 +1,7 @@
 # LlaveTrack
 
+> Qué es y cómo funciona el sistema, y el estado de cada historia: [documentacion.md](documentacion.md). Tareas abiertas: [PENDIENTES.md](PENDIENTES.md).
+
 Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA. El docente reserva la llave desde la web, ingresa un código en el equipo y un disco giratorio le entrega su llave. Cada llave tiene un tag RFID, así el sistema registra quién la retiró, quién la devolvió y a qué hora.
 
 ## Estructura
