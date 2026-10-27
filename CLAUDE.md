@@ -133,7 +133,7 @@ llavetrack/v1/equipo-01/resp
 - L298N a 24 V: sacar el jumper del regulador de 5 V del módulo y alimentar su lógica con 5 V externos. No limita corriente: la tensión tiene que ser la nominal del motor.
 - LCD I2C: dirección 0x27 o 0x3F (confirmar con el scanner). Si el adaptador va a 5 V, sus pull-ups ponen 5 V en SDA/SCL del ESP32 (que es de 3,3 V): usar un adaptador de nivel.
 - Pines ESP32: no usar 6–11 (flash). Cuidado con los de arranque 0, 2, 12 y 15 (12 nunca con pull-up externo). 34–39 son solo entrada y sin pull-up interno (sirven para el sensor de cero con pull-up externo). I2C en 21/22; SPI en 18/19/23 con SS en 5. El teclado 4x4 usa 8 pines: si no alcanzan, va en un PCF8574 sobre el mismo bus I2C.
-- Proponé el mapa de pines (`config.h` + tabla en `docs/cableado.md`) y esperá mi confirmación antes de usarlo.
+- Mapa de pines: el equipo ya está cableado por los compañeros (27/10/2026) y el firmware se adapta a eso: tabla en `docs/cableado.md`. Resumen: RC522 SS 5 / RST 27; LCD 21/22; motor IN3 25 / IN4 26 (canal B del L298N, ENB con jumper: sin control de velocidad); teclado filas 4, 13, 14, 16 y columnas 17, 32, 33, 2; un LED bicolor verde 12 / rojo 15.
 
 ## Pendientes (preguntame antes de asumir)
 Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al día al terminar cada historia). Las user stories con sus criterios están en `docs/user-stories.md`; US-22 a US-24 se agregaron al MVP el 20/10/2026 (en los commits viejos figuran como US-20 a US-22).
@@ -146,7 +146,7 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [ ] LCD: dirección I2C (0x27 o 0x3F), sale del scanner en la Fase 3.
 - [x] Referencia de cero: tag RFID HOME en el slot 0 por ahora (sin sensor). Su UID es `9A35EA81` (leído el 27/10/2026): va en `config.h` como `UID_HOME`, no en la base.
 - [x] Disco de 32 slots. El 0 es del tag HOME: quedan 31 lugares, entran las 30 aulas reales y sobra 1.
-- [ ] LEDs: dos bicolores, uno por agujero del panel: conexión y faltantes (respuesta del 20/10/2026). Falta: qué color significa qué, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
+- [ ] LEDs: cableado hay **un solo LED bicolor** (verde 12, rojo 15), aunque se había pensado en dos (conexión y faltantes). Falta decidir qué muestra cada color, o si se cablea el segundo.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
 - [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, (ver `PENDIENTES.md`). Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`).
 - [ ] WiFi: el ESP32 se conecta a la WiFi de la escuela, que es WPA2-Enterprise (decidido el 20/10/2026). El módulo `red` usa WPA2-Enterprise (PEAP) con usuario y contraseña en `secrets.h`. Falta: nombre de la red, método (casi siempre PEAP), una cuenta para el equipo (mejor una que dé sistemas, no la personal de alguien), si pide certificado, y probar que la red deja salir al puerto 8883. Plan B: hotspot de un celular.

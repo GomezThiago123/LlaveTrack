@@ -110,7 +110,9 @@ Ya están hechos, pero falta tu prueba.
 
 Lo único que falta del hardware es el motor (sección 1); lo demás ya se puede arrancar. Va un módulo por vez, cada uno con su programa de prueba:
 
-- [ ] Proponer el mapa de pines para la NodeMCU ESP32 de 38 pines (`config.h` y `docs/cableado.md`) y esperar tu confirmación.
+- [x] Mapa de pines: el cableado de los compañeros, en `docs/cableado.md` (27/10/2026). El programa de prueba ya usa esos pines.
+- [ ] **LED:** hay uno solo bicolor (verde 12, rojo 15). Decidir qué muestra cada color o cablear el segundo.
+- [ ] **Motor sin control de velocidad** (ENB con jumper): ver si frena preciso al probar; si no, conectar ENB a un GPIO libre.
 - [ ] LCD y scanner I2C.
 - [ ] Teclado 4x4.
 - [ ] Lector RFID (RC522 a **3,3 V**).

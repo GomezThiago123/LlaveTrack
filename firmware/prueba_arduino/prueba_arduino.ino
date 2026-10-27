@@ -5,9 +5,8 @@
 //
 // Comandos:
 //   i  escanear el bus I2C (direccion del LCD: 0x27 o 0x3F)
-//   l  probar los LEDs (cada color 1 segundo)
+//   l  probar el LED bicolor (verde, rojo y los dos juntos)
 //   a  motor adelante      r  motor atras      s  parar el motor
-//   +  mas rapido          -  mas lento
 //   v  medir vueltas: gira y muestra el tiempo entre pasadas del tag HOME (3 vueltas)
 //   El lector RFID y el teclado se prueban solos: acerca un tag o toca una tecla.
 //
@@ -22,14 +21,13 @@
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
-// --- Pines (PROPUESTA del 27/10/2026, sin confirmar) ---
-const int RFID_SS = 5, RFID_RST = 4;          // SPI: SCK 18, MISO 19, MOSI 23
+// --- Pines: los del cableado que hicieron los companeros (ver docs/cableado.md) ---
+const int RFID_SS = 5, RFID_RST = 27;         // SPI: SCK 18, MISO 19, MOSI 23
 const int I2C_SDA = 21, I2C_SCL = 22;
-const int MOTOR_ENA = 25, MOTOR_IN1 = 26, MOTOR_IN2 = 27;
-const int LED_CONEXION_1 = 16, LED_CONEXION_2 = 17;
-const int LED_FALTANTES_1 = 2, LED_FALTANTES_2 = 15;
-byte FILAS[4] = {34, 35, 36, 39};             // necesitan resistencias de 10k a 3,3 V
-byte COLUMNAS[4] = {13, 14, 32, 33};
+const int MOTOR_IN3 = 25, MOTOR_IN4 = 26;     // canal B del L298N. ENB con jumper: siempre a velocidad maxima
+const int LED_VERDE = 12, LED_ROJO = 15;      // un LED bicolor
+byte FILAS[4] = {4, 13, 14, 16};
+byte COLUMNAS[4] = {17, 32, 33, 2};
 
 // --- Tags conocidos (leidos con NFC Tools el 27/10/2026) ---
 const char *UID_HOME = "9A35EA81";
@@ -49,7 +47,6 @@ MFRC522 rfid(RFID_SS, RFID_RST);
 LiquidCrystal_I2C *lcd = nullptr;  // se crea cuando el scanner encuentra la direccion
 Keypad teclado = Keypad(makeKeymap(TECLAS), FILAS, COLUMNAS, 4, 4);
 
-int velocidad = 120;      // PWM de 0 a 255. Arranca despacio
 int sentido = 0;          // 1 adelante, -1 atras, 0 parado
 bool midiendo = false;
 unsigned long ultimaHome = 0;
@@ -82,10 +79,9 @@ byte escanearI2C() {
 
 void motor(int nuevoSentido) {
   sentido = nuevoSentido;
-  digitalWrite(MOTOR_IN1, sentido == 1 ? HIGH : LOW);
-  digitalWrite(MOTOR_IN2, sentido == -1 ? HIGH : LOW);
-  analogWrite(MOTOR_ENA, sentido == 0 ? 0 : velocidad);
-  Serial.printf("Motor: %s (velocidad %d/255)\n", sentido == 1 ? "adelante" : sentido == -1 ? "atras" : "parado", velocidad);
+  digitalWrite(MOTOR_IN3, sentido == 1 ? HIGH : LOW);
+  digitalWrite(MOTOR_IN4, sentido == -1 ? HIGH : LOW);
+  Serial.printf("Motor: %s\n", sentido == 1 ? "adelante" : sentido == -1 ? "atras" : "parado");
 }
 
 String uidLeido() {
@@ -105,16 +101,21 @@ const char *nombreDelTag(const String &uid) {
   return nullptr;
 }
 
-void probarLeds() {
-  int pines[] = {LED_CONEXION_1, LED_CONEXION_2, LED_FALTANTES_1, LED_FALTANTES_2};
-  const char *nombres[] = {"conexion color 1 (GPIO16)", "conexion color 2 (GPIO17)",
-                           "faltantes color 1 (GPIO2)", "faltantes color 2 (GPIO15)"};
-  for (int i = 0; i < 4; i++) {
-    Serial.printf("LED %s\n", nombres[i]);
-    digitalWrite(pines[i], HIGH);
-    delay(1000);
-    digitalWrite(pines[i], LOW);
-  }
+void probarLed() {
+  Serial.println("LED verde (GPIO12)");
+  digitalWrite(LED_VERDE, HIGH);
+  delay(1000);
+  digitalWrite(LED_VERDE, LOW);
+  Serial.println("LED rojo (GPIO15)");
+  digitalWrite(LED_ROJO, HIGH);
+  delay(1000);
+  digitalWrite(LED_ROJO, LOW);
+  Serial.println("LED los dos juntos (se ve amarillo o naranja)");
+  digitalWrite(LED_VERDE, HIGH);
+  digitalWrite(LED_ROJO, HIGH);
+  delay(1000);
+  digitalWrite(LED_VERDE, LOW);
+  digitalWrite(LED_ROJO, LOW);
 }
 
 void leerTag() {
@@ -150,14 +151,13 @@ void setup() {
   delay(500);
   Serial.println("\nLlaveTrack: prueba de hardware");
 
-  pinMode(MOTOR_IN1, OUTPUT);
-  pinMode(MOTOR_IN2, OUTPUT);
-  pinMode(MOTOR_ENA, OUTPUT);
+  pinMode(MOTOR_IN3, OUTPUT);
+  pinMode(MOTOR_IN4, OUTPUT);
   motor(0);
-  for (int pin : {LED_CONEXION_1, LED_CONEXION_2, LED_FALTANTES_1, LED_FALTANTES_2}) {
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
-  }
+  pinMode(LED_VERDE, OUTPUT);
+  pinMode(LED_ROJO, OUTPUT);
+  digitalWrite(LED_VERDE, LOW);
+  digitalWrite(LED_ROJO, LOW);
 
   Wire.begin(I2C_SDA, I2C_SCL);
   byte direccion = escanearI2C();
@@ -177,7 +177,7 @@ void setup() {
   } else {
     Serial.printf("Lector RC522 OK (version 0x%02X). Acerca un tag.\n", version);
   }
-  Serial.println("Comandos: i l a r s + - v");
+  Serial.println("Comandos: i l a r s v");
 }
 
 void loop() {
@@ -193,12 +193,10 @@ void loop() {
     char c = Serial.read();
     switch (c) {
       case 'i': escanearI2C(); break;
-      case 'l': probarLeds(); break;
+      case 'l': probarLed(); break;
       case 'a': motor(1); break;
       case 'r': motor(-1); break;
       case 's': motor(0); midiendo = false; break;
-      case '+': velocidad = min(255, velocidad + 20); if (sentido) motor(sentido); else Serial.printf("Velocidad %d\n", velocidad); break;
-      case '-': velocidad = max(0, velocidad - 20); if (sentido) motor(sentido); else Serial.printf("Velocidad %d\n", velocidad); break;
       case 'v':
         Serial.println("Midiendo: gira hasta pasar 4 veces por HOME (3 vueltas). 's' para cortar.");
         midiendo = true;
