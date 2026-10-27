@@ -148,7 +148,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | 20/10 | Las historias del equipo conectado y los LEDs son **US-22 a US-24** | En Notion, US-20 y US-21 eran otras. Los commits viejos dicen US-20 a US-22 |
 | 20/10 | El equipo usa la **WiFi de la escuela** (plan B: hotspot) | Respuesta del grupo |
 | 27/10 | El firmware usa **el cableado que hicieron los compañeros** (`docs/cableado.md`): un LED bicolor y el motor sin control de velocidad | Ya estaba armado: es más fácil adaptar el código que volver a cablear |
-| 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Si no alcanza la precisión, se agrega un sensor de horquilla |
+| 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 25 s (~0,78 s por slot). Si no alcanza la precisión, se agrega un sensor de horquilla |
 | 21/10 | La web toma el **diseño del prototipo de Joel** con los colores de la UBA | Con 30 aulas, la grilla con buscador y pisos es mucho más cómoda que la lista |
 
 ## 8. Cómo se prueba

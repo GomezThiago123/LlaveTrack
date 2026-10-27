@@ -10,7 +10,7 @@
   - la dirección del LCD (0x27 o 0x3F);
   - si los UID que lee el lector coinciden con los de NFC Tools (ej. `Tag A94B37A4 = 101`);
   - si el teclado y el LED (`l`) andan;
-  - **los 3 tiempos de vuelta del disco** (`v`, con el tag HOME colgado). Es lo que falta para el firmware del motor.
+  - [x] **Tiempo de vuelta del disco: 25 s** (27/10/2026), unos 0,78 s por slot.
 - [ ] **Colgar el tag HOME en el slot 0** y las 5 llaves en los slots 1 a 5 (101, 102, 213, 214, 313).
 
 ## 2. Decisiones del grupo
