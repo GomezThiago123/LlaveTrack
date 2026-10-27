@@ -4,18 +4,15 @@
 
 **Dónde estamos:** el servidor, la web y la base (Supabase, con las 5 llaves reales) están hechos y probados con el simulador. Lo que falta es sobre todo **el equipo** (firmware del ESP32) y **subir el servidor a la nube** para la demo. Qué es cada cosa: [documentacion.md](documentacion.md).
 
-## 1. Ahora: probar el hardware (te toca a vos)
+## 1. Ahora (te toca a vos)
 
-- [ ] **Cargar `firmware/prueba_arduino/prueba_arduino.ino`** con el Arduino IDE (placa "ESP32 Dev Module", Monitor Serie a 115200) y pegarle a Claude lo que muestre:
-  - la dirección del LCD (0x27 o 0x3F);
-  - si los UID que lee el lector coinciden con los de NFC Tools (ej. `Tag A94B37A4 = 101`);
-  - si el teclado y el LED (`l`) andan;
-  - [x] **Tiempo de vuelta del disco: 25 s** (27/10/2026), unos 0,78 s por slot.
+- [ ] **OK al plan de la Fase 3** (firmware del equipo) que propuso Claude el 27/10/2026, y a los **colores del LED**: verde fijo = conectado y no falta ninguna llave; naranja (los dos colores) = conectado y falta alguna; rojo titilando = sin conexión. Es lo que destraba el firmware.
 - [ ] **Colgar el tag HOME en el slot 0** y las 5 llaves en los slots 1 a 5 (101, 102, 213, 214, 313).
+- [ ] **Si podés, pasar la salida del programa de prueba** (`firmware/prueba_arduino/`): la dirección del LCD, si los UID del lector coinciden con los de NFC Tools y si andan el teclado y el LED. No traba nada: el firmware busca solo la dirección del LCD, y cada módulo se prueba igual en la Fase 3.
+- [x] **Tiempo de vuelta del disco: 25 s** (27/10/2026), unos 0,78 s por slot.
 
 ## 2. Decisiones del grupo
 
-- [ ] **LED:** hay un solo LED bicolor cableado (verde GPIO 12, rojo GPIO 15) y el diseño pedía dos (conexión y faltantes). Decidir qué muestra cada color, o cablear el segundo.
 - [ ] **Motor sin control de velocidad** (ENB del L298N con jumper): ver al probar si frena justo en la llave. Si no, sacar el jumper y conectar ENB a un GPIO libre.
 - [ ] **WiFi de la escuela** (decidido: el ESP32 se conecta ahí; es WPA2-Enterprise). Hace falta:
   - el nombre de la red y el método (casi siempre PEAP; lo sabe sistemas);
@@ -23,10 +20,10 @@
   - saber si pide certificado;
   - probar que deja salir al puerto 8883: desde una notebook en esa red, MQTTX a `test.mosquitto.org:8883` con SSL. Si no conecta, plan B: hotspot de un celular.
 
-## 3. Fase 3: firmware del equipo (Claude, después de las pruebas del punto 1)
+## 3. Fase 3: firmware del equipo (Claude, con el OK del punto 1)
 
-- [ ] **Reescribir la sección Firmware del CLAUDE.md** para el motor de continua: la posición sale del lector RFID (retiro: girar hasta leer el UID pedido; lugar vacío: girar hasta no leer nada, idea del código de los compañeros, o por tiempo desde el último tag) y del tiempo de vuelta medido. Plan corto y OK antes de escribir código.
-- [ ] Módulos, cada uno con su prueba: LCD → teclado → RFID → motor y búsqueda del HOME → WiFi y MQTT (keepalive 10 s, LWT, latido 30 s) → LED → máquina de estados completa → modo diagnóstico (tecla `D` al encender).
+- [ ] **Reescribir la sección Firmware del CLAUDE.md** para el motor de continua: posición por el lector RFID y el tiempo (retiro: girar por el camino más corto hasta leer el UID pedido; lugar vacío: girar el tiempo calculado y comprobar que no se lee ningún tag). La vuelta se vuelve a medir sola al arrancar, entre dos pasadas por HOME.
+- [ ] En cuatro pasos, cada uno con su prueba: (1) proyecto PlatformIO, LCD y teclado; (2) lector, motor y homing con HOME; (3) WiFi y MQTT (keepalive 10 s, LWT, latido 30 s); (4) máquina de estados completa, LED y modo diagnóstico (tecla `D` al encender).
 - [ ] **Mosquitto para el equipo real:** hoy solo acepta conexiones de la misma compu. Agregar `listener 1883` y `allow_anonymous true` a `mosquitto.conf` y abrir el puerto en el firewall (necesita permisos de administrador; solo en desarrollo).
 
 ## 4. La nube, para la demo
@@ -71,6 +68,7 @@ US-11 (baja de llave perdida) · US-14 (devolver sin conexión) · US-15 (corte 
 - **Decisiones sobre las user stories** (20/10): sesión de 60 s, reserva de 2 min, todos ven quién tiene cada llave, devolución automática, incidentes para el preceptor, desbloqueo manual, textos de los criterios. US-22 a US-24 cargadas en Notion.
 - **Web rediseñada** con el prototipo de Joel y los colores de la UBA (21/10), probada con capturas y contra Supabase.
 - **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 5 llaves reales cargadas** (101, 102, 213, 214, 313; 27/10). El proyecto queda con esas 5 llaves (decidido el 27/10/2026); `seed/datos_30_aulas.json` queda solo como referencia.
-- **Hardware relevado:** disco de 32 slots, motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2, tags MIFARE Classic 1K, **tag HOME `9A35EA81`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
+- **Web:** los grupos de aulas se llaman "Peine 1/2/3" (27/10/2026).
+- **Hardware relevado:** disco de 32 slots (una vuelta: 25 s), motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2, tags MIFARE Classic 1K, **tag HOME `9A35EA81`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
 - **Programa de prueba del hardware** (`firmware/prueba_arduino/`), con esos pines; compila.
 - **Documentación:** `documentacion.md` (para el grupo y los profes), `docs/user-stories.md`, `docs/protocolo-mqtt.md`, `docs/cableado.md`.

@@ -100,7 +100,7 @@ El tag **HOME** (slot 0, nunca sale del disco) es `9A35EA81`. No va en la base: 
 | Quién | Pantallas (barra de abajo) |
 | --- | --- |
 | Sin login | Estado de las 30 aulas y del equipo, login, recuperar contraseña |
-| Docente | **Aulas** (buscador, peines, "solo disponibles", pedir llave y el código arriba) · **Mis llaves** (las que tengo y mis préstamos) · **Cuenta** |
+| Docente | **Aulas** (buscador, peines 1, 2 y 3, "solo disponibles", pedir llave y el código arriba) · **Mis llaves** (las que tengo y mis préstamos) · **Cuenta** |
 | Preceptor y admin | **Aulas** · **Faltantes** (quién tiene cada llave, desde cuándo, "Enviar recordatorio") · **Historial** (filtros por aula, docente, fechas y estado) · **Equipo** (estado, carrusel, problemas, tags RFID) · **Docentes** (cuentas bloqueadas, alta, activar o desactivar) |
 
 Diseño: el [prototipo de Joel](https://github.com/joel012930/llavetrack), con los colores de la UBA. Las pantallas se actualizan solas cada 5 segundos. La sesión se cierra tras 60 segundos sin actividad, salvo mientras se muestra el código.
