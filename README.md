@@ -146,6 +146,8 @@ Está en `firmware/` (PlatformIO). El cableado está en [docs/cableado.md](docs/
 
 **Con VS Code** (lo más fácil): instalá la extensión **PlatformIO IDE**, abrí la carpeta `firmware/` (Archivo → Abrir carpeta) y conectá el ESP32 por USB. En la barra de abajo: la flecha **→** lo carga y el enchufe abre el Monitor Serie (115200 baudios). La primera vez tarda unos minutos porque baja las herramientas del ESP32.
 
+**Si la compu no detecta la placa:** la NodeMCU usa el chip USB **CP2102**, que en Windows necesita el driver *CP210x* de Silicon Labs (silabs.com → USB to UART Bridge VCP Drivers; extraer el .zip y correr `CP210xVCPInstaller_x64`). Con el driver, aparece en el Administrador de dispositivos como *Silicon Labs CP210x USB to UART Bridge (COMx)*. Si ni así aparece, el cable es solo de carga: usar uno que pase datos.
+
 **Desde la terminal**, con PlatformIO instalado (`pip install platformio`):
 ```sh
 cd firmware

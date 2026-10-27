@@ -3,7 +3,7 @@
 Qué es el sistema, cómo funciona, cómo se conectan sus partes y en qué estado está cada historia.
 Para levantarlo en la compu está el [README](README.md); la lista de tareas abiertas está en [PENDIENTES.md](PENDIENTES.md).
 
-*Última actualización: 27/10/2026.*
+*Última actualización: 27/10/2026 (noche).*
 
 ---
 
@@ -55,7 +55,7 @@ Las llaves cuelgan de un disco de MDF con 32 lugares (*slots*). Cada llavero tie
 - **El simulador** (`backend/simulador/`) se hace pasar por el equipo: manda exactamente los mismos mensajes. Por eso todo se puede probar sin el hardware, y el día que el ESP32 esté listo lo reemplaza sin cambiar nada del servidor ni de la web.
 
 ### Cómo se conecta el equipo real (cuando esté el firmware)
-1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Hoy está hecho el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío); el paso 2 agrega la conexión.
+1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Hoy está escrito el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío), pero todavía no se pudo cargar en la placa por un problema con el cable USB. El paso 2 agrega la conexión.
 2. **El equipo se conecta al WiFi y al broker**, y anuncia que está en línea. En la web aparece "Equipo en línea" y se habilita "Pedir llave". Si se corta, a los ~15 segundos la web lo muestra desconectado.
 3. **Mosquitto tiene que aceptar conexiones de la red.** Como está instalado hoy (sin configuración propia, Mosquitto 2) solo acepta conexiones de la misma compu: el simulador entra, el ESP32 no. Para probar el equipo en la compu hay que agregar a `mosquitto.conf` un `listener 1883` y `allow_anonymous true`, y abrir el puerto en el firewall. En la demo, el broker va en la nube con contraseña por equipo y cifrado (puerto 8883).
 4. **El WiFi**: la red de la escuela es WPA2-Enterprise (usuario y contraseña por persona). El equipo se puede conectar, pero hace falta una cuenta para él y que la red deje salir al puerto 8883. Plan B: el hotspot de un celular.

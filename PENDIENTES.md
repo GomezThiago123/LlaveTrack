@@ -6,7 +6,12 @@
 
 ## 1. Ahora (te toca a vos)
 
-- [ ] **Probar el paso 1 del firmware** (`firmware/`, el disco sin red): cargarlo y pegarle a Claude lo que muestre el Monitor Serie. Ver la sección 3.
+- [ ] **Conectar el ESP32 a la compu con un cable que pase datos.** Es lo que traba todo el firmware: sin eso no se le puede cargar ningún programa.
+  - El driver del chip USB de la placa (**CP210x** de Silicon Labs) ya está instalado: la placa apareció una vez como **COM5** (27/10/2026).
+  - Pero la conexión se cortó y después Windows no registró nada al volver a enchufarla: el cable no pasa datos o el conector está flojo. Probar **el cable con el que los compañeros cargaron su programa** u otro puerto, y no moverlo una vez conectado.
+  - **Plan B:** Claude arma el firmware en un archivo y se carga desde la compu de los compañeros con Chrome (página de Espressif, sin instalar nada).
+  - Hoy el ESP32 tiene el programa de los compañeros ("Ingrese aula"), que solo conoce los UID de la 214 y la 313: por eso con 101 dice que no la encuentra.
+- [ ] **Probar el paso 1 del firmware** cuando la placa conecte: Claude lo carga y lee el Monitor Serie desde la compu (hay que estar al lado: el disco gira solo al arrancar). Ver la sección 3.
 - [x] **OK al plan de la Fase 3 y a los colores del LED** (27/10/2026): verde fijo = conectado y no falta ninguna llave; naranja = conectado y falta alguna; rojo titilando = sin conexión.
 - [ ] **Colgar el tag HOME en el slot 0** y las 5 llaves en los slots 1 a 5 (101, 102, 213, 214, 313).
 - [ ] **Si podés, pasar la salida del programa de prueba** (`firmware/prueba_arduino/`): la dirección del LCD, si los UID del lector coinciden con los de NFC Tools y si andan el teclado y el LED. No traba nada: el firmware busca solo la dirección del LCD, y cada módulo se prueba igual en la Fase 3.
@@ -24,7 +29,7 @@
 ## 3. Fase 3: firmware del equipo
 
 - [x] **Plan acordado** (27/10/2026) y sección Firmware del CLAUDE.md reescrita para el motor de continua: la posición sale del lector RFID y del tiempo.
-- [ ] **Paso 1: el disco, sin red** (`firmware/`, compila con `pio run`). Al prender busca el HOME y mide la vuelta; después, desde el Monitor Serie: `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la 101), `v 31` (lugar vacío), `d` (diagnóstico: qué tag hay en cada slot). Hay que probar:
+- [ ] **Paso 1: el disco, sin red** (`firmware/`, escrito y compila con `pio run`; falta cargarlo: ver el punto 1). Al prender busca el HOME y mide la vuelta; después, desde el Monitor Serie: `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la 101), `v 31` (lugar vacío), `d` (diagnóstico: qué tag hay en cada slot). Hay que probar:
   - que el homing encuentre el HOME y mida unos 25 s;
   - el diagnóstico: que la 101 aparezca en el slot 1, la 102 en el 2, etc. Si aparecen al revés (la 101 en el 31), cambiar `ADELANTE_SUMA_SLOTS` en `config.h`;
   - que `b` frene con la llave centrada en la ventana (si se pasa, ajustar `ADELANTO_FRENO_SLOTS`);
