@@ -2,7 +2,7 @@
 
 Última actualización: 20/10/2026. Hechas hasta ahora: Fase 0, Fase 1, Fase 2 (salvo Google), US-22, US-23 y US-24 en el servidor y el simulador, la base en Supabase y el seed con las 30 aulas.
 
-## 0. Lo último (20 y 21/10/2026)
+## 0. Lo último (hasta el 21/10/2026)
 
 - [x] **Rediseño de la web** con el [prototipo de Joel](https://github.com/joel012930/llavetrack) y los colores de la UBA (azul, celeste y blanco): todas las pantallas, probadas con capturas en tamaño de celular (21/10/2026).
 - [x] **V2 en el servidor** (en `main`): US-17 mis préstamos, US-12/13 historial, US-16 recordatorio (a mano: el sistema no conoce los turnos), US-09 alta y desactivar docentes, US-10 cambiar el tag RFID (a mano hasta el modo alta del equipo). Supabase ya tiene las migraciones.
@@ -15,7 +15,7 @@
 
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
-- [ ] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
+- [x] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
 - [ ] **Sensor de posición:** el motor es un motorreductor de continua de 24 V y 2 cables (no es paso a paso), así que la posición sale de contar las 32 pestañas del disco. ¿Tienen un sensor para eso (ej. óptico de horquilla) o hay que conseguirlo? Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
@@ -53,9 +53,9 @@ En el orden acordado. Cada uno arranca con un plan corto y espera tu OK.
 Esperan tu decisión. Después armo un plan y espero tu OK.
 
 - [x] **Numeración:** las historias del equipo conectado, las llaves faltantes y la conexión del equipo se cargaron en Notion como US-22, US-23 y US-24 (MVP) y se renombraron en el código y la documentación. Los commits viejos dicen US-20/21/22.
-- [ ] **US-01, sesión de 60 s** (hoy 15 min). Decidido: 60 s, salvo mientras está abierta la pantalla del código. Falta implementarlo.
-- [ ] **US-02, quién ve quién tiene la llave:** decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
-- [ ] **US-03, la reserva vence a los 2 min:** decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
+- [x] **US-01, sesión de 60 s** (implementado) (hoy 15 min). Decidido: 60 s, salvo mientras está abierta la pantalla del código. Falta implementarlo.
+- [x] **US-02, quién ve quién tiene la llave** (implementado): decidido: todos los usuarios logueados ven nombre, hora y teléfono (hoy solo el preceptor y el admin). Falta implementarlo.
+- [x] **US-03, la reserva vence a los 2 min** (implementado): decidido: 2 min por defecto (hoy 10). Falta implementarlo; acordate de borrar `RESERVA_MINUTOS=3` de tu `.env`.
 - [x] **US-05, incidente visible para el preceptor:** tabla `Incidente`, `GET /api/incidentes` y el cuadro "Problemas del equipo hoy" del preceptor. En el simulador: `falla <codigo>`. En el equipo se hace en la Fase 3.
 - [x] **US-06, "cuando confirmo":** decidido: automático, como ahora (alcanza con colgar la llave). El criterio ya se ajustó en Notion y en `docs/user-stories.md` (21/10/2026).
 - [x] **US-07, desbloqueo manual por el preceptor:** cuadro "Cuentas bloqueadas" en la lista de aulas del preceptor y el admin.
@@ -72,7 +72,7 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 - [ ] **Mosquitto expuesto a internet:** TLS en el puerto 8883, usuario y contraseña por equipo y una ACL por prefijo. Nunca el 1883 abierto. El ESP32 se conecta con `WiFiClientSecure` y el certificado raíz.
 - [x] **Base persistente:** PostgreSQL de Supabase (`DATABASE_URL` en `backend/.env`, ver `.env.example`). Solo como base: la web y el ESP32 siguen pasando por el servidor. RLS activado en todas las tablas.
 - [x] **Conexión a Supabase:** migraciones, seed y RLS aplicados; login, reservas y conexión del simulador andan contra la base real (20/10/2026). Se borraron las tablas y funciones del diseño viejo, y el trigger sobre `auth.users`.
-- [ ] **Cargar el seed nuevo en Supabase:** `python -m app.seed --reiniciar` (borra los datos de prueba que hay ahora) y reiniciar el simulador (ahora usa 32 slots).
+- [x] **Cargar el seed nuevo en Supabase** (hecho): `python -m app.seed --reiniciar` (borra los datos de prueba que hay ahora) y reiniciar el simulador (ahora usa 32 slots).
 - [x] **Terminar el ciclo con Supabase** (hecho el 21/10/2026): `retirar <codigo>` y `devolver 04A00214` en el simulador, y ver en **Table Editor → prestamo** la fila con `devuelto_en`.
 - [ ] **Pasarles la conexión a tus compañeros:** la URL con la contraseña va por privado (nunca al repo). Cada uno la pone en su `backend/.env`; para desarrollar sin pisarse pueden seguir con SQLite local.
 - [ ] **Configurar el `.env` de producción:** `COOKIE_SEGURA=true`, `WEB_URL` con el dominio y `SMTP_*`.
@@ -80,7 +80,7 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 ## 4. Web: lo que falta
 
 - [ ] **Login con Google.** Hace falta crear el client ID en Google Cloud. Ahora que va a haber un dominio con HTTPS, funciona también desde los celulares.
-- [ ] **Decidir qué parte del [prototipo](https://claude.ai/artifact/BUCVFTTa6UfGr5jqzBvFh5) pasa a la web real.** Candidatos: la grilla de aulas (con 30 aulas, la lista actual es larga), la barra de la cuenta regresiva y la confirmación de retiro.
+- [x] **Decidido: la web tomó el diseño del prototipo de Joel.** Antes se evaluaba este [prototipo](https://claude.ai/artifact/BUCVFTTa6UfGr5jqzBvFh5) pasa a la web real.** Candidatos: la grilla de aulas (con 30 aulas, la lista actual es larga), la barra de la cuenta regresiva y la confirmación de retiro.
 - [ ] **Mail de recuperación de verdad:** completar `SMTP_*`, por ejemplo con Gmail y una contraseña de aplicación. Mientras tanto, el link sale en la consola del servidor.
 
 ## 5. Para probar vos
@@ -88,10 +88,10 @@ Como la demo corre en la nube, hay cosas nuevas para resolver antes de la Fase 4
 Ya están hechos, pero falta tu prueba.
 
 - [ ] **Web nueva:** recorrerla en el celular como Ana (Aulas, pedir una llave, Mis llaves, Cuenta) y como Carla (Faltantes con "Enviar recordatorio", Historial con filtros, Equipo con el cambio de tag, Docentes con alta y desactivar). Antes: `alembic upgrade head` si tu base no está al día.
-- [ ] **US-05:** como Ana pedí una llave; en el simulador `falla <codigo>`; como Carla tiene que aparecer "Problemas del equipo hoy" con la hora, el aula y la docente. Antes: `alembic upgrade head` (tabla nueva).
+- [x] **US-05** (probado el 20/10/2026): como Ana pedí una llave; en el simulador `falla <codigo>`; como Carla tiene que aparecer "Problemas del equipo hoy" con la hora, el aula y la docente. Antes: `alembic upgrade head` (tabla nueva).
 - [x] **US-07:** Bruno bloqueado tras 5 intentos y desbloqueado por Carla (probado en el entorno real el 21/10/2026).
-- [ ] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
-- [ ] **Fase 2 en la compu:** pedir una llave como Ana, retirarla con el simulador y verla como Carla.
+- [x] **Reiniciá tu simulador:** el que tenés abierto tiene el código viejo, sin los LEDs. Cerralo con `salir` y volvé a abrirlo.
+- [x] **Fase 2 en la compu** (probado el 21/10/2026): pedir una llave como Ana, retirarla con el simulador y verla como Carla.
 - [ ] **Fase 2 en el celular**, entrando a `http://<IP-de-la-compu>:5173`.
 - [ ] **Sesión vencida (US-01):** sin tocar nada durante 60 s, la web vuelve sola al login; en la pantalla del código, no.
 - [ ] **US-22:** `desenchufar` y `enchufar` en el simulador; los botones de la web se deshabilitan y se habilitan solos.
