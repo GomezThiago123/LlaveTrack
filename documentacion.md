@@ -3,7 +3,7 @@
 Qué es el sistema, cómo funciona, cómo se conectan sus partes y en qué estado está cada historia.
 Para levantarlo en la compu está el [README](README.md); la lista de tareas abiertas está en [PENDIENTES.md](PENDIENTES.md).
 
-*Última actualización: 21/10/2026.*
+*Última actualización: 27/10/2026.*
 
 ---
 
@@ -72,8 +72,20 @@ Cada llavero tiene un **tag RFID con un número único de fábrica (UID)**, por 
 - **Al devolver**, el equipo lee el UID de la llave que colgaron y el servidor busca de qué aula es y quién la tenía.
 - **El slot 0** tiene un tag especial, **HOME**, que nunca se presta: le sirve al equipo para saber dónde está el cero del disco al arrancar.
 
-### Cómo se cargan los UID reales (hoy son inventados)
-Los 30 UID del seed son inventados (`04A0` + número de aula). Para poner los verdaderos:
+### Las llaves cargadas hoy
+Por pedido del profe se arranca con **5 llaves**, con sus UID reales (leídos con NFC Tools el 27/10/2026; son tags MIFARE Classic 1K):
+
+| Aula | UID | Slot |
+| --- | --- | --- |
+| 101 | `A94B37A4` | 1 |
+| 102 | `2A86C880` | 2 |
+| 213 | `5A81F281` | 3 |
+| 214 | `CAA8EA81` | 4 |
+| 313 | `2AC3FE80` | 5 |
+
+Falta leer el tag **HOME** (slot 0). Las 30 aulas, con UID inventados, quedan en `backend/seed/datos_30_aulas.json`.
+
+### Cómo se cargan más llaves
 1. **Marcar cada llavero** con el número de su aula (con fibra o una etiqueta).
 2. **Leer el UID de cada tag.** Dos formas:
    - **Ya mismo, con un celular Android con NFC**: la app gratuita *NFC Tools* muestra el número de serie al acercar el tag (ej. `04:A1:B2:C3`). Funciona con la mayoría de los tags de 13,56 MHz. Ojo: algunas apps muestran los bytes en orden inverso, así que conviene comparar uno con lo que lee el equipo antes de cargar los 30.
@@ -81,7 +93,7 @@ Los 30 UID del seed son inventados (`04A0` + número de aula). Para poner los ve
 3. **Cargarlo en el sistema**:
    - **Desde la web**: preceptor → **Equipo** → Tags RFID → el lápiz del aula. Acepta el número con o sin dos puntos y avisa si ese tag ya es de otra aula.
    - **O en `backend/seed/datos.json`** y recargar la base (`python -m app.seed --reiniciar`, que borra los datos de prueba).
-4. **Colgar cada llave en su slot**: el slot de cada aula se ve en la misma pantalla de Equipo (hoy: 101 en el 1, 102 en el 2… 315 en el 30). Si una llave queda en otro lugar, al retirarla el equipo la busca dando una vuelta (es más lento), y al devolverla el sistema guarda el slot donde la leyó. Conviene colgarlas bien desde el principio.
+4. **Colgar cada llave en su slot**: el slot de cada aula se ve en la misma pantalla de Equipo (hoy: 101 en el 1, 102 en el 2, 213 en el 3, 214 en el 4 y 313 en el 5). Si una llave queda en otro lugar, al retirarla el equipo la busca dando una vuelta (es más lento), y al devolverla el sistema guarda el slot donde la leyó. Conviene colgarlas bien desde el principio.
 
 ## 5. La web
 

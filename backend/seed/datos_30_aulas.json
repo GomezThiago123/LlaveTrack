@@ -1,0 +1,44 @@
+{
+  "_comentario": "Las 30 aulas reales (para usar mas adelante: copiar sobre datos.json). Disco de 32 slots: el 0 es del tag HOME (reservado) y el 31 queda libre. Los UID son INVENTADOS (04A0 + numero de aula): reemplazarlos por los reales que lista el modo diagnostico del equipo. Todas las claves son de prueba (cambiarlas antes de la demo).",
+  "dispositivos": [
+    { "deviceId": "equipo-01", "slotsTotales": 32, "slotsReservados": [0] }
+  ],
+  "aulas": [
+    {"nombre": "101", "llave": {"rfidUid": "04A00101", "slot": 1}},
+    {"nombre": "102", "llave": {"rfidUid": "04A00102", "slot": 2}},
+    {"nombre": "103", "llave": {"rfidUid": "04A00103", "slot": 3}},
+    {"nombre": "104", "llave": {"rfidUid": "04A00104", "slot": 4}},
+    {"nombre": "105", "llave": {"rfidUid": "04A00105", "slot": 5}},
+    {"nombre": "111", "llave": {"rfidUid": "04A00111", "slot": 6}},
+    {"nombre": "112", "llave": {"rfidUid": "04A00112", "slot": 7}},
+    {"nombre": "113", "llave": {"rfidUid": "04A00113", "slot": 8}},
+    {"nombre": "114", "llave": {"rfidUid": "04A00114", "slot": 9}},
+    {"nombre": "115", "llave": {"rfidUid": "04A00115", "slot": 10}},
+    {"nombre": "201", "llave": {"rfidUid": "04A00201", "slot": 11}},
+    {"nombre": "202", "llave": {"rfidUid": "04A00202", "slot": 12}},
+    {"nombre": "203", "llave": {"rfidUid": "04A00203", "slot": 13}},
+    {"nombre": "204", "llave": {"rfidUid": "04A00204", "slot": 14}},
+    {"nombre": "205", "llave": {"rfidUid": "04A00205", "slot": 15}},
+    {"nombre": "211", "llave": {"rfidUid": "04A00211", "slot": 16}},
+    {"nombre": "212", "llave": {"rfidUid": "04A00212", "slot": 17}},
+    {"nombre": "213", "llave": {"rfidUid": "04A00213", "slot": 18}},
+    {"nombre": "214", "llave": {"rfidUid": "04A00214", "slot": 19}},
+    {"nombre": "215", "llave": {"rfidUid": "04A00215", "slot": 20}},
+    {"nombre": "301", "llave": {"rfidUid": "04A00301", "slot": 21}},
+    {"nombre": "302", "llave": {"rfidUid": "04A00302", "slot": 22}},
+    {"nombre": "303", "llave": {"rfidUid": "04A00303", "slot": 23}},
+    {"nombre": "304", "llave": {"rfidUid": "04A00304", "slot": 24}},
+    {"nombre": "305", "llave": {"rfidUid": "04A00305", "slot": 25}},
+    {"nombre": "311", "llave": {"rfidUid": "04A00311", "slot": 26}},
+    {"nombre": "312", "llave": {"rfidUid": "04A00312", "slot": 27}},
+    {"nombre": "313", "llave": {"rfidUid": "04A00313", "slot": 28}},
+    {"nombre": "314", "llave": {"rfidUid": "04A00314", "slot": 29}},
+    {"nombre": "315", "llave": {"rfidUid": "04A00315", "slot": 30}}
+  ],
+  "usuarios": [
+    {"nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "telefono": "11 5555-0001", "rol": "DOCENTE", "clave": "llavetrack"},
+    {"nombre": "Bruno", "apellido": "Gomez", "email": "bruno.gomez@example.com", "telefono": "11 5555-0002", "rol": "DOCENTE", "clave": "llavetrack"},
+    {"nombre": "Carla", "apellido": "Diaz", "email": "carla.diaz@example.com", "telefono": "11 5555-0003", "rol": "PRECEPTOR", "clave": "llavetrack"},
+    {"nombre": "Admin", "apellido": "Sistema", "email": "admin@example.com", "telefono": null, "rol": "ADMIN", "clave": "llavetrack"}
+  ]
+}

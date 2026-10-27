@@ -29,7 +29,7 @@ def test_seed_real_es_valido():
     uids = [llave["rfidUid"] for llave in llaves]
     slots = [llave["slot"] for llave in llaves]
 
-    assert len(datos["aulas"]) == 30
+    assert len(datos["aulas"]) >= 1
     assert all(re.fullmatch(r"[0-9A-F]+", uid) for uid in uids)  # hex en mayusculas sin separadores
     assert len(set(uids)) == len(uids)
     assert len(set(slots)) == len(slots)
