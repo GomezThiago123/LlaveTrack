@@ -139,3 +139,20 @@ Las pantallas se actualizan solas cada 5 segundos. El diseño sale del [prototip
 | --- | --- |
 | `npm run dev` | Levanta la web en modo desarrollo |
 | `npm run build` | Compila la web para producción (queda en `dist/`) |
+
+## Firmware del equipo (ESP32)
+
+Está en `firmware/` (PlatformIO). El cableado está en [docs/cableado.md](docs/cableado.md) y los pines y tiempos en `firmware/include/config.h`.
+
+**Con VS Code** (lo más fácil): instalá la extensión **PlatformIO IDE**, abrí la carpeta `firmware/` (Archivo → Abrir carpeta) y conectá el ESP32 por USB. En la barra de abajo: la flecha **→** lo carga y el enchufe abre el Monitor Serie (115200 baudios). La primera vez tarda unos minutos porque baja las herramientas del ESP32.
+
+**Desde la terminal**, con PlatformIO instalado (`pip install platformio`):
+```sh
+cd firmware
+pio run -t upload     # compila y carga
+pio device monitor    # Monitor Serie
+```
+
+Hoy es el **paso 1** (el disco, sin red): al prender busca el tag HOME y mide la vuelta; después se prueba desde el Monitor Serie con `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la llave de la 101), `v 31` (dejar un lugar vacío) y `d` (diagnóstico: qué tag hay en cada slot). **Al prender, el disco gira solo**: tené la mano cerca del interruptor la primera vez.
+
+Para probar cada pieza por separado está `firmware/prueba_arduino/prueba_arduino.ino` (Arduino IDE).

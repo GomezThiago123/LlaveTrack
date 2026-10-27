@@ -6,7 +6,8 @@
 
 ## 1. Ahora (te toca a vos)
 
-- [ ] **OK al plan de la Fase 3** (firmware del equipo) que propuso Claude el 27/10/2026, y a los **colores del LED**: verde fijo = conectado y no falta ninguna llave; naranja (los dos colores) = conectado y falta alguna; rojo titilando = sin conexión. Es lo que destraba el firmware.
+- [ ] **Probar el paso 1 del firmware** (`firmware/`, el disco sin red): cargarlo y pegarle a Claude lo que muestre el Monitor Serie. Ver la sección 3.
+- [x] **OK al plan de la Fase 3 y a los colores del LED** (27/10/2026): verde fijo = conectado y no falta ninguna llave; naranja = conectado y falta alguna; rojo titilando = sin conexión.
 - [ ] **Colgar el tag HOME en el slot 0** y las 5 llaves en los slots 1 a 5 (101, 102, 213, 214, 313).
 - [ ] **Si podés, pasar la salida del programa de prueba** (`firmware/prueba_arduino/`): la dirección del LCD, si los UID del lector coinciden con los de NFC Tools y si andan el teclado y el LED. No traba nada: el firmware busca solo la dirección del LCD, y cada módulo se prueba igual en la Fase 3.
 - [x] **Tiempo de vuelta del disco: 25 s** (27/10/2026), unos 0,78 s por slot.
@@ -20,11 +21,16 @@
   - saber si pide certificado;
   - probar que deja salir al puerto 8883: desde una notebook en esa red, MQTTX a `test.mosquitto.org:8883` con SSL. Si no conecta, plan B: hotspot de un celular.
 
-## 3. Fase 3: firmware del equipo (Claude, con el OK del punto 1)
+## 3. Fase 3: firmware del equipo
 
-- [ ] **Reescribir la sección Firmware del CLAUDE.md** para el motor de continua: posición por el lector RFID y el tiempo (retiro: girar por el camino más corto hasta leer el UID pedido; lugar vacío: girar el tiempo calculado y comprobar que no se lee ningún tag). La vuelta se vuelve a medir sola al arrancar, entre dos pasadas por HOME.
-- [ ] En cuatro pasos, cada uno con su prueba: (1) proyecto PlatformIO, LCD y teclado; (2) lector, motor y homing con HOME; (3) WiFi y MQTT (keepalive 10 s, LWT, latido 30 s); (4) máquina de estados completa, LED y modo diagnóstico (tecla `D` al encender).
-- [ ] **Mosquitto para el equipo real:** hoy solo acepta conexiones de la misma compu. Agregar `listener 1883` y `allow_anonymous true` a `mosquitto.conf` y abrir el puerto en el firewall (necesita permisos de administrador; solo en desarrollo).
+- [x] **Plan acordado** (27/10/2026) y sección Firmware del CLAUDE.md reescrita para el motor de continua: la posición sale del lector RFID y del tiempo.
+- [ ] **Paso 1: el disco, sin red** (`firmware/`, compila con `pio run`). Al prender busca el HOME y mide la vuelta; después, desde el Monitor Serie: `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la 101), `v 31` (lugar vacío), `d` (diagnóstico: qué tag hay en cada slot). Hay que probar:
+  - que el homing encuentre el HOME y mida unos 25 s;
+  - el diagnóstico: que la 101 aparezca en el slot 1, la 102 en el 2, etc. Si aparecen al revés (la 101 en el 31), cambiar `ADELANTE_SUMA_SLOTS` en `config.h`;
+  - que `b` frene con la llave centrada en la ventana (si se pasa, ajustar `ADELANTO_FRENO_SLOTS`);
+  - que `v` deje un lugar vacío en la ventana.
+  - Si el lector no ve los tags con el disco girando (los compañeros movían de a pulsos), avisar: se agrega el giro a pulsos.
+- [ ] **Paso 2: WiFi, MQTT y el retiro y la devolución completos** (reemplaza al simulador). Antes: **Mosquitto para el equipo real** (hoy solo acepta conexiones de la misma compu: agregar `listener 1883` y `allow_anonymous true` a `mosquitto.conf` y abrir el puerto en el firewall; necesita permisos de administrador) y la red WiFi (`secrets.h`).
 
 ## 4. La nube, para la demo
 

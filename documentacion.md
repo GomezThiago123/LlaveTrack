@@ -55,7 +55,7 @@ Las llaves cuelgan de un disco de MDF con 32 lugares (*slots*). Cada llavero tie
 - **El simulador** (`backend/simulador/`) se hace pasar por el equipo: manda exactamente los mismos mensajes. Por eso todo se puede probar sin el hardware, y el día que el ESP32 esté listo lo reemplaza sin cambiar nada del servidor ni de la web.
 
 ### Cómo se conecta el equipo real (cuando esté el firmware)
-1. **El firmware** (Fase 3) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo.
+1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Hoy está hecho el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío); el paso 2 agrega la conexión.
 2. **El equipo se conecta al WiFi y al broker**, y anuncia que está en línea. En la web aparece "Equipo en línea" y se habilita "Pedir llave". Si se corta, a los ~15 segundos la web lo muestra desconectado.
 3. **Mosquitto tiene que aceptar conexiones de la red.** Como está instalado hoy (sin configuración propia, Mosquitto 2) solo acepta conexiones de la misma compu: el simulador entra, el ESP32 no. Para probar el equipo en la compu hay que agregar a `mosquitto.conf` un `listener 1883` y `allow_anonymous true`, y abrir el puerto en el firewall. En la demo, el broker va en la nube con contraseña por equipo y cifrado (puerto 8883).
 4. **El WiFi**: la red de la escuela es WPA2-Enterprise (usuario y contraseña por persona). El equipo se puede conectar, pero hace falta una cuenta para él y que la red deje salir al puerto 8883. Plan B: el hotspot de un celular.
@@ -148,6 +148,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | 20/10 | Las historias del equipo conectado y los LEDs son **US-22 a US-24** | En Notion, US-20 y US-21 eran otras. Los commits viejos dicen US-20 a US-22 |
 | 20/10 | El equipo usa la **WiFi de la escuela** (plan B: hotspot) | Respuesta del grupo |
 | 27/10 | El firmware usa **el cableado que hicieron los compañeros** (`docs/cableado.md`): un LED bicolor y el motor sin control de velocidad | Ya estaba armado: es más fácil adaptar el código que volver a cablear |
+| 27/10 | LED bicolor: **verde** = todo bien, **naranja** = falta alguna llave, **rojo titilando** = sin conexión | Hay un solo LED cableado para mostrar las dos cosas |
 | 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 25 s (~0,78 s por slot). Si no alcanza la precisión, se agrega un sensor de horquilla |
 | 21/10 | La web toma el **diseño del prototipo de Joel** con los colores de la UBA | Con 30 aulas, la grilla con buscador y peines es mucho más cómoda que la lista |
 
