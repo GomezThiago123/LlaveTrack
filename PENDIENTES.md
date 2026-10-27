@@ -16,7 +16,7 @@
 Bloquean trabajo: sin estas respuestas no se puede seguir con lo que dice cada una.
 
 - [x] **Decisiones sobre las user stories** (sección 2b): lo construido no coincide con algunos criterios de aceptación.
-- [ ] **Sensor de posición:** el motor es un motorreductor de continua de 24 V y 2 cables (no es paso a paso), así que la posición sale de contar las 32 pestañas del disco. ¿Tienen un sensor para eso (ej. óptico de horquilla) o hay que conseguirlo? Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
+- [ ] **Medir cuánto tarda el disco en dar una vuelta** a 24 V, con cronómetro, 3 veces. Decidido: la posición sale del lector RFID y el tiempo de giro (plan B: sensor de horquilla). Lo que sigue es lo de antes, para referencia. **Sensor de posición:** el motor es un motorreductor de continua de 24 V y 2 cables (no es paso a paso), así que la posición sale de contar las 32 pestañas del disco. ¿Tienen un sensor para eso (ej. óptico de horquilla) o hay que conseguirlo? Con eso reescribo el diseño del motor en el CLAUDE.md. *Bloquea: la Fase 3 (motor).*
 - [ ] **LEDs:** dos bicolores (conexión y faltantes). En la Fase 3 propongo los colores, GPIO y resistencias.
 - [ ] **Proveedor de la nube** para el servidor (ver la sección 3). Lo propongo yo cuando lleguemos.
 - [ ] **WiFi de la escuela (decidido: el ESP32 se conecta ahí):** es WPA2-Enterprise. Hace falta:
