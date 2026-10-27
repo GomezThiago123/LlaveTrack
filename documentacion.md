@@ -83,7 +83,7 @@ Por pedido del profe se arranca con **5 llaves**, con sus UID reales (leídos co
 | 214 | `CAA8EA81` | 4 |
 | 313 | `2AC3FE80` | 5 |
 
-Falta leer el tag **HOME** (slot 0). Las 30 aulas, con UID inventados, quedan en `backend/seed/datos_30_aulas.json`.
+El tag **HOME** (slot 0, nunca sale del disco) es `9A35EA81`. No va en la base: lo usa el equipo para encontrar el cero al arrancar, y se carga en `config.h` del firmware. Las 30 aulas, con UID inventados, quedan en `backend/seed/datos_30_aulas.json`.
 
 ### Cómo se cargan más llaves
 1. **Marcar cada llavero** con el número de su aula (con fibra o una etiqueta).

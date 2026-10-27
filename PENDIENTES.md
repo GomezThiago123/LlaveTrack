@@ -101,7 +101,7 @@ Ya están hechos, pero falta tu prueba.
 
 - [x] **5 llaves con UID real** (pedido del profe, 27/10/2026): 101, 102, 213, 214 y 313 en `seed/datos.json`.
 - [x] **Cargadas en Supabase** (27/10/2026).
-- [ ] **Leer el tag HOME** (slot 0) con NFC Tools.
+- [x] **Tag HOME leído:** `9A35EA81` (27/10/2026). Va en `config.h` (`UID_HOME`) cuando se haga el firmware.
 - [ ] **Colgar las 5 llaves** en los slots 1 a 5 (101, 102, 213, 214, 313).
 - [ ] **Más adelante, los 25 llaveros que faltan** (ver `documentacion.md`, sección 4): marcarlos, leerlos con un Android con NFC Tools o con el modo diagnóstico, y cargarlos en Equipo → Tags RFID o en el seed.
 - [ ] **Mosquitto para el equipo real**: hoy solo acepta conexiones de la misma compu. Para el ESP32, agregar `listener 1883` y `allow_anonymous true` a `mosquitto.conf` y abrir el puerto en el firewall (solo en desarrollo).

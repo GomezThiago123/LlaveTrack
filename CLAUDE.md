@@ -144,7 +144,7 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [x] Placa: NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32). Los pines 6–11 están expuestos pero son de la flash: no usarlos.
 - [x] LCD: 16x2 confirmado.
 - [ ] LCD: dirección I2C (0x27 o 0x3F), sale del scanner en la Fase 3.
-- [x] Referencia de cero: tag RFID HOME en el slot 0 por ahora (sin sensor).
+- [x] Referencia de cero: tag RFID HOME en el slot 0 por ahora (sin sensor). Su UID es `9A35EA81` (leído el 27/10/2026): va en `config.h` como `UID_HOME`, no en la base.
 - [x] Disco de 32 slots. El 0 es del tag HOME: quedan 31 lugares, entran las 30 aulas reales y sobra 1.
 - [ ] LEDs: dos bicolores, uno por agujero del panel: conexión y faltantes (respuesta del 20/10/2026). Falta: qué color significa qué, GPIO y resistencias. Se decide en la Fase 3: proponerlos (`config.h` + `docs/cableado.md`) y esperar confirmación.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
