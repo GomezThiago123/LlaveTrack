@@ -99,6 +99,8 @@ Ya están hechos, pero falta tu prueba.
 
 ## 6. Fase 3: firmware
 
+- [ ] **Probar el hardware con `firmware/prueba_arduino/prueba_arduino.ino`** (Arduino IDE): scanner I2C y LCD, lector RFID (comparar los UID con los de NFC Tools), teclado, LEDs, motor, y **`v` para medir 3 vueltas** del disco con el tag HOME. Usa el mapa de pines PROPUESTO (sin confirmar). Compila con el core 3.3 del ESP32.
+
 - [x] **5 llaves con UID real** (pedido del profe, 27/10/2026): 101, 102, 213, 214 y 313 en `seed/datos.json`.
 - [x] **Cargadas en Supabase** (27/10/2026).
 - [x] **Tag HOME leído:** `9A35EA81` (27/10/2026). Va en `config.h` (`UID_HOME`) cuando se haga el firmware.
