@@ -128,7 +128,7 @@ export function EtiquetaSeccion({ children, derecha }: { children: ReactNode; de
   );
 }
 
-/** Botones de opcion unica, ej. Todas · Piso 1 · Piso 2 */
+/** Botones de opcion unica, ej. Todas · Peine 1 · Peine 2 */
 export function Segmentado<T extends string>({
   valor,
   opciones,

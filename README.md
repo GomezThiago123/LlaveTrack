@@ -125,7 +125,7 @@ Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a
 | --- | --- |
 | `/` | Sin login: estado de cada aula y si el equipo está en línea |
 | `/login`, `/recuperar`, `/restablecer` | Ingresar, recuperar la contraseña y crearla (el docente nuevo llega por el link del mail) |
-| `/aulas` | Con login: buscador, pisos y "solo disponibles"; quién tiene cada llave. Pedir una llave muestra el código arriba, con cuenta regresiva |
+| `/aulas` | Con login: buscador, peines y "solo disponibles"; quién tiene cada llave. Pedir una llave muestra el código arriba, con cuenta regresiva |
 | `/mis-llaves` | Las llaves que tengo y mis préstamos anteriores (US-17) |
 | `/cuenta` | Mis datos y cerrar sesión |
 | `/faltantes` | Preceptor: llaves fuera del carrusel, contacto del docente y "Enviar recordatorio" (US-16) |

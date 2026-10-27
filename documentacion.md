@@ -100,7 +100,7 @@ El tag **HOME** (slot 0, nunca sale del disco) es `9A35EA81`. No va en la base: 
 | Quién | Pantallas (barra de abajo) |
 | --- | --- |
 | Sin login | Estado de las 30 aulas y del equipo, login, recuperar contraseña |
-| Docente | **Aulas** (buscador, pisos, "solo disponibles", pedir llave y el código arriba) · **Mis llaves** (las que tengo y mis préstamos) · **Cuenta** |
+| Docente | **Aulas** (buscador, peines, "solo disponibles", pedir llave y el código arriba) · **Mis llaves** (las que tengo y mis préstamos) · **Cuenta** |
 | Preceptor y admin | **Aulas** · **Faltantes** (quién tiene cada llave, desde cuándo, "Enviar recordatorio") · **Historial** (filtros por aula, docente, fechas y estado) · **Equipo** (estado, carrusel, problemas, tags RFID) · **Docentes** (cuentas bloqueadas, alta, activar o desactivar) |
 
 Diseño: el [prototipo de Joel](https://github.com/joel012930/llavetrack), con los colores de la UBA. Las pantallas se actualizan solas cada 5 segundos. La sesión se cierra tras 60 segundos sin actividad, salvo mientras se muestra el código.
@@ -149,7 +149,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | 20/10 | El equipo usa la **WiFi de la escuela** (plan B: hotspot) | Respuesta del grupo |
 | 27/10 | El firmware usa **el cableado que hicieron los compañeros** (`docs/cableado.md`): un LED bicolor y el motor sin control de velocidad | Ya estaba armado: es más fácil adaptar el código que volver a cablear |
 | 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 25 s (~0,78 s por slot). Si no alcanza la precisión, se agrega un sensor de horquilla |
-| 21/10 | La web toma el **diseño del prototipo de Joel** con los colores de la UBA | Con 30 aulas, la grilla con buscador y pisos es mucho más cómoda que la lista |
+| 21/10 | La web toma el **diseño del prototipo de Joel** con los colores de la UBA | Con 30 aulas, la grilla con buscador y peines es mucho más cómoda que la lista |
 
 ## 8. Cómo se prueba
 

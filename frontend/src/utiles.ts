@@ -84,7 +84,7 @@ export function delAula(nombre: string): string {
   return /^\d/.test(nombre) ? `del aula ${nombre}` : `de ${nombre}`;
 }
 
-/** El piso sale del primer numero del aula: 214 -> 2. Null si el nombre no empieza con un numero. */
-export function piso(nombre: string): number | null {
+/** El peine sale del primer numero del aula: 214 -> 2. Null si el nombre no empieza con un numero. */
+export function peine(nombre: string): number | null {
   return /^\d/.test(nombre) ? Number(nombre[0]) : null;
 }

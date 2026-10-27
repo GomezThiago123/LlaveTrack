@@ -1,4 +1,4 @@
-// Lista de aulas con login (US-02): buscador, pisos y "solo disponibles". Pedir una llave (US-03).
+// Lista de aulas con login (US-02): buscador, peines y "solo disponibles". Pedir una llave (US-03).
 // Todos ven quien tiene cada llave, desde que hora y su telefono. Se actualiza cada 5 s.
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
@@ -9,7 +9,7 @@ import ProblemasEquipo from '../componentes/ProblemasEquipo';
 import { TarjetaEnPoder, TarjetaReserva } from '../componentes/Reserva';
 import { useRefresco } from '../refresco';
 import { useSesion } from '../sesion';
-import { esPreceptor, hora, piso } from '../utiles';
+import { esPreceptor, hora, peine } from '../utiles';
 
 export default function Aulas() {
   const { usuario, manejarError } = useSesion();
@@ -19,7 +19,7 @@ export default function Aulas() {
   const [error, setError] = useState<string | null>(null);
   const [pidiendo, setPidiendo] = useState<number | null>(null); // id del aula que se esta pidiendo
   const [busqueda, setBusqueda] = useState('');
-  const [filtroPiso, setFiltroPiso] = useState('todas');
+  const [filtroPeine, setFiltroPeine] = useState('todas');
   const [soloDisponibles, setSoloDisponibles] = useState(false);
 
   // La reserva pendiente, si hay (tambien si se recargo la pagina)
@@ -35,10 +35,10 @@ export default function Aulas() {
   const tieneReserva = reserva?.estado === 'PENDIENTE';
   const enMiPoder = lista.filter((a) => a.estado === 'PRESTADA' && a.tenedor?.usuarioId === usuario?.id);
   const disponibles = lista.filter((a) => a.estado === 'DISPONIBLE').length;
-  const pisos = [...new Set(lista.map((a) => piso(a.nombre)).filter((p) => p !== null))].sort();
+  const peines = [...new Set(lista.map((a) => peine(a.nombre)).filter((p) => p !== null))].sort();
   const filtradas = lista.filter(
     (a) =>
-      (filtroPiso === 'todas' || String(piso(a.nombre)) === filtroPiso) &&
+      (filtroPeine === 'todas' || String(peine(a.nombre)) === filtroPeine) &&
       (!soloDisponibles || a.estado === 'DISPONIBLE') &&
       a.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()),
   );
@@ -88,14 +88,14 @@ export default function Aulas() {
           onChange={(e) => setBusqueda(e.target.value)}
         />
       </div>
-      {pisos.length > 1 && (
+      {peines.length > 1 && (
         <Segmentado
-          etiqueta="Filtrar por piso"
-          valor={filtroPiso}
-          alCambiar={setFiltroPiso}
+          etiqueta="Filtrar por peine"
+          valor={filtroPeine}
+          alCambiar={setFiltroPeine}
           opciones={[
             { valor: 'todas', texto: `Todas (${lista.length})` },
-            ...pisos.map((p) => ({ valor: String(p), texto: `Piso ${p}` })),
+            ...peines.map((p) => ({ valor: String(p), texto: `Peine ${p}` })),
           ]}
         />
       )}
