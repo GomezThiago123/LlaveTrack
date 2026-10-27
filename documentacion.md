@@ -83,9 +83,9 @@ Por pedido del profe se arranca con **5 llaves**, con sus UID reales (leídos co
 | 214 | `CAA8EA81` | 4 |
 | 313 | `2AC3FE80` | 5 |
 
-El tag **HOME** (slot 0, nunca sale del disco) es `9A35EA81`. No va en la base: lo usa el equipo para encontrar el cero al arrancar, y se carga en `config.h` del firmware. Las 30 aulas, con UID inventados, quedan en `backend/seed/datos_30_aulas.json`.
+El tag **HOME** (slot 0, nunca sale del disco) es `9A35EA81`. No va en la base: lo usa el equipo para encontrar el cero al arrancar, y se carga en `config.h` del firmware. El sistema queda con estas 5 llaves (decidido el 27/10/2026).
 
-### Cómo se cargan más llaves
+### Cómo se carga o se cambia una llave (por ejemplo, si se pierde un llavero)
 1. **Marcar cada llavero** con el número de su aula (con fibra o una etiqueta).
 2. **Leer el UID de cada tag.** Dos formas:
    - **Ya mismo, con un celular Android con NFC**: la app gratuita *NFC Tools* muestra el número de serie al acercar el tag (ej. `04:A1:B2:C3`). Funciona con la mayoría de los tags de 13,56 MHz. Ojo: algunas apps muestran los bytes en orden inverso, así que conviene comparar uno con lo que lee el equipo antes de cargar los 30.

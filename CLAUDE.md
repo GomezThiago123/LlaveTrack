@@ -53,7 +53,7 @@ Reglas:
 - Una llave nunca puede quedar tomada dos veces: cada cambio de estado es un UPDATE condicional (`UPDATE llave SET estado = ... WHERE id = ? AND estado = 'DISPONIBLE'`, con SQLAlchemy) dentro de una transacción, verificando cuántas filas cambió. Test obligatorio con dos pedidos simultáneos.
 - Un docente tiene como máximo una reserva pendiente.
 - Fechas en UTC en la base; se muestran en `America/Argentina/Buenos_Aires`.
-- Seed desde un archivo editable (`backend/seed/datos.json`): por pedido del profe (27/10/2026) son 5 llaves con sus UID reales (101, 102, 213, 214 y 313 en los slots 1 a 5) y los usuarios de prueba. Las 30 aulas, con UID inventados, quedan en `seed/datos_30_aulas.json` para más adelante.
+- Seed desde un archivo editable (`backend/seed/datos.json`): por pedido del profe (27/10/2026) son 5 llaves con sus UID reales (101, 102, 213, 214 y 313 en los slots 1 a 5) y los usuarios de prueba. El proyecto queda con esas 5 llaves (decidido el 27/10/2026); `seed/datos_30_aulas.json` (30 aulas con UID inventados) queda solo como referencia.
 - Vencimiento "perezoso": antes de cada consulta o cambio (REST o MQTT) se llama `vencer_reservas()`. No hay tarea periódica.
 - `Llave.slot` es null mientras la llave está prestada (no está en el disco).
 - La lógica va en `app/servicios/` (sin commit); las rutas HTTP y el cliente MQTT llaman a esos servicios y hacen el commit.

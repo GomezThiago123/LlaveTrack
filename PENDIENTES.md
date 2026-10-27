@@ -22,7 +22,6 @@
   - una cuenta para el equipo (mejor una de sistemas, no la personal de alguien);
   - saber si pide certificado;
   - probar que deja salir al puerto 8883: desde una notebook en esa red, MQTTX a `test.mosquitto.org:8883` con SSL. Si no conecta, plan B: hotspot de un celular.
-- [ ] **Más adelante, los 25 llaveros que faltan:** marcarlos, leerlos con NFC Tools y cargarlos (Equipo → Tags RFID, o `seed/datos_30_aulas.json`).
 
 ## 3. Fase 3: firmware del equipo (Claude, después de las pruebas del punto 1)
 
@@ -71,7 +70,7 @@ US-11 (baja de llave perdida) · US-14 (devolver sin conexión) · US-15 (corte 
 - **V2 hechas a pedido:** US-09 (docentes), US-10 (tags RFID a mano), US-12/13 (historial), US-16 (recordatorio manual), US-17 (mis llaves).
 - **Decisiones sobre las user stories** (20/10): sesión de 60 s, reserva de 2 min, todos ven quién tiene cada llave, devolución automática, incidentes para el preceptor, desbloqueo manual, textos de los criterios. US-22 a US-24 cargadas en Notion.
 - **Web rediseñada** con el prototipo de Joel y los colores de la UBA (21/10), probada con capturas y contra Supabase.
-- **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 5 llaves reales cargadas** (101, 102, 213, 214, 313; 27/10). Las 30 aulas quedan en `seed/datos_30_aulas.json`.
+- **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 5 llaves reales cargadas** (101, 102, 213, 214, 313; 27/10). El proyecto queda con esas 5 llaves (decidido el 27/10/2026); `seed/datos_30_aulas.json` queda solo como referencia.
 - **Hardware relevado:** disco de 32 slots, motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2, tags MIFARE Classic 1K, **tag HOME `9A35EA81`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
 - **Programa de prueba del hardware** (`firmware/prueba_arduino/`), con esos pines; compila.
 - **Documentación:** `documentacion.md` (para el grupo y los profes), `docs/user-stories.md`, `docs/protocolo-mqtt.md`, `docs/cableado.md`.
