@@ -28,6 +28,8 @@ void discoBuscar(const String &uid, int slotEsperado);  // el slot esperado, sus
 void discoIrAVacio(int slot);                           // va al slot y confirma que no haya ningun tag
 void discoDiagnostico();                                // una vuelta anotando que tag hay en cada slot
 void discoParar();
+// Imprime por Serial cada tag que entra y sale del lector, con la posicion (modo diagnostico)
+void discoTrazas(bool activar);
 
 ResultadoDisco discoResultado();
 const char *discoTextoResultado(ResultadoDisco resultado);

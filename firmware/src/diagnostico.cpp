@@ -149,6 +149,7 @@ void diagnosticoIniciar(bool lector) {
     ledColor(ColorLed::ROJO_TITILANDO);
     return;
   }
+  discoTrazas(true);
   Serial.println("  Comandos: h, i N, b UID N, v N, d, s, p");
   comandoSerie("h");
 }

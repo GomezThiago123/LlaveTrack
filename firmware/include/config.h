@@ -24,10 +24,12 @@ constexpr int SLOTS = 32;
 constexpr int SLOT_HOME = 0;                    // nunca lleva llave
 constexpr const char *UID_HOME = "9A35EA81";    // leido con NFC Tools el 27/10/2026
 
-// Una vuelta tarda 25 s (medido el 27/10/2026). Al arrancar se vuelve a medir.
-constexpr unsigned long VUELTA_MS_INICIAL = 25000;
-// Si en este tiempo no aparece el HOME: el motor no gira o el tag HOME no esta
-constexpr unsigned long HOMING_TIMEOUT_MS = 40000;
+// Una vuelta tarda 42 s (medido por el homing en el equipo real el 03/11/2026; antes se
+// estimaba en 25 s). Al arrancar se vuelve a medir: esto es solo el valor inicial.
+constexpr unsigned long VUELTA_MS_INICIAL = 42000;
+// Si en este tiempo no aparece el HOME: el motor no gira o el tag HOME no esta.
+// Una vuelta y media: tiene que alcanzar para ver el HOME dos veces si arranca justo despues.
+constexpr unsigned long HOMING_TIMEOUT_MS = VUELTA_MS_INICIAL * 3 / 2;
 
 // Sentido: true si al girar "adelante" (IN3 alto) pasan por la ventana los slots 1, 2, 3...
 // Si el modo diagnostico muestra la 101 en el slot 31 (y no en el 1), cambiar a false.

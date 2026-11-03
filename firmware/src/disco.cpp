@@ -16,10 +16,12 @@ struct TagVisto {
   unsigned long primera = 0, ultima = 0;
   float posPrimera = 0;  // donde estimabamos el disco cuando aparecio
   bool activo = false;
+  bool ignorar = false;  // diagnostico: ya estaba en la ventana al empezar (se anota en su 2da pasada)
 };
 constexpr int MAX_TAGS = 6;
 TagVisto vistos[MAX_TAGS];
 String ultimoTag;
+bool trazas = false;  // imprimir cada tag que entra y sale del lector (modo diagnostico)
 
 // --- Posicion ---
 float pos = 0;        // slot frente a la ventana (0 a SLOTS), estimado
@@ -185,6 +187,7 @@ void evaluarLlegada() {
 // --- Eventos del lector ---
 
 void alEntrar(TagVisto &t) {
+  if (trazas) Serial.printf("[disco]   entra %s en %.2f\n", t.uid.c_str(), pos);
   if (tarea != Tarea::MOVER || dirSlots == 0) return;
 
   if (t.uid == UID_HOME) {
@@ -206,6 +209,10 @@ void alEntrar(TagVisto &t) {
 
 void alSalir(TagVisto &t) {
   unsigned long ahora = millis();
+  if (trazas) {
+    Serial.printf("[disco]   sale  %s en %.2f (%lu ms frente al lector)\n", t.uid.c_str(), pos,
+                  t.ultima - t.primera);
+  }
   if (tarea == Tarea::HOMING && t.uid == UID_HOME) {
     ultimoHomeMs = ahora;
     if (homeAlEmpezar) {  // este paso empezo antes de que lo miraramos: no sirve
@@ -234,7 +241,11 @@ void alSalir(TagVisto &t) {
     return;
   }
 
-  if (tarea == Tarea::DIAGNOSTICO && cantMarcas < MAX_MARCAS) {
+  if (tarea == Tarea::DIAGNOSTICO && cantMarcas < MAX_MARCAS && !t.ignorar) {
+    // Uno que entro al principio se ve dos veces (la vuelta es un poco mas larga): una alcanza
+    for (int i = 0; i < cantMarcas; i++) {
+      if (marcas[i].uid == t.uid) return;
+    }
     float posUltima = normalizar(pos - dirSlots * (ahora - t.ultima) / msPorSlot);
     marcas[cantMarcas++] = {t.uid, t.posPrimera, posUltima};
   }
@@ -261,6 +272,7 @@ void leerLector() {
         v.primera = v.ultima = ahora;
         v.posPrimera = pos;
         v.activo = true;
+        v.ignorar = false;
         alEntrar(v);
         break;
       }
@@ -319,7 +331,9 @@ void actualizarMover(float avance) {
 
 void actualizarDiagnostico(float avance) {
   recorrido += avance;
-  if (recorrido < SLOTS + anchoTag) return;
+  // Una vuelta y dos tags mas: asi el que estaba en la ventana al empezar (que se ignora, porque
+  // no se lo vio entrar) vuelve a pasar entero
+  if (recorrido < SLOTS + 2 * anchoTag) return;
   frenar();
   Serial.println("[disco] Diagnostico: que tag hay en cada slot");
   for (int i = 0; i < cantMarcas; i++) {
@@ -389,8 +403,11 @@ void discoDiagnostico() {
   resultado = ResultadoDisco::EN_CURSO;
   cantMarcas = 0;
   recorrido = 0;
+  for (auto &v : vistos) v.ignorar = v.activo;
   girar(1);
 }
+
+void discoTrazas(bool activar) { trazas = activar; }
 
 void discoParar() {
   if (tarea != Tarea::NADA) terminar(ResultadoDisco::OK);
