@@ -1,0 +1,10 @@
+# Lo que NO entra en la imagen de deploy/Dockerfile (secretos, dependencias y bases locales)
+**/.env
+**/.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/*.db
+firmware
+.git

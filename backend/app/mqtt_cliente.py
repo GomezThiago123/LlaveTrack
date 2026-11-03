@@ -45,6 +45,9 @@ class ClienteMqtt:
         self.cliente.will_set(self.topico_estado, json.dumps({"online": False}), qos=1, retain=True)
         if config.mqtt_usuario:
             self.cliente.username_pw_set(config.mqtt_usuario, config.mqtt_clave)
+        if config.mqtt_tls:
+            # Verifica el certificado del broker con las autoridades del sistema
+            self.cliente.tls_set()
         self.cliente.reconnect_delay_set(min_delay=1, max_delay=30)
         self.cliente.on_connect = self._al_conectar
         self.cliente.on_disconnect = self._al_desconectar

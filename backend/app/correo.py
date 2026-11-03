@@ -1,11 +1,15 @@
-"""Envio de mails con smtplib (libreria estandar de Python).
+"""Envio de mails, con la libreria estandar de Python.
 
-Sin SMTP_HOST en el .env no se manda nada: el mail se muestra en la consola del servidor.
-Sirve para desarrollar y probar sin una cuenta de mail.
+- Con BREVO_API_KEY: por la API HTTPS de Brevo (en la nube: Render gratis bloquea SMTP).
+- Con SMTP_HOST: por SMTP (por ejemplo, Gmail con una contrasena de aplicacion).
+- Sin ninguno de los dos no se manda nada: el mail se muestra en la consola del servidor.
+  Sirve para desarrollar y probar sin una cuenta de mail.
 """
 
+import json
 import logging
 import smtplib
+import urllib.request
 from email.message import EmailMessage
 
 from app.config import config
@@ -13,8 +17,31 @@ from app.modelos import Usuario
 
 log = logging.getLogger(__name__)
 
+BREVO_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+def _enviar_por_brevo(destino: str, asunto: str, cuerpo: str) -> None:
+    datos = {
+        "sender": {"name": "LlaveTrack", "email": config.brevo_remitente},
+        "to": [{"email": destino}],
+        "subject": asunto,
+        "textContent": cuerpo,
+    }
+    pedido = urllib.request.Request(
+        BREVO_URL,
+        data=json.dumps(datos).encode(),
+        headers={"api-key": config.brevo_api_key, "Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    # Si Brevo responde con un error, urlopen lanza una excepcion (igual que smtplib)
+    with urllib.request.urlopen(pedido, timeout=10):
+        pass
+
 
 def enviar_correo(destino: str, asunto: str, cuerpo: str) -> None:
+    if config.brevo_api_key:
+        _enviar_por_brevo(destino, asunto, cuerpo)
+        return
     if not config.smtp_host:
         log.warning("SMTP no configurado. Mail para %s:\n%s\n%s", destino, asunto, cuerpo)
         return

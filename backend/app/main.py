@@ -1,7 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 
 from app.config import config
 from app.db import SesionLocal
@@ -39,3 +41,27 @@ app.include_router(equipo.router)
 def salud():
     """La usa la web para saber si el servidor esta levantado."""
     return {"ok": True}
+
+
+def montar_web(aplicacion: FastAPI, carpeta: str | Path) -> None:
+    """Entrega la web compilada (npm run build) desde este servidor, en la nube.
+
+    Un archivo que existe (ej. /assets/index-abc.js) se entrega tal cual; cualquier otra
+    direccion (ej. /aulas) devuelve index.html y la resuelve React. Lo que empieza con /api
+    nunca llega aca si existe; si no existe, es un 404 de la API.
+    """
+    raiz = Path(carpeta).resolve()
+
+    @aplicacion.get("/{ruta:path}", include_in_schema=False)
+    def web(ruta: str):
+        if ruta == "api" or ruta.startswith("api/"):
+            raise HTTPException(status_code=404)
+        archivo = (raiz / ruta).resolve()
+        # is_relative_to: que nadie pida ../../ y se lleve un archivo de fuera de la carpeta
+        if ruta and archivo.is_relative_to(raiz) and archivo.is_file():
+            return FileResponse(archivo)
+        return FileResponse(raiz / "index.html")
+
+
+if config.web_dist:
+    montar_web(app, config.web_dist)

@@ -30,12 +30,13 @@ class Config(BaseSettings):
     # para que no venza mientras el disco gira y el docente retira la llave
     retiro_margen_segundos: int = 120
 
-    # Broker MQTT (Mosquitto)
+    # Broker MQTT: Mosquitto en desarrollo; en la nube, HiveMQ Cloud (puerto 8883 con TLS)
     mqtt_habilitado: bool = True
     mqtt_host: str = "localhost"
     mqtt_puerto: int = 1883
     mqtt_usuario: str | None = None
     mqtt_clave: str | None = None
+    mqtt_tls: bool = False  # cifra la conexion y verifica el certificado del broker
 
     # US-22: el equipo se considera desconectado si pasa este tiempo sin ningun mensaje suyo
     # (manda un latido cada 30 s, asi que 90 s = 3 latidos perdidos)
@@ -59,6 +60,16 @@ class Config(BaseSettings):
     smtp_usuario: str | None = None
     smtp_clave: str | None = None
     smtp_remitente: str | None = None  # por defecto, smtp_usuario
+    # En la nube (Render gratis bloquea SMTP) los mails salen por la API HTTPS de Brevo.
+    # Si hay BREVO_API_KEY se usa esto en lugar de SMTP. El remitente tiene que estar
+    # verificado en Brevo.
+    brevo_api_key: str | None = None
+    brevo_remitente: str | None = None
+
+    # Carpeta con la web compilada (npm run build). Si se indica, este mismo servidor entrega la
+    # web en "/": asi web y API quedan en la misma direccion (en la nube). En desarrollo la
+    # entrega Vite.
+    web_dist: str | None = None
 
 
 config = Config()

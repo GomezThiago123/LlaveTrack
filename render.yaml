@@ -1,0 +1,30 @@
+# Despliegue en Render (gratis): un solo servicio con la API y la web. Guia: docs/despliegue.md
+# Los valores con "sync: false" son secretos: Render los pide al crear el servicio y nunca van al repo.
+services:
+  - type: web
+    name: llavetrack
+    runtime: docker
+    plan: free
+    region: virginia  # la misma region que Supabase (us-east-1)
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/salud
+    envVars:
+      - key: DATABASE_URL  # Supabase, Session pooler (postgresql+psycopg://...)
+        sync: false
+      - key: WEB_URL  # la direccion publica, para los links de los mails
+        sync: false
+      - key: MQTT_HOST  # el cluster de HiveMQ Cloud
+        sync: false
+      - key: MQTT_PUERTO
+        value: "8883"
+      - key: MQTT_TLS
+        value: "true"
+      - key: MQTT_USUARIO
+        sync: false
+      - key: MQTT_CLAVE
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_REMITENTE  # el mail verificado en Brevo
+        sync: false
