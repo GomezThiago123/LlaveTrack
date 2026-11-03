@@ -155,6 +155,17 @@ pio run -t upload     # compila y carga
 pio device monitor    # Monitor Serie
 ```
 
-Hoy es el **paso 1** (el disco, sin red): al prender busca el tag HOME y mide la vuelta; después se prueba desde el Monitor Serie con `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la llave de la 101), `v 31` (dejar un lugar vacío) y `d` (diagnóstico: qué tag hay en cada slot). **Al prender, el disco gira solo**: tené la mano cerca del interruptor la primera vez.
+**Antes de compilar**, copiá `firmware/include/secrets.example.h` como `secrets.h` (en la misma carpeta) y completalo con la WiFi y la IP de la compu donde corre Mosquitto. `secrets.h` no va al repo.
+
+Hoy es el **paso 2a** (la red): al prender busca el tag HOME, se conecta a la WiFi y al broker, avisa al servidor (`inicio`) y deja un lugar vacío en la ventana. En reposo el LCD muestra la hora y las llaves que faltan. Por el Monitor Serie: `r` (estado de la red), `p` (dónde está el disco), `h` (homing de nuevo). El retiro y la devolución son el paso 2b. **Al prender, el disco gira solo**: tené la mano cerca del interruptor la primera vez.
+
+**Modo diagnóstico** (mantener **D** apretada al encender, sin red): escanea el bus I2C y se prueba el disco desde el Monitor Serie con `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la llave de la 101), `v 31` (dejar un lugar vacío) y `d` (qué tag hay en cada slot).
+
+**Para que el ESP32 llegue a Mosquitto** (solo en una red privada, como el hotspot de un celular): crear `/etc/mosquitto/conf.d/llavetrack.conf` (en Windows, agregarlo al final de `mosquitto.conf`) con
+```
+listener 1883 0.0.0.0
+allow_anonymous true
+```
+reiniciar Mosquitto y abrir el puerto 1883 en el firewall. En la demo el broker va con TLS y contraseña (puerto 8883).
 
 Para probar cada pieza por separado está `firmware/prueba_arduino/prueba_arduino.ino` (Arduino IDE).

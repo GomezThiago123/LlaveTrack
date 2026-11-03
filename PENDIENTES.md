@@ -35,7 +35,12 @@
   - que `b` frene con la llave centrada en la ventana (si se pasa, ajustar `ADELANTO_FRENO_SLOTS`);
   - que `v` deje un lugar vacío en la ventana.
   - Si el lector no ve los tags con el disco girando (los compañeros movían de a pulsos), avisar: se agrega el giro a pulsos.
-- [ ] **Paso 2: WiFi, MQTT y el retiro y la devolución completos** (reemplaza al simulador). Antes: **Mosquitto para el equipo real** (hoy solo acepta conexiones de la misma compu: agregar `listener 1883` y `allow_anonymous true` a `mosquitto.conf` y abrir el puerto en el firewall; necesita permisos de administrador) y la red WiFi (`secrets.h`).
+- [ ] **Paso 2a: la red** (escrito el 03/11/2026 y compila; falta probarlo en la placa). El paso 1 quedó como modo diagnóstico (D apretada al encender). Antes de probar:
+  - **Mosquitto para el equipo real** (hoy solo acepta conexiones de la misma compu): `/etc/mosquitto/conf.d/llavetrack.conf` con `listener 1883 0.0.0.0` y `allow_anonymous true`, reiniciar Mosquitto y abrir el 1883 en el firewall (necesita `sudo`). Solo en una red privada.
+  - **`firmware/include/secrets.h`**: hoy es una copia de la plantilla; completar la WiFi (hotspot del celular) y la IP de la notebook (`hostname -I`).
+  - El backend ya tiene su `.venv` en la notebook Linux (129 tests OK); sin `.env` usa SQLite local con las 5 llaves.
+  - Qué probar: en el Monitor Serie, la IP y "MQTT conectado"; en la web, el equipo en línea y el LED verde; al frenar el servidor, el LED titila y el LCD dice "Sin conexion / Servidor"; al apagar el hotspot, "Sin conexion / WiFi"; después del homing, el disco va al lugar vacío que dice el servidor.
+- [ ] **Paso 2b: el retiro y la devolución completos** (teclas A y B; reemplaza al simulador).
 
 ## 4. La nube, para la demo
 

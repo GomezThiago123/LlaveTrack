@@ -115,7 +115,7 @@ llavetrack/v1/equipo-01/resp
 ```
 
 ## Firmware
-- Módulos (`firmware/src/`): `config.h` (pines y constantes, en `include/`), `secrets.h`, `lcd`, `teclado`, `rfid`, `motor`, `led`, `disco` (posición), `red` (WiFi + MQTT con reconexión), `protocolo` (JSON) y `main.cpp` con la máquina de estados. Versiones fijas en `platformio.ini` (plataforma `espressif32@7.1.3`).
+- Módulos (`firmware/src/`): `config.h` (pines y constantes, en `include/`), `secrets.h`, `lcd`, `teclado`, `rfid`, `motor`, `led`, `disco` (posición), `red` (WiFi + MQTT con reconexión), `protocolo` (JSON, `eventId` y reintentos), `diagnostico` (el modo diagnóstico) y `main.cpp` con la máquina de estados. Versiones fijas en `platformio.ini` (plataforma `espressif32@7.1.3`).
 - Nada bloqueante: `millis()` en lugar de `delay()` largos; `discoActualizar()` en cada vuelta del `loop()` lee el lector, estima la posición y avanza la tarea del disco. Estados: `INICIO → HOMING → REPOSO → INGRESO_CODIGO → ESPERANDO_SERVIDOR → MOVIENDO → ESPERANDO_RETIRO | ESPERANDO_DEVOLUCION → REPOSO`, más `ERROR` con mensaje en el LCD.
 - Posición (motor de continua, sin pasos que contar; módulo `disco`): se estima por **tiempo** (ms por slot) y se corrige con el lector. Homing al arrancar: gira hasta el tag HOME, toma su centro (entre que empieza y deja de leerse) y mide la vuelta entre dos centros (≈25 s); de ahí salen los ms por slot y el ancho de un tag en slots. Cada vez que pasa por el HOME, corrige la posición. **Retiro**: va al slot esperado y, si ve ESE UID en el camino, se centra en él (medio tag más); si no está, prueba los vecinos y da una vuelta entera; si tampoco, el `main` repite el homing (intento 2). **Lugar vacío**: va por tiempo y confirma que el lector no vea nada (si ve algo, se corre medio slot, hasta 3 veces). Ajustes en `config.h`: `ADELANTE_SUMA_SLOTS` (para qué lado está numerado el disco) y `ADELANTO_FRENO_SLOTS` (inercia).
 - Referencia de cero: el tag HOME (`9A35EA81`) fijo en el slot 0, que nunca lleva llave. No hay sensor extra (plan A); plan B: sensor óptico de horquilla en las pestañas.
@@ -125,7 +125,8 @@ llavetrack/v1/equipo-01/resp
 - Teclas: `A` retirar, `B` devolver, `C` cancelar, `*` borrar, `#` confirmar.
 - Sin conexión el equipo no entrega ni recibe llaves (LCD "Sin conexion"). La devolución offline es V2 (US-14).
 - MQTT: `client.setKeepAlive(10)`, LWT retenido (`willRetain = true` en `connect()`), `estado` `{"online":true}` retenido al conectar y `latido` cada 30 s (`MQTT_KEEPALIVE_S` y `LATIDO_S` en `config.h`).
-- Modo diagnóstico (mantener `D` al encender): UIDs por Serial y LCD, escaneo del bus I2C y una vuelta al disco listando qué UID hay en cada slot (sirve para armar el seed).
+- Modo diagnóstico (mantener `D` al encender, sin red): escaneo del bus I2C y los comandos del disco por Serial (`h`, `i N`, `b UID N`, `v N`, `d` = una vuelta listando qué UID hay en cada slot, que sirve para armar el seed).
+- Red: reconectarse al broker traba hasta `MQTT_TIMEOUT_S` (3 s), así que solo se intenta con el disco quieto. WiFi común o WPA2-Enterprise según `WIFI_ENTERPRISE` en `secrets.h`; TLS según `MQTT_TLS`.
 
 ## Hardware y cableado (→ `docs/cableado.md` y `config.h`)
 - Alimentación: fuente 220 V → 16 V DC (el diagrama de bloques dice 12 V por error) → interruptor + fusible en la línea de 16 V → step-up a 24 V para el motor (vía L298N) y step-down a 5 V para el ESP32 (pin 5V/VIN) y el LCD. GND común a todo.

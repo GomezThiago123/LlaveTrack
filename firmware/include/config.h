@@ -43,7 +43,22 @@ constexpr unsigned long TAG_AUSENTE_MS = 150;
 // Al llegar a un slot, cuanto se mira el lector para confirmar que esta (o que no hay nada)
 constexpr unsigned long VERIFICAR_MS = 500;
 
-// --- Retiro y devolucion (se usan en el paso 2) ---
+// --- Red (los datos de la WiFi y del broker van en secrets.h) ---
+constexpr int MQTT_KEEPALIVE_S = 10;     // el broker publica el LWT a los ~15 s de silencio
+constexpr unsigned long LATIDO_S = 30;   // "sigo vivo" al servidor
+// Conectarse al broker traba el programa hasta MQTT_TIMEOUT_S: por eso solo se intenta con el
+// disco quieto, cada MQTT_REINTENTO_MS
+constexpr int MQTT_TIMEOUT_S = 3;
+constexpr unsigned long MQTT_REINTENTO_MS = 5000;
+// Si la WiFi no conecta en este tiempo, se vuelve a empezar la conexion
+constexpr unsigned long WIFI_REINTENTO_MS = 30000;
+// Sin respuesta del servidor en este tiempo: se reenvia el mismo evento (mismo eventId)
+constexpr unsigned long RESPUESTA_TIMEOUT_MS = 5000;
+constexpr const char *ZONA_HORARIA = "<-03>3";  // Argentina, sin horario de verano
+// En reposo, la linea 1 del LCD rota entre la hora y las llaves que faltan
+constexpr unsigned long LCD_ROTACION_MS = 3000;
+
+// --- Retiro y devolucion (se usan en el paso 2b) ---
 constexpr unsigned long RETIRO_ESTABLE_MS = 1500;  // la llave dejo de leerse = la retiraron
 constexpr unsigned long DEVOLUCION_ESTABLE_MS = 1000;
 constexpr unsigned long RETIRO_TIMEOUT_MS = 60000;
