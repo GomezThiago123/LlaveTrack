@@ -1,21 +1,17 @@
 # Pendientes de LlaveTrack
 
-Última actualización: 27/10/2026.
+Última actualización: 03/11/2026.
 
-**Dónde estamos:** el servidor, la web y la base (Supabase, con las 5 llaves reales) están hechos y probados con el simulador. Lo que falta es sobre todo **el equipo** (firmware del ESP32) y **subir el servidor a la nube** para la demo. Qué es cada cosa: [documentacion.md](documentacion.md).
+**Dónde estamos:** el servidor, la web y la base (Supabase, con las 6 llaves reales) están hechos y probados con el simulador. El disco del equipo ya anda con el firmware (paso 1, probado el 03/11/2026). Lo que falta es sobre todo **el equipo** (firmware del ESP32) y **subir el servidor a la nube** para la demo. Qué es cada cosa: [documentacion.md](documentacion.md).
 
 ## 1. Ahora (te toca a vos)
 
-- [ ] **Conectar el ESP32 a la compu con un cable que pase datos.** Es lo que traba todo el firmware: sin eso no se le puede cargar ningún programa.
-  - El driver del chip USB de la placa (**CP210x** de Silicon Labs) ya está instalado: la placa apareció una vez como **COM5** (27/10/2026).
-  - Pero la conexión se cortó y después Windows no registró nada al volver a enchufarla: el cable no pasa datos o el conector está flojo. Probar **el cable con el que los compañeros cargaron su programa** u otro puerto, y no moverlo una vez conectado.
-  - **Plan B:** Claude arma el firmware en un archivo y se carga desde la compu de los compañeros con Chrome (página de Espressif, sin instalar nada).
-  - Hoy el ESP32 tiene el programa de los compañeros ("Ingrese aula"), que solo conoce los UID de la 214 y la 313: por eso con 101 dice que no la encuentra.
-- [ ] **Probar el paso 1 del firmware** cuando la placa conecte: Claude lo carga y lee el Monitor Serie desde la compu (hay que estar al lado: el disco gira solo al arrancar). Ver la sección 3.
+- [x] **ESP32 conectado a la notebook Linux** con el cable de los compañeros (03/11/2026): aparece como `/dev/ttyUSB0`. Para que Linux deje usarlo sin `sudo` hizo falta una regla de udev (ver README, Firmware).
+- [x] **Paso 1 del firmware probado en el equipo** (03/11/2026). Ver la sección 3.
 - [x] **OK al plan de la Fase 3 y a los colores del LED** (27/10/2026): verde fijo = conectado y no falta ninguna llave; naranja = conectado y falta alguna; rojo titilando = sin conexión.
-- [ ] **Colgar el tag HOME en el slot 0** y las 5 llaves en los slots 1 a 5 (101, 102, 213, 214, 313).
-- [ ] **Si podés, pasar la salida del programa de prueba** (`firmware/prueba_arduino/`): la dirección del LCD, si los UID del lector coinciden con los de NFC Tools y si andan el teclado y el LED. No traba nada: el firmware busca solo la dirección del LCD, y cada módulo se prueba igual en la Fase 3.
-- [x] **Tiempo de vuelta del disco: 25 s** (27/10/2026), unos 0,78 s por slot.
+- [x] **Tags relevados y colgados** (03/11/2026): el HOME es `A94B37A4` (el `9A35EA81` anotado el 27/10 era la llave de la 104). Se sumó la **104**: quedan 6 llaves, desde el HOME 101, 104, 102, 214, 213 y 313 (slots 1 a 6). Seed y Supabase actualizados; los dos préstamos de prueba que habían quedado abiertos (102 y 213) se cerraron.
+- [x] **LCD en 0x27** y lector OK (03/11/2026). Del programa de prueba (`firmware/prueba_arduino/`) solo faltaría ver el teclado y el LED, que se prueban igual en el paso 2.
+- [x] **Tiempo de vuelta del disco: 42 a 47 s** (medido con el lector el 03/11/2026; el 25 s del 27/10 era a ojo). Unos 1,4 s por slot. El firmware la mide en cada arranque.
 
 ## 2. Decisiones del grupo
 
@@ -29,16 +25,18 @@
 ## 3. Fase 3: firmware del equipo
 
 - [x] **Plan acordado** (27/10/2026) y sección Firmware del CLAUDE.md reescrita para el motor de continua: la posición sale del lector RFID y del tiempo.
-- [ ] **Paso 1: el disco, sin red** (`firmware/`, escrito y compila con `pio run`; falta cargarlo: ver el punto 1). Al prender busca el HOME y mide la vuelta; después, desde el Monitor Serie: `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la 101), `v 31` (lugar vacío), `d` (diagnóstico: qué tag hay en cada slot). Hay que probar:
-  - que el homing encuentre el HOME y mida unos 25 s;
-  - el diagnóstico: que la 101 aparezca en el slot 1, la 102 en el 2, etc. Si aparecen al revés (la 101 en el 31), cambiar `ADELANTE_SUMA_SLOTS` en `config.h`;
-  - que `b` frene con la llave centrada en la ventana (si se pasa, ajustar `ADELANTO_FRENO_SLOTS`);
-  - que `v` deje un lugar vacío en la ventana.
-  - Si el lector no ve los tags con el disco girando (los compañeros movían de a pulsos), avisar: se agrega el giro a pulsos.
+- [x] **Paso 1: el disco, sin red** (probado en el equipo el 03/11/2026; hoy es el modo diagnóstico, con D apretada al encender). Comandos del Monitor Serie: `i 5` (ir al slot 5), `b 9AAFF281 1` (buscar la 101), `v 10` (lugar vacío), `d` (qué tag hay en cada slot). Resultados:
+  - el homing encuentra el HOME y mide la vuelta (42 a 47 s; la velocidad varía entre corridas y un poco dentro de la misma);
+  - el lector lee los tags con el disco girando a velocidad plena (~1,4 s cada uno): no hace falta girar a pulsos;
+  - el diagnóstico lista bien los 7 tags; `ADELANTE_SUMA_SLOTS = false` para el orden en que quedaron colgadas;
+  - al invertir el giro el disco pierde ~0,85 slot (holgura del engranaje): `HOLGURA_REVERSA_SLOTS` lo compensa (el error bajó a ~0,15 slot);
+  - `b` encuentra la llave para los dos lados (si no está donde la espera, prueba los vecinos y da la vuelta); `BUSCAR_MARGEN_SLOTS` evita que pruebe los vecinos por la deriva de medio slot;
+  - `v` deja la ventana vacía.
+- [ ] **Confirmar a ojo que `b` deja la llave centrada en la ventana** (si se pasa o queda corta, ajustar `ADELANTO_FRENO_SLOTS`). Define si hace falta control de velocidad (ver la sección 2).
 - [ ] **Paso 2a: la red** (escrito el 03/11/2026 y compila; falta probarlo en la placa). El paso 1 quedó como modo diagnóstico (D apretada al encender). Antes de probar:
   - **Mosquitto para el equipo real** (hoy solo acepta conexiones de la misma compu): `/etc/mosquitto/conf.d/llavetrack.conf` con `listener 1883 0.0.0.0` y `allow_anonymous true`, reiniciar Mosquitto y abrir el 1883 en el firewall (necesita `sudo`). Solo en una red privada.
   - **`firmware/include/secrets.h`**: hoy es una copia de la plantilla; completar la WiFi (hotspot del celular) y la IP de la notebook (`hostname -I`).
-  - El backend ya tiene su `.venv` en la notebook Linux (129 tests OK); sin `.env` usa SQLite local con las 5 llaves.
+  - El backend ya tiene su `.venv` en la notebook Linux (129 tests OK); sin `.env` usa SQLite local. Esa base tiene el seed viejo (5 llaves, la 101 con el UID del HOME): recargarla con `python -m app.seed --reiniciar` (borra los datos locales de prueba).
   - Qué probar: en el Monitor Serie, la IP y "MQTT conectado"; en la web, el equipo en línea y el LED verde; al frenar el servidor, el LED titila y el LCD dice "Sin conexion / Servidor"; al apagar el hotspot, "Sin conexion / WiFi"; después del homing, el disco va al lugar vacío que dice el servidor.
 - [ ] **Paso 2b: el retiro y la devolución completos** (teclas A y B; reemplaza al simulador).
 
@@ -83,8 +81,8 @@ US-11 (baja de llave perdida) · US-14 (devolver sin conexión) · US-15 (corte 
 - **V2 hechas a pedido:** US-09 (docentes), US-10 (tags RFID a mano), US-12/13 (historial), US-16 (recordatorio manual), US-17 (mis llaves).
 - **Decisiones sobre las user stories** (20/10): sesión de 60 s, reserva de 2 min, todos ven quién tiene cada llave, devolución automática, incidentes para el preceptor, desbloqueo manual, textos de los criterios. US-22 a US-24 cargadas en Notion.
 - **Web rediseñada** con el prototipo de Joel y los colores de la UBA (21/10), probada con capturas y contra Supabase.
-- **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 5 llaves reales cargadas** (101, 102, 213, 214, 313; 27/10). El proyecto queda con esas 5 llaves (decidido el 27/10/2026); `seed/datos_30_aulas.json` queda solo como referencia.
+- **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 6 llaves reales cargadas** (101, 104, 102, 214, 213, 313 en los slots 1 a 6; 03/11). El proyecto queda con esas 6 llaves (las 5 del profe del 27/10 más la 104); `seed/datos_30_aulas.json` queda solo como referencia.
 - **Web:** los grupos de aulas se llaman "Peine 1/2/3" (27/10/2026).
-- **Hardware relevado:** disco de 32 slots (una vuelta: 25 s), motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2, tags MIFARE Classic 1K, **tag HOME `9A35EA81`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
+- **Hardware relevado:** disco de 32 slots (una vuelta: 42 a 47 s), motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2 en 0x27, tags MIFARE Classic 1K, **tag HOME `A94B37A4`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
 - **Programa de prueba del hardware** (`firmware/prueba_arduino/`), con esos pines; compila.
 - **Documentación:** `documentacion.md` (para el grupo y los profes), `docs/user-stories.md`, `docs/protocolo-mqtt.md`, `docs/cableado.md`.

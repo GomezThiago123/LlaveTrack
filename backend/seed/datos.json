@@ -1,14 +1,15 @@
 {
-  "_comentario": "Las 5 llaves de la primera prueba (pedido del profe, 27/10/2026), con sus UID reales leidos con NFC Tools. Disco de 32 slots: el 0 es del tag HOME; estas van en los slots 1 a 5. Las 30 aulas (con UID inventados) estan en datos_30_aulas.json. Todas las claves son de prueba (cambiarlas antes de la demo).",
+  "_comentario": "Las 6 llaves del equipo, con sus UID reales (relevados el 03/11/2026 con el lector del equipo). Disco de 32 slots: el 0 es del tag HOME (A94B37A4, va en el config.h del firmware, no aca); las llaves van en los slots 1 a 6, en el orden en que quedaron colgadas (diagnostico del 03/11/2026). Las 30 aulas (con UID inventados) estan en datos_30_aulas.json. Todas las claves son de prueba (cambiarlas antes de la demo).",
   "dispositivos": [
     { "deviceId": "equipo-01", "slotsTotales": 32, "slotsReservados": [0] }
   ],
   "aulas": [
-    {"nombre": "101", "llave": {"rfidUid": "A94B37A4", "slot": 1}},
-    {"nombre": "102", "llave": {"rfidUid": "2A86C880", "slot": 2}},
-    {"nombre": "213", "llave": {"rfidUid": "5A81F281", "slot": 3}},
+    {"nombre": "101", "llave": {"rfidUid": "9AAFF281", "slot": 1}},
+    {"nombre": "102", "llave": {"rfidUid": "2A86C880", "slot": 3}},
+    {"nombre": "104", "llave": {"rfidUid": "9A35EA81", "slot": 2}},
+    {"nombre": "213", "llave": {"rfidUid": "5A81F281", "slot": 5}},
     {"nombre": "214", "llave": {"rfidUid": "CAA8EA81", "slot": 4}},
-    {"nombre": "313", "llave": {"rfidUid": "2AC3FE80", "slot": 5}}
+    {"nombre": "313", "llave": {"rfidUid": "2AC3FE80", "slot": 6}}
   ],
   "usuarios": [
     {"nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "telefono": "11 5555-0001", "rol": "DOCENTE", "clave": "llavetrack"},

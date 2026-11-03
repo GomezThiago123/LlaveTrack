@@ -73,23 +73,24 @@ Cada llavero tiene un **tag RFID con un número único de fábrica (UID)**, por 
 - **El slot 0** tiene un tag especial, **HOME**, que nunca se presta: le sirve al equipo para saber dónde está el cero del disco al arrancar.
 
 ### Las llaves cargadas hoy
-Por pedido del profe se arranca con **5 llaves**, con sus UID reales (leídos con NFC Tools el 27/10/2026; son tags MIFARE Classic 1K):
+El sistema trabaja con **6 llaves**: las 5 que pidió el profe el 27/10/2026 más la de la **104**, que se sumó el 03/11/2026. Son tags MIFARE Classic 1K, y los UID se relevaron con el lector del equipo el 03/11/2026. Los slots siguen el orden en que quedaron colgadas, a partir del HOME:
 
 | Aula | UID | Slot |
 | --- | --- | --- |
-| 101 | `A94B37A4` | 1 |
-| 102 | `2A86C880` | 2 |
-| 213 | `5A81F281` | 3 |
+| 101 | `9AAFF281` | 1 |
+| 104 | `9A35EA81` | 2 |
+| 102 | `2A86C880` | 3 |
 | 214 | `CAA8EA81` | 4 |
-| 313 | `2AC3FE80` | 5 |
+| 213 | `5A81F281` | 5 |
+| 313 | `2AC3FE80` | 6 |
 
-El tag **HOME** (slot 0, nunca sale del disco) es `9A35EA81`. No va en la base: lo usa el equipo para encontrar el cero al arrancar, y se carga en `config.h` del firmware. El sistema queda con estas 5 llaves (decidido el 27/10/2026).
+El tag **HOME** (slot 0, nunca sale del disco) es `A94B37A4`. No va en la base: lo usa el equipo para encontrar el cero al arrancar, y se carga en `config.h` del firmware. La lista del 27/10, armada a mano con NFC Tools, tenía cruzados el HOME y la 101; el diagnóstico del equipo lo detectó.
 
 ### Cómo se carga o se cambia una llave (por ejemplo, si se pierde un llavero)
 1. **Marcar cada llavero** con el número de su aula (con fibra o una etiqueta).
 2. **Leer el UID de cada tag.** Dos formas:
    - **Ya mismo, con un celular Android con NFC**: la app gratuita *NFC Tools* muestra el número de serie al acercar el tag (ej. `04:A1:B2:C3`). Funciona con la mayoría de los tags de 13,56 MHz. Ojo: algunas apps muestran los bytes en orden inverso, así que conviene comparar uno con lo que lee el equipo antes de cargar los 30.
-   - **Con el equipo**, cuando esté el firmware: el modo diagnóstico (mantener **D** al encender) recorre el disco y lista qué UID hay en cada slot.
+   - **Con el equipo** (lo más seguro): el modo diagnóstico (mantener **D** al encender) da una vuelta al disco y lista qué UID hay en cada slot. Así se armó la lista de arriba.
 3. **Cargarlo en el sistema**:
    - **Desde la web**: preceptor → **Equipo** → Tags RFID → el lápiz del aula. Acepta el número con o sin dos puntos y avisa si ese tag ya es de otra aula.
    - **O en `backend/seed/datos.json`** y recargar la base (`python -m app.seed --reiniciar`, que borra los datos de prueba).
@@ -149,7 +150,9 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | 20/10 | El equipo usa la **WiFi de la escuela** (plan B: hotspot) | Respuesta del grupo |
 | 27/10 | El firmware usa **el cableado que hicieron los compañeros** (`docs/cableado.md`): un LED bicolor y el motor sin control de velocidad | Ya estaba armado: es más fácil adaptar el código que volver a cablear |
 | 27/10 | LED bicolor: **verde** = todo bien, **naranja** = falta alguna llave, **rojo titilando** = sin conexión | Hay un solo LED cableado para mostrar las dos cosas |
-| 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 25 s (~0,78 s por slot). Si no alcanza la precisión, se agrega un sensor de horquilla |
+| 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 42 a 47 s (~1,4 s por slot, medido el 03/11). Si no alcanza la precisión, se agrega un sensor de horquilla |
+| 03/11 | Se suma la llave de la **104**: quedan **6 llaves**, en los slots 1 a 6 en el orden en que se colgaron | Estaba en el disco con su tag. Es más fácil acomodar la numeración y la base que volver a colgar las llaves |
+| 03/11 | El firmware **compensa la holgura** del disco al invertir el giro (~0,85 slot) y, al buscar una llave, **sigue un poco más** del lugar esperado | Medido en el equipo: el engranaje tiene juego y la velocidad del motor varía un poco entre vueltas |
 | 21/10 | La web toma el **diseño del prototipo de Joel** con los colores de la UBA | Con 30 aulas, la grilla con buscador y peines es mucho más cómoda que la lista |
 
 ## 8. Cómo se prueba
@@ -157,6 +160,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 - **Tests automáticos del servidor**: `pytest` en `backend/` (129 tests). Incluyen dos pedidos simultáneos por la misma llave, el vencimiento de reservas, los eventos repetidos del equipo y que ninguna lista haga una consulta por cada fila.
 - **Simulador**: reemplaza al equipo. Comandos `retirar`, `devolver`, `falla`, `timeout`, `desenchufar` y `enchufar` (ver README).
 - **La web**: se revisó pantalla por pantalla con capturas automáticas en tamaño de celular, con datos de prueba y contra Supabase.
+- **El disco del equipo** (03/11): con el modo diagnóstico, desde el Monitor Serie. Se probaron el homing (encuentra el HOME y mide la vuelta), el diagnóstico (lista los 7 tags en su slot), la búsqueda de una llave para los dos sentidos de giro y el lugar vacío en la ventana. El lector lee los tags con el disco girando a velocidad plena.
 
 ## 9. Dónde está cada cosa
 

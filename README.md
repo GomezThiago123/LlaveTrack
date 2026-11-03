@@ -146,7 +146,10 @@ Está en `firmware/` (PlatformIO). El cableado está en [docs/cableado.md](docs/
 
 **Con VS Code** (lo más fácil): instalá la extensión **PlatformIO IDE**, abrí la carpeta `firmware/` (Archivo → Abrir carpeta) y conectá el ESP32 por USB. En la barra de abajo: la flecha **→** lo carga y el enchufe abre el Monitor Serie (115200 baudios). La primera vez tarda unos minutos porque baja las herramientas del ESP32.
 
-**Si la compu no detecta la placa:** la NodeMCU usa el chip USB **CP2102**, que en Windows necesita el driver *CP210x* de Silicon Labs (silabs.com → USB to UART Bridge VCP Drivers; extraer el .zip y correr `CP210xVCPInstaller_x64`). Con el driver, aparece en el Administrador de dispositivos como *Silicon Labs CP210x USB to UART Bridge (COMx)*. Si ni así aparece, el cable es solo de carga: usar uno que pase datos.
+**Si la compu no detecta la placa:** la NodeMCU usa el chip USB **CP2102**, que en Windows necesita el driver *CP210x* de Silicon Labs (silabs.com → USB to UART Bridge VCP Drivers; extraer el .zip y correr `CP210xVCPInstaller_x64`). Con el driver, aparece en el Administrador de dispositivos como *Silicon Labs CP210x USB to UART Bridge (COMx)*. Si ni así aparece, el cable es solo de carga: usar uno que pase datos. En **Linux** el driver ya viene y la placa aparece como `/dev/ttyUSB0`, pero hay que darle permiso al usuario una sola vez (después, desenchufar y volver a enchufar la placa):
+```sh
+echo 'SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666"' | sudo tee /etc/udev/rules.d/99-esp32-cp210x.rules && sudo udevadm control --reload-rules
+```
 
 **Desde la terminal**, con PlatformIO instalado (`pip install platformio`):
 ```sh
@@ -159,7 +162,7 @@ pio device monitor    # Monitor Serie
 
 Hoy es el **paso 2a** (la red): al prender busca el tag HOME, se conecta a la WiFi y al broker, avisa al servidor (`inicio`) y deja un lugar vacío en la ventana. En reposo el LCD muestra la hora y las llaves que faltan. Por el Monitor Serie: `r` (estado de la red), `p` (dónde está el disco), `h` (homing de nuevo). El retiro y la devolución son el paso 2b. **Al prender, el disco gira solo**: tené la mano cerca del interruptor la primera vez.
 
-**Modo diagnóstico** (mantener **D** apretada al encender, sin red): escanea el bus I2C y se prueba el disco desde el Monitor Serie con `i 5` (ir al slot 5), `b A94B37A4 1` (buscar la llave de la 101), `v 31` (dejar un lugar vacío) y `d` (qué tag hay en cada slot).
+**Modo diagnóstico** (mantener **D** apretada al encender, sin red): escanea el bus I2C y se prueba el disco desde el Monitor Serie con `i 5` (ir al slot 5), `b 9AAFF281 1` (buscar la llave de la 101), `v 10` (dejar un lugar vacío) y `d` (qué tag hay en cada slot).
 
 **Para que el ESP32 llegue a Mosquitto** (solo en una red privada, como el hotspot de un celular): crear `/etc/mosquitto/conf.d/llavetrack.conf` (en Windows, agregarlo al final de `mosquitto.conf`) con
 ```

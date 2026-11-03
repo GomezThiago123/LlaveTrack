@@ -13,7 +13,7 @@ Placa: NodeMCU ESP32 de 38 pines (ESP-WROOM-32).
 | | MOSI | 23 | |
 | | SDA (SS) | 5 | |
 | | RST | 27 | |
-| LCD 16x2 (adaptador I2C) | SDA | 21 | Bus I2C del ESP32. Dirección: 0x27 o 0x3F (la muestra el programa de prueba) |
+| LCD 16x2 (adaptador I2C) | SDA | 21 | Bus I2C del ESP32. Dirección: 0x27 (confirmada con el scanner el 03/11/2026) |
 | | SCL | 22 | |
 | Motor (L298N, canal B) | IN3 | 25 | Sentido de giro |
 | | IN4 | 26 | Sentido de giro. ENB con jumper: siempre a velocidad máxima |
