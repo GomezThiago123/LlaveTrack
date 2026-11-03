@@ -33,11 +33,12 @@
   - `b` encuentra la llave para los dos lados (si no está donde la espera, prueba los vecinos y da la vuelta); `BUSCAR_MARGEN_SLOTS` evita que pruebe los vecinos por la deriva de medio slot;
   - `v` deja la ventana vacía.
 - [x] **`b` deja la llave centrada en la ventana** (la 313, confirmado a ojo el 03/11/2026): `ADELANTO_FRENO_SLOTS` queda en 0.
-- [ ] **Paso 2a: la red** (escrito el 03/11/2026 y compila; falta probarlo en la placa). El paso 1 quedó como modo diagnóstico (D apretada al encender). Antes de probar:
-  - **Mosquitto para el equipo real** (hoy solo acepta conexiones de la misma compu): `/etc/mosquitto/conf.d/llavetrack.conf` con `listener 1883 0.0.0.0` y `allow_anonymous true`, reiniciar Mosquitto y abrir el 1883 en el firewall (necesita `sudo`). Solo en una red privada.
-  - **`firmware/include/secrets.h`**: hoy es una copia de la plantilla; completar la WiFi (hotspot del celular) y la IP de la notebook (`hostname -I`).
-  - El backend ya tiene su `.venv` en la notebook Linux (129 tests OK); sin `.env` usa SQLite local. Esa base tiene el seed viejo (5 llaves, la 101 con el UID del HOME): recargarla con `python -m app.seed --reiniciar` (borra los datos locales de prueba).
-  - Qué probar: en el Monitor Serie, la IP y "MQTT conectado"; en la web, el equipo en línea y el LED verde; al frenar el servidor, el LED titila y el LCD dice "Sin conexion / Servidor"; al apagar el hotspot, "Sin conexion / WiFi"; después del homing, el disco va al lugar vacío que dice el servidor.
+- [x] **Paso 2a: la red** (probado en el equipo el 03/11/2026, con la WiFi PEINE-3 y el servidor en la notebook). Se conecta a la WiFi y al broker, manda `inicio`, el servidor le responde el lugar vacío (slot 31) y el disco va ahí; el servidor lo ve en línea; LCD en reposo con la hora; LED verde fijo. Si el servidor se cae, el LCD dice "Sin conexion / Servidor" en el mismo segundo, y cuando vuelve se recupera solo. Cómo quedó armado en la notebook:
+  - Mosquitto: `/etc/mosquitto/conf.d/llavetrack.conf` con `listener 1883 0.0.0.0` y `allow_anonymous true`.
+  - Firewall: `sudo ufw allow from 10.56.16.120 to any port 1883 proto tcp` (solo la IP del ESP32, porque el broker no tiene contraseña). **Si la red le da otra IP al ESP32** (la muestra el Monitor Serie al conectarse), hay que agregar la regla con la IP nueva.
+  - `firmware/include/secrets.h` con PEINE-3 y la IP de la notebook (`10.56.16.125`; si cambia, actualizarla y volver a cargar el firmware).
+  - La SQLite local se recargó con las 6 llaves.
+- [ ] **Paso 2a, lo que falta ver:** el LED rojo titilando sin conexión, el LCD "Sin conexion / WiFi" (cortando la WiFi) y la web con el equipo real (los botones de "Pedir llave" se habilitan y deshabilitan solos).
 - [ ] **Paso 2b: el retiro y la devolución completos** (teclas A y B; reemplaza al simulador).
 
 ## 4. La nube, para la demo

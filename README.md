@@ -169,6 +169,6 @@ Hoy es el **paso 2a** (la red): al prender busca el tag HOME, se conecta a la Wi
 listener 1883 0.0.0.0
 allow_anonymous true
 ```
-reiniciar Mosquitto y abrir el puerto 1883 en el firewall. En la demo el broker va con TLS y contraseña (puerto 8883).
+reiniciar Mosquitto y abrir el puerto 1883 en el firewall **solo para el ESP32** (el broker no tiene contraseña). En Linux, con la IP que muestra el Monitor Serie al conectarse a la WiFi: `sudo ufw allow from <IP-del-ESP32> to any port 1883 proto tcp`. En la demo el broker va con TLS y contraseña (puerto 8883).
 
 Para probar cada pieza por separado está `firmware/prueba_arduino/prueba_arduino.ino` (Arduino IDE).

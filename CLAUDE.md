@@ -105,7 +105,7 @@ El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Go
 - Cada evento lleva un `eventId` único aunque el ESP32 se reinicie (ej. `equipo-01-<random de arranque>-<contador>`). El servidor responde cada evento en `resp` con el mismo `eventId` y `ok: true`, o `ok: false` + `motivo` (`CODIGO_INVALIDO`, `CODIGO_VENCIDO`, `LLAVE_DESCONOCIDA`, `SIN_PRESTAMO_ACTIVO`, `ERROR_INTERNO`).
 - PubSubClient solo publica con QoS 0, así que la confiabilidad es de aplicación: el ESP32 reintenta el mismo evento hasta recibir respuesta y el servidor descarta duplicados por `eventId`. Sin respuesta en 5 s → LCD "Sin respuesta" y reintento.
 - `client.setBufferSize(512)`: el buffer por defecto (256 bytes) corta los JSON.
-- Mosquitto: en desarrollo, anónimo en localhost. En la demo el servidor está en la nube, así que el broker queda expuesto a internet: TLS (puerto 8883, `WiFiClientSecure` en el ESP32), usuario y contraseña por equipo y una ACL que limite cada equipo a su prefijo. Nunca el 1883 abierto.
+- Mosquitto: en desarrollo, anónimo; para el equipo real, `listener 1883 0.0.0.0` en `/etc/mosquitto/conf.d/llavetrack.conf` y el firewall (`ufw`) abierto solo para la IP del ESP32. En la demo el servidor está en la nube, así que el broker queda expuesto a internet: TLS (puerto 8883, `WiFiClientSecure` en el ESP32), usuario y contraseña por equipo y una ACL que limite cada equipo a su prefijo. Nunca el 1883 abierto.
 
 ```
 llavetrack/v1/equipo-01/evt/solicitud_retiro
@@ -149,7 +149,7 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [x] LED: un solo LED bicolor (verde 12, rojo 15). Colores (27/10/2026): verde fijo = conectado y no falta ninguna llave; naranja (los dos) = conectado y falta alguna; rojo titilando = sin conexión.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
 - [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, (ver `PENDIENTES.md`). Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`).
-- [ ] WiFi: el ESP32 se conecta a la WiFi de la escuela, que es WPA2-Enterprise (decidido el 20/10/2026). El módulo `red` usa WPA2-Enterprise (PEAP) con usuario y contraseña en `secrets.h`. Falta: nombre de la red, método (casi siempre PEAP), una cuenta para el equipo (mejor una que dé sistemas, no la personal de alguien), si pide certificado, y probar que la red deja salir al puerto 8883. Plan B: hotspot de un celular.
+- [ ] WiFi: el ESP32 se conecta a la WiFi de la escuela, que es WPA2-Enterprise (decidido el 20/10/2026). El módulo `red` usa WPA2-Enterprise (PEAP) con usuario y contraseña en `secrets.h`. Falta: nombre de la red, método (casi siempre PEAP), una cuenta para el equipo (mejor una que dé sistemas, no la personal de alguien), si pide certificado, y probar que la red deja salir al puerto 8883. Plan B: hotspot de un celular. En desarrollo se usa **PEINE-3** (WiFi común de la escuela, WPA2 con contraseña, tiene 2,4 GHz): el 03/11/2026 el ESP32 se conectó y llegó a la notebook (la red no aísla los dispositivos). Podría servir también para la demo si deja salir al 8883: decisión del grupo.
 
 ## Fases
 0. Esqueleto: estructura del repo, README con cómo levantar todo, `.gitignore`, ejemplos de `.env` y `secrets.h`, `docs/protocolo-mqtt.md` y borrador de `docs/cableado.md`.

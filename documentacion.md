@@ -54,11 +54,11 @@ Las llaves cuelgan de un disco de MDF con 32 lugares (*slots*). Cada llavero tie
 - **MQTT** es un sistema de mensajes: el equipo y el servidor no se conectan entre sí, los dos se conectan al **broker** (Mosquitto), que reparte los mensajes. El contrato de cada mensaje está en [docs/protocolo-mqtt.md](docs/protocolo-mqtt.md).
 - **El simulador** (`backend/simulador/`) se hace pasar por el equipo: manda exactamente los mismos mensajes. Por eso todo se puede probar sin el hardware, y el día que el ESP32 esté listo lo reemplaza sin cambiar nada del servidor ni de la web.
 
-### Cómo se conecta el equipo real (cuando esté el firmware)
-1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Está escrito el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío), que ahora es el **modo diagnóstico** (tecla D apretada al encender), y el **paso 2a** (la red): WiFi común o WPA2-Enterprise, MQTT con reconexión, aviso de "en línea" con latido, `inicio`, la hora y las llaves faltantes en el LCD, y el LED. Falta probarlo en la placa. El paso 2b agrega el retiro y la devolución.
-2. **El equipo se conecta al WiFi y al broker**, y anuncia que está en línea. En la web aparece "Equipo en línea" y se habilita "Pedir llave". Si se corta, a los ~15 segundos la web lo muestra desconectado.
-3. **Mosquitto tiene que aceptar conexiones de la red.** Como está instalado hoy (sin configuración propia, Mosquitto 2) solo acepta conexiones de la misma compu: el simulador entra, el ESP32 no. Para probar el equipo en la compu hay que agregar a `mosquitto.conf` un `listener 1883` y `allow_anonymous true`, y abrir el puerto en el firewall. En la demo, el broker va en la nube con contraseña por equipo y cifrado (puerto 8883).
-4. **El WiFi**: la red de la escuela es WPA2-Enterprise (usuario y contraseña por persona). El equipo se puede conectar, pero hace falta una cuenta para él y que la red deje salir al puerto 8883. Plan B: el hotspot de un celular.
+### Cómo se conecta el equipo real
+1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Están hechos y probados en el equipo el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío), que ahora es el **modo diagnóstico** (tecla D apretada al encender), y el **paso 2a** (la red): WiFi común o WPA2-Enterprise, MQTT con reconexión, aviso de "en línea" con latido, `inicio`, la hora y las llaves faltantes en el LCD, y el LED. El paso 2b agrega el retiro y la devolución.
+2. **El equipo se conecta al WiFi y al broker**, y anuncia que está en línea. En la web aparece "Equipo en línea" y se habilita "Pedir llave". Si se corta, a los ~15 segundos la web lo muestra desconectado. Probado el 03/11/2026: se conecta, el servidor le dice qué lugar vacío dejar en la ventana, y si el servidor se cae el LCD dice "Sin conexion / Servidor" en el mismo segundo; cuando vuelve, se recupera solo.
+3. **Mosquitto tiene que aceptar conexiones de la red.** Instalado sin configuración propia (Mosquitto 2) solo acepta conexiones de la misma compu: el simulador entra, el ESP32 no. En la notebook se agregó `/etc/mosquitto/conf.d/llavetrack.conf` (`listener 1883 0.0.0.0` y `allow_anonymous true`) y el firewall abre el 1883 **solo para la IP del ESP32**, porque el broker no tiene contraseña. En la demo, el broker va en la nube con contraseña por equipo y cifrado (puerto 8883).
+4. **El WiFi**: se decidió usar la red de la escuela, que es WPA2-Enterprise (usuario y contraseña por persona): hace falta una cuenta para el equipo y que la red deje salir al puerto 8883. En las pruebas se usó **PEINE-3**, una WiFi común de la escuela (con contraseña, en 2,4 GHz): el ESP32 se conecta y llega a la notebook. Plan B: el hotspot de un celular.
 
 ### Cómo se conecta el celular
 - **En desarrollo**: el celular en el mismo WiFi que la compu entra a `http://<IP-de-la-compu>:5173`.
@@ -133,8 +133,8 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-20 | Devolver una llave retirada por otro | V2 | ⬜ Falta (hoy cualquiera la devuelve y queda a nombre de quien la retiró) |
 | US-21 | Registrar incidentes del equipo | V2 | 🟡 Se registran y se ven; falta marcarlos resueltos |
 | US-22 | Ver si el equipo está conectado | MVP | ✅ Hecha |
-| US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 Servidor y simulador |
-| US-24 | Ver en el equipo si está conectado | MVP | 🟡 Servidor y simulador |
+| US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 El equipo real recibe la lista; falta verla con una llave afuera (paso 2b) |
+| US-24 | Ver en el equipo si está conectado | MVP | 🟡 Probada con el equipo real (LCD y LED verde); falta ver el LED rojo titilando |
 
 ## 7. Decisiones importantes
 
