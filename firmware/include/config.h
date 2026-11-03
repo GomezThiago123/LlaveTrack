@@ -25,9 +25,10 @@ constexpr int SLOT_HOME = 0;                    // nunca lleva llave
 // Corregido el 03/11/2026 (Thiago leyo los tags): 9A35EA81, que se usaba antes, es la llave de la 104
 constexpr const char *UID_HOME = "A94B37A4";
 
-// Una vuelta tarda 42 s (medido por el homing en el equipo real el 03/11/2026; antes se
-// estimaba en 25 s). Al arrancar se vuelve a medir: esto es solo el valor inicial.
-constexpr unsigned long VUELTA_MS_INICIAL = 42000;
+// Una vuelta tarda entre 42 y 46,4 s segun la corrida (medido por el homing en el equipo real el
+// 03/11/2026; antes se estimaba en 25 s). Al arrancar se vuelve a medir: esto es solo el valor
+// inicial (y de el sale el timeout del homing, por eso se toma el mas lento).
+constexpr unsigned long VUELTA_MS_INICIAL = 46000;
 // Si en este tiempo no aparece el HOME: el motor no gira o el tag HOME no esta.
 // Una vuelta y media: tiene que alcanzar para ver el HOME dos veces si arranca justo despues.
 constexpr unsigned long HOMING_TIMEOUT_MS = VUELTA_MS_INICIAL * 3 / 2;
@@ -38,9 +39,15 @@ constexpr bool ADELANTE_SUMA_SLOTS = true;
 
 // Juego mecanico (engranajes, eje) al invertir el sentido: el motor gira un rato sin que el disco
 // se mueva. Medido el 03/11/2026: unos 0,85 slots (~1,1 s), siempre igual, sin importar la
-// distancia. Provisorio hasta medirlo otra vez (en el modo diagnostico, ver donde "entra" cada tag
-// yendo para atras: si entra antes de lo esperado, falta holgura; si despues, sobra).
+// distancia. Confirmado en una 2da prueba (error ~0,15 slot). Para volver a medirlo: en el modo
+// diagnostico, ver donde "entra" cada tag yendo para atras (si entra antes de lo esperado, falta
+// holgura; si despues, sobra).
 constexpr float HOLGURA_REVERSA_SLOTS = 0.85;
+
+// Buscando una llave: si al llegar al slot esperado todavia no aparecio, seguir este tramo antes de
+// frenar. La velocidad deriva (hasta ~0,5 slot por vuelta, 03/11/2026) y la posicion estimada
+// puede ir adelantada: sin esto frenaba con la llave al borde del lector y probaba los vecinos.
+constexpr float BUSCAR_MARGEN_SLOTS = 0.6;
 
 // Frenar un poco antes por la inercia del disco, en slots (0,1 = un decimo de slot)
 constexpr float ADELANTO_FRENO_SLOTS = 0.0;

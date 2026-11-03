@@ -50,6 +50,7 @@ Modo modo = Modo::IR;
 float objetivo = 0;
 float restante = 0;  // slots que faltan recorrer en el sentido actual
 bool vueltaCompleta = false;
+bool margenUsado = false;  // BUSCAR: ya se siguio BUSCAR_MARGEN_SLOTS despues del slot esperado
 String uidBuscado;
 int slotEsperado = 0;
 int faseBusqueda = 0;  // 0 el esperado, 1 el siguiente, 2 el anterior, 3 una vuelta entera
@@ -126,6 +127,7 @@ void terminar(ResultadoDisco r) {
 void irHacia(float destino) {
   objetivo = normalizar(destino);
   vueltaCompleta = false;
+  margenUsado = false;
   llegando = verificando = false;
   float d = distanciaCorta(pos, objetivo);
   restante = fabsf(d);
@@ -329,6 +331,13 @@ void actualizarMover(float avance) {
   if (restante <= ADELANTO_FRENO_SLOTS) {
     if (vueltaCompleta) {  // dio la vuelta entera sin ver la llave
       terminar(ResultadoDisco::UID_NO_ENCONTRADO);
+      return;
+    }
+    // Buscando: la llave todavia no aparecio. Seguir un poco (la posicion estimada puede ir
+    // adelantada); si entra en este tramo, alEntrar() la centra
+    if (modo == Modo::BUSCAR && !margenUsado && !discoTagPresente(uidBuscado)) {
+      margenUsado = true;
+      restante += BUSCAR_MARGEN_SLOTS;
       return;
     }
     frenar();
