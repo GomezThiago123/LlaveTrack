@@ -57,7 +57,7 @@ def test_usuario_inactivo_no_puede_entrar(cliente, fabrica_sesiones):
 
 
 def test_usuario_sin_contrasena_no_puede_entrar(cliente, fabrica_sesiones):
-    """Un usuario que solo entra con Google (password_hash null)."""
+    """Un docente nuevo que todavia no creo su contrasena (password_hash null)."""
     with fabrica_sesiones() as s:
         usuario(s, ANA).password_hash = None
         s.commit()
@@ -286,6 +286,28 @@ def test_contrasena_nueva_corta_se_rechaza(cliente, mails):
         "/api/auth/restablecer", json={"token": token_del_mail(mails[0]), "claveNueva": "corta"}
     )
     assert res.status_code == 422
+
+
+def test_cambiar_clave_por_comando_reemplaza_la_de_prueba_y_cierra_las_sesiones(sesion):
+    _, token_sesion = auth.login(sesion, ANA, CLAVE)
+    sesion.flush()
+    _, token_link = auth.pedir_recuperacion(sesion, ANA)
+    sesion.flush()
+
+    auth.cambiar_clave(sesion, "  Ana.Perez@Example.com ", "clave-de-la-demo")
+
+    with pytest.raises(ErrorNegocio):
+        auth.login(sesion, ANA, CLAVE)  # la de prueba ya no sirve
+    assert auth.usuario_de_sesion(sesion, token_sesion) is None
+    with pytest.raises(ErrorNegocio):
+        auth.restablecer_clave(sesion, token_link, "otra-clave-123")  # el link pendiente tampoco
+    auth.login(sesion, ANA, "clave-de-la-demo")
+
+
+def test_cambiar_clave_de_un_usuario_que_no_existe(sesion):
+    with pytest.raises(ErrorNegocio) as error:
+        auth.cambiar_clave(sesion, "nadie@example.com", "clave-de-la-demo")
+    assert error.value.codigo == "USUARIO_NO_ENCONTRADO"
 
 
 def test_restablecer_desbloquea_la_cuenta_y_cierra_las_sesiones(sesion):

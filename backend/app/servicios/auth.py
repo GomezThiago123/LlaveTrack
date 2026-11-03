@@ -216,7 +216,18 @@ def restablecer_clave(
             400, "LINK_INVALIDO", "El link no es válido o ya venció. Pedí uno nuevo."
         )
 
-    usuario = recuperacion.usuario
+    _poner_clave(sesion, recuperacion.usuario, clave_nueva, ahora)
+
+
+def cambiar_clave(sesion: Session, email: str, clave_nueva: str) -> None:
+    """Cambia la contrasena sin link: la usa el comando app.cambiar_clave (ej. antes de la demo)."""
+    usuario = sesion.scalar(select(Usuario).where(Usuario.email == email.strip().lower()))
+    if usuario is None:
+        raise ErrorNegocio(404, "USUARIO_NO_ENCONTRADO", "El usuario no existe.")
+    _poner_clave(sesion, usuario, clave_nueva, ahora_utc())
+
+
+def _poner_clave(sesion: Session, usuario: Usuario, clave_nueva: str, ahora: datetime) -> None:
     usuario.password_hash = hashear_clave(clave_nueva)
     usuario.intentos_fallidos = 0
     usuario.bloqueado_hasta = None
