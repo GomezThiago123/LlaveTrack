@@ -26,5 +26,7 @@ ENV WEB_DIST=/app/web \
 # Al arrancar: pone la base al dia (si ya lo esta, no hace nada) y levanta la API.
 # Render dice en que puerto escuchar ($PORT). --proxy-headers: Render atiende el HTTPS y le pasa
 # el pedido al servidor; asi el servidor sabe que el original era HTTPS.
+# exec: uvicorn recibe la senal de apagado y avisa enseguida por MQTT que queda offline (US-24).
+# Sin exec la recibe solo el shell, y el equipo se entera recien por el LWT.
 CMD alembic upgrade head && \
-    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'
+    exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'
