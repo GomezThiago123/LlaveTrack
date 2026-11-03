@@ -34,8 +34,9 @@ constexpr unsigned long VUELTA_MS_INICIAL = 46000;
 constexpr unsigned long HOMING_TIMEOUT_MS = VUELTA_MS_INICIAL * 3 / 2;
 
 // Sentido: true si al girar "adelante" (IN3 alto) pasan por la ventana los slots 1, 2, 3...
-// Si el modo diagnostico muestra la 101 en el slot 31 (y no en el 1), cambiar a false.
-constexpr bool ADELANTE_SUMA_SLOTS = true;
+// Medido el 03/11/2026: girando adelante pasan 313, 213, 214, 102, 104, 101 y el HOME, asi que con
+// false quedan 101=1, 104=2, 102=3, 214=4, 213=5, 313=6 (los slots del seed).
+constexpr bool ADELANTE_SUMA_SLOTS = false;
 
 // Juego mecanico (engranajes, eje) al invertir el sentido: el motor gira un rato sin que el disco
 // se mueva. Medido el 03/11/2026: unos 0,85 slots (~1,1 s), siempre igual, sin importar la
