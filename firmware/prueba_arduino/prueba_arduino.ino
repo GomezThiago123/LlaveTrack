@@ -29,10 +29,10 @@ const int LED_VERDE = 12, LED_ROJO = 15;      // un LED bicolor
 byte FILAS[4] = {4, 13, 14, 16};
 byte COLUMNAS[4] = {17, 32, 33, 2};
 
-// --- Tags conocidos (leidos con NFC Tools el 27/10/2026) ---
-const char *UID_HOME = "9A35EA81";
+// --- Tags conocidos (corregidos el 03/11/2026: Thiago leyo cada tag) ---
+const char *UID_HOME = "A94B37A4";
 const char *TAGS[][2] = {
-  {"9A35EA81", "HOME"}, {"A94B37A4", "101"}, {"2A86C880", "102"},
+  {"A94B37A4", "HOME"}, {"9AAFF281", "101"}, {"2A86C880", "102"}, {"9A35EA81", "104"},
   {"5A81F281", "213"},  {"CAA8EA81", "214"}, {"2AC3FE80", "313"},
 };
 

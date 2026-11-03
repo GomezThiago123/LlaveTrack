@@ -7,7 +7,7 @@
 //   Monitor Serie                  Teclado
 //   h          homing de nuevo
 //   i 5        ir al slot 5        numero + #   (ej. 5#)
-//   b A94B37A4 1   buscar esa llave, esperada en el slot 1
+//   b 9AAFF281 1   buscar esa llave (la 101), esperada en el slot 1
 //   v 31       ir al slot 31 y confirmar que este vacio
 //   d          una vuelta mostrando que tag hay en cada slot                  D
 //   s          parar               C

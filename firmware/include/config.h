@@ -22,7 +22,8 @@ constexpr byte PINES_COLUMNAS[4] = {17, 32, 33, 2};
 // --- Disco ---
 constexpr int SLOTS = 32;
 constexpr int SLOT_HOME = 0;                    // nunca lleva llave
-constexpr const char *UID_HOME = "9A35EA81";    // leido con NFC Tools el 27/10/2026
+// Corregido el 03/11/2026 (Thiago leyo los tags): 9A35EA81, que se usaba antes, es la llave de la 104
+constexpr const char *UID_HOME = "A94B37A4";
 
 // Una vuelta tarda 42 s (medido por el homing en el equipo real el 03/11/2026; antes se
 // estimaba en 25 s). Al arrancar se vuelve a medir: esto es solo el valor inicial.
