@@ -26,6 +26,8 @@ bool trazas = false;  // imprimir cada tag que entra y sale del lector (modo dia
 // --- Posicion ---
 float pos = 0;        // slot frente a la ventana (0 a SLOTS), estimado
 int dirSlots = 0;     // +1: pasan los slots 1, 2, 3...  -1: al reves  0: quieto
+int ultimoSentido = 0;     // el sentido del ultimo giro (aunque ahora este quieto)
+float holguraPendiente = 0;  // slots que el motor gira sin mover el disco (al invertir el sentido)
 unsigned long tAnterior = 0;
 float msPorSlot = (float)VUELTA_MS_INICIAL / SLOTS;
 float anchoTag = 0.5;  // cuantos slots dura un tag frente al lector (se mide con el HOME)
@@ -83,6 +85,9 @@ float distanciaEnSentido(float desde, float hasta, int sentido) {
 }
 
 void girar(int sentidoSlots) {
+  // Al invertir el sentido, primero se recupera el juego de los engranajes: el disco no se mueve
+  if (ultimoSentido != 0 && sentidoSlots != ultimoSentido) holguraPendiente = HOLGURA_REVERSA_SLOTS;
+  ultimoSentido = sentidoSlots;
   dirSlots = sentidoSlots;
   tAnterior = millis();
   // El sentido fisico del motor depende de para que lado esta numerado el disco
@@ -95,12 +100,15 @@ void frenar() {
   motorFrenar();
 }
 
-// Suma lo que giro desde la ultima vez. Devuelve cuantos slots avanzo.
+// Suma lo que giro desde la ultima vez. Devuelve cuantos slots avanzo el DISCO (sin la holgura).
 float integrar() {
   unsigned long ahora = millis();
   float avance = 0;
   if (dirSlots != 0) {
     avance = (ahora - tAnterior) / msPorSlot;
+    float enVacio = min(avance, holguraPendiente);  // el motor gira pero el disco todavia no
+    holguraPendiente -= enVacio;
+    avance -= enVacio;
     pos = normalizar(pos + dirSlots * avance);
   }
   tAnterior = ahora;

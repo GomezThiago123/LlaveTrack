@@ -35,6 +35,12 @@ constexpr unsigned long HOMING_TIMEOUT_MS = VUELTA_MS_INICIAL * 3 / 2;
 // Si el modo diagnostico muestra la 101 en el slot 31 (y no en el 1), cambiar a false.
 constexpr bool ADELANTE_SUMA_SLOTS = true;
 
+// Juego mecanico (engranajes, eje) al invertir el sentido: el motor gira un rato sin que el disco
+// se mueva. Medido el 03/11/2026: unos 0,85 slots (~1,1 s), siempre igual, sin importar la
+// distancia. Provisorio hasta medirlo otra vez (en el modo diagnostico, ver donde "entra" cada tag
+// yendo para atras: si entra antes de lo esperado, falta holgura; si despues, sobra).
+constexpr float HOLGURA_REVERSA_SLOTS = 0.85;
+
 // Frenar un poco antes por la inercia del disco, en slots (0,1 = un decimo de slot)
 constexpr float ADELANTO_FRENO_SLOTS = 0.0;
 // Cuanto dura el freno (los dos IN en alto) antes de soltar el motor
