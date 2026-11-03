@@ -35,8 +35,9 @@ Web (React, mobile-first) ──HTTPS / REST JSON──► Servidor (Python)    
 - `backend/`: Python 3.11+ con FastAPI (sincrónico, sin `async`), SQLAlchemy + Alembic (SQLite en desarrollo; PostgreSQL de Supabase para la demo y la base compartida, vía `DATABASE_URL` con el Session pooler y el driver `psycopg`. Supabase es solo la base: no se usa su API, su Auth ni su cliente JS, y toda tabla nueva activa RLS sin políticas en su migración para que la API de Supabase no la exponga), paho-mqtt corriendo en su propio hilo, Pydantic para validar todo lo que entra (REST y MQTT), pytest. Entorno virtual propio en `backend/.venv` con `backend/requirements.txt` (versiones fijas). Se corre desde `backend/` con el `.venv` activado: `python run.py` (puerto 8000), `pytest`. Los tests ignoran el `.env` (`LLAVETRACK_TESTS=1` en `conftest.py`) y cargan `tests/datos_prueba.json`, no el seed real.
 - `backend/` y `frontend/` son independientes: cada uno se instala y se levanta en su propia terminal, sin nada compartido en la raíz.
 - `frontend/`: React + Vite + TypeScript, pensada para usar desde el celular. Sin app nativa en el MVP. Se corre desde `frontend/`: `npm install`, `npm run dev` (puerto 5173; Vite reenvía `/api` al backend en :8000, u otro con `LLAVETRACK_API`). Node 20.19+ (recomendado 24). Diseño: el [prototipo de Joel](https://github.com/joel012930/llavetrack) (v0) pasado a CSS común con los colores de la UBA (azul, celeste y blanco); íconos con `lucide-react` (versión fija). Barra de abajo: el docente tiene Aulas · Mis llaves · Cuenta; el preceptor y el admin, Aulas · Faltantes · Historial · Equipo · Docentes (y Cuenta arriba). El código de la reserva se muestra arriba de la lista de aulas.
-- Broker: Mosquitto local (ya instalado); inspecciono los mensajes con MQTTX.
-- `backend/simulador/`: CLI interactiva en Python (usa el `.venv` del backend) que se hace pasar por el ESP32 vía MQTT: queda prendida con LWT y latido, y en su prompt se puede retirar, devolver, `desenchufar` (corte de luz) y `enchufar`. Para desarrollar y testear sin hardware.
+- Broker: en desarrollo, Mosquitto local (ya instalado); en la nube, HiveMQ Cloud. Inspecciono los mensajes con MQTTX.
+- Nube (gratis, sin dominio propio): Render corre la imagen de `deploy/Dockerfile` (web y API en la misma dirección), con `render.yaml`; mail por la API de Brevo (Render gratis bloquea SMTP); un ping externo a `/api/publico/estado` cada 10 min evita que Render se duerma y que Supabase se pause. Guía: `docs/despliegue.md`.
+- `backend/simulador/`: CLI interactiva en Python (usa el `.venv` del backend) que se hace pasar por el ESP32 vía MQTT: queda prendida con LWT y latido, y en su prompt se puede retirar, devolver, `desenchufar` (corte de luz) y `enchufar`. Para desarrollar y testear sin hardware. Con `--tls --usuario` prueba contra el broker de la nube.
 - `docs/`: `protocolo-mqtt.md` (contrato), `cableado.md` (pines y alimentación) y `user-stories.md` (las de Notion con sus criterios de aceptación: revisarlas antes de cada historia).
 
 ## Modelo de datos (MVP)
@@ -90,11 +91,10 @@ En reposo siempre hay un slot vacío frente a la ventana. El RFID no puede "busc
 3. LCD "Llave de aula" / "214 recibida" (US-06) y el disco gira a `slotReposo`. La devolución se confirma sola al leer el UID: el docente no aprieta nada (decidido el 20/10/2026).
 4. UID desconocido o sin préstamo activo: "Llave no reconocida" y no se registra nada.
 
-### Autenticación (US-01, US-07, US-08): DECIDIDO, las dos opciones
-El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Google". Las dos entran al mismo `Usuario`, identificado por su email.
-- Email + contraseña (se implementa primero): hash con `bcrypt`, bloqueo de 15 min tras 5 intentos fallidos (US-07) y recuperación por email (`smtplib` de la librería estándar) con link que vence en 30 min (US-08). `passwordHash` puede ser null (usuario que solo entra con Google).
-- Google (se agrega después): la web obtiene el ID token, el servidor lo verifica con `google-auth` (audience = client ID, email verificado) y solo deja entrar emails cargados en `Usuario` con `activo = true`; nunca crea usuarios. Guardar `googleSub` la primera vez. En desarrollo funciona en `http://localhost`; para usarlo desde celulares en la demo hace falta un dominio con HTTPS (Google no acepta IPs tipo 192.168.x.x): deploy o túnel. Si no hay, la demo usa contraseña.
-- En las dos: sesión en cookie httpOnly que se cierra tras 60 s de inactividad (US-01), salvo mientras está abierta la pantalla del código.
+### Autenticación (US-01, US-07, US-08): DECIDIDO, solo email + contraseña
+Sin "Ingresar con Google" (decidido el 03/11/2026: US-01 no lo pide y debilita el login). No implementarlo.
+- Email + contraseña: hash con `bcrypt`, bloqueo de 15 min tras 5 intentos fallidos (US-07) y recuperación por email con link que vence en 30 min (US-08). `passwordHash` es null mientras el docente nuevo no creó su contraseña (US-09). La columna `googleSub` quedó sin uso.
+- Sesión en cookie httpOnly que se cierra tras 60 s de inactividad (US-01), salvo mientras está abierta la pantalla del código.
 
 ## Protocolo MQTT (ESP32 ↔ servidor)
 - Prefijo `llavetrack/v1/{deviceId}/`. El ESP32 publica en `evt/{tipo}`, en `estado` (retenido, con LWT `{"online":false}` también retenido) y en `latido` (`{}` cada 30 s, sin eventId ni respuesta); se suscribe a `resp`, `cmd`, `faltantes` y `llavetrack/v1/servidor/estado`.
@@ -105,7 +105,7 @@ El usuario elige en la pantalla de login: email + contraseña o "Ingresar con Go
 - Cada evento lleva un `eventId` único aunque el ESP32 se reinicie (ej. `equipo-01-<random de arranque>-<contador>`). El servidor responde cada evento en `resp` con el mismo `eventId` y `ok: true`, o `ok: false` + `motivo` (`CODIGO_INVALIDO`, `CODIGO_VENCIDO`, `LLAVE_DESCONOCIDA`, `SIN_PRESTAMO_ACTIVO`, `ERROR_INTERNO`).
 - PubSubClient solo publica con QoS 0, así que la confiabilidad es de aplicación: el ESP32 reintenta el mismo evento hasta recibir respuesta y el servidor descarta duplicados por `eventId`. Sin respuesta en 5 s → LCD "Sin respuesta" y reintento.
 - `client.setBufferSize(512)`: el buffer por defecto (256 bytes) corta los JSON.
-- Mosquitto: en desarrollo, anónimo; para el equipo real, `listener 1883 0.0.0.0` en `/etc/mosquitto/conf.d/llavetrack.conf` y el firewall (`ufw`) abierto solo para la IP del ESP32. En la demo el servidor está en la nube, así que el broker queda expuesto a internet: TLS (puerto 8883, `WiFiClientSecure` en el ESP32), usuario y contraseña por equipo y una ACL que limite cada equipo a su prefijo. Nunca el 1883 abierto.
+- Mosquitto: en desarrollo, anónimo; para el equipo real, `listener 1883 0.0.0.0` en `/etc/mosquitto/conf.d/llavetrack.conf` y el firewall (`ufw`) abierto solo para la IP del ESP32. En la demo el broker es HiveMQ Cloud, expuesto a internet: TLS (puerto 8883, `WiFiClientSecure` en el ESP32), usuario y contraseña por equipo y, si el plan gratis lo permite, permisos que limiten cada equipo a su prefijo. Nunca el 1883 abierto.
 
 ```
 llavetrack/v1/equipo-01/evt/solicitud_retiro
@@ -138,7 +138,7 @@ llavetrack/v1/equipo-01/resp
 
 ## Pendientes (preguntame antes de asumir)
 Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al día al terminar cada historia). Las user stories con sus criterios están en `docs/user-stories.md`; US-22 a US-24 se agregaron al MVP el 20/10/2026 (en los commits viejos figuran como US-20 a US-22).
-- [x] Autenticación: las dos (email + contraseña primero, Google después). Ver "Autenticación".
+- [x] Autenticación: solo email + contraseña, sin Google (03/11/2026). Ver "Autenticación".
 - [x] Motor: motorreductor de continua (DC), 24 V y 2 cables (respuesta del 20/10/2026), no un paso a paso aunque lo diga el diagrama de bloques. Va por un canal del L298N a 24 V (coincide con su tensión nominal).
 - [x] Sensor de posición: el **lector RFID** y el tiempo (decidido el 27/10/2026, plan A; plan B: sensor de horquilla). Una vuelta a 24 V tarda **42 a 47 s** (~1,4 s por slot; medido con el lector el 03/11/2026, el 25 s del 27/10 era una estimación a ojo); el firmware la vuelve a medir al arrancar. Ver Firmware → Posición.
 - [x] Placa: NodeMCU ESP32 de 38 pines con USB-C (módulo ESP-WROOM-32). Los pines 6–11 están expuestos pero son de la flash: no usarlos.
@@ -148,7 +148,7 @@ Lista completa de tareas y preguntas abiertas: `PENDIENTES.md` (mantenela al dí
 - [x] Disco de 32 slots. El 0 es del tag HOME: quedan 31 lugares, entran las 30 aulas reales y sobra 1.
 - [x] LED: un solo LED bicolor (verde 12, rojo 15). Colores (27/10/2026): verde fijo = conectado y no falta ninguna llave; naranja (los dos) = conectado y falta alguna; rojo titilando = sin conexión.
 - [x] Aula 105: el asterisco era un error; es un aula como las demás.
-- [x] El servidor de la demo corre en la nube. Pendiente: proveedor, dominio con HTTPS, Mosquitto accesible desde internet con TLS, (ver `PENDIENTES.md`). Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`).
+- [x] El servidor de la demo corre en la nube, sin gastar plata (decidido el 03/11/2026): Render, HiveMQ Cloud, Brevo y `*.onrender.com` como dirección con HTTPS. Base persistente: Supabase (proyecto `njdagfhwhtppqpypagzx`). Falta crear las cuentas y subirlo: `docs/despliegue.md` y `PENDIENTES.md`.
 - [ ] WiFi: el ESP32 se conecta a la WiFi de la escuela, que es WPA2-Enterprise (decidido el 20/10/2026). El módulo `red` usa WPA2-Enterprise (PEAP) con usuario y contraseña en `secrets.h`. Falta: nombre de la red, método (casi siempre PEAP), una cuenta para el equipo (mejor una que dé sistemas, no la personal de alguien), si pide certificado, y probar que la red deja salir al puerto 8883. Plan B: hotspot de un celular. En desarrollo se usa **PEINE-3** (WiFi común de la escuela, WPA2 con contraseña, tiene 2,4 GHz): el 03/11/2026 el ESP32 se conectó y llegó a la notebook (la red no aísla los dispositivos). Podría servir también para la demo si deja salir al 8883: decisión del grupo.
 
 ## Fases

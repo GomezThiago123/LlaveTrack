@@ -10,7 +10,9 @@ Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA. El docen
 | --- | --- |
 | `backend/` | API REST + MQTT en Python (FastAPI). Incluye `simulador/`, que se hace pasar por el equipo para probar sin hardware |
 | `frontend/` | Aplicación web mobile-first (React + Vite + TypeScript) |
-| `docs/` | Protocolo MQTT y documentación |
+| `docs/` | Protocolo MQTT, cableado, user stories y [cómo subirlo a la nube](docs/despliegue.md) |
+| `firmware/` | Programa del ESP32 (PlatformIO) |
+| `deploy/`, `render.yaml` | Imagen y configuración para la nube |
 
 El backend y el frontend son independientes: cada uno se instala y se levanta **en su propia terminal**.
 
@@ -39,7 +41,7 @@ pip install -r requirements.txt
 ```
 Si PowerShell no deja activar el entorno, corré una sola vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-Después, con el entorno activado, creá la base de datos y cargá los datos iniciales (las 30 aulas con su llave y los usuarios de prueba de `seed/datos.json`):
+Después, con el entorno activado, creá la base de datos y cargá los datos iniciales (las 6 aulas con su llave y los usuarios de prueba de `seed/datos.json`):
 ```sh
 alembic upgrade head
 python -m app.seed
@@ -59,6 +61,7 @@ Activá el entorno virtual (`source .venv/bin/activate` en Linux, `.venv\Scripts
 | `pytest` | Corre los tests (usan una base temporal con `tests/datos_prueba.json` e ignoran tu `.env`: nunca tocan `llavetrack.db` ni Supabase) |
 | `alembic upgrade head` | Aplica las migraciones pendientes a la base (correrlo después de cada `git pull`) |
 | `python -m app.seed --reiniciar` | **Borra todos los datos** y vuelve a cargar `seed/datos.json` |
+| `python -m app.cambiar_clave EMAIL` | Cambia la contraseña de un usuario, en la base que indique el `.env` |
 | `python simulador/simulador.py` | Simulador del equipo (ver abajo) |
 
 Con el servidor levantado, en `http://localhost:8000/docs` está la documentación interactiva de la API, que genera FastAPI. Para probar las rutas que piden login, primero ejecutá `POST /api/auth/login` ahí mismo: el navegador guarda la cookie de sesión y la manda en los pedidos siguientes.
@@ -90,16 +93,16 @@ Los comandos se escriben en el prompt `equipo>`:
 
 | Comando | Qué simula |
 | --- | --- |
-| `retirar 482913` | Ingresa el código de una reserva y retira la llave |
+| `retirar 482913` | Ingresa el código de una reserva y retira la llave. El código es el que da la web |
 | `timeout 482913` | Ingresa el código pero nadie retira la llave |
 | `falla 482913` | Ingresa el código pero el equipo no encuentra la llave: el preceptor lo ve en "Problemas del equipo hoy" (US-05) |
-| `devolver 04A00214` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
+| `devolver CAA8EA81` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
 | `desenchufar` | Corte de luz: deja de responder sin avisar. A los ~15 s el servidor lo ve desconectado |
 | `enchufar` | Vuelve a arrancar después de `desenchufar` |
 | `pantalla` | Muestra los dos LEDs (conexión y faltantes) y cómo rota el LCD en reposo |
 | `salir` | Se apaga prolijo (también con Ctrl+C) y queda desconectado enseguida |
 
-Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json`: por ahora son inventados, `04A0` + el número de aula (la del 214 es `04A00214`).
+Muestra cada mensaje MQTT (`→` lo que manda el equipo, `←` lo que responde el servidor) y lo que mostraría el LCD. Con `--repetir` manda cada evento dos veces, para ver que el servidor no lo procesa dos veces. Los UID de las llaves están en `seed/datos.json` (la del 214 es `CAA8EA81`). Contra el broker de la nube: `python simulador/simulador.py --host xxxx.hivemq.cloud --tls --usuario equipo-01` (ver [docs/despliegue.md](docs/despliegue.md)). Con el equipo real prendido no uses el simulador: los dos se presentan como `equipo-01`.
 
 Mientras el equipo está desconectado, la web no deja pedir llaves (US-22). El simulador también muestra los LEDs: el de faltantes se prende cuando hay llaves prestadas (US-23) y el de conexión titila si se cae el broker o el servidor; en ese caso no deja retirar ni devolver (US-24).
 
@@ -151,7 +154,7 @@ Está en `firmware/` (PlatformIO). El cableado está en [docs/cableado.md](docs/
 echo 'SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666"' | sudo tee /etc/udev/rules.d/99-esp32-cp210x.rules && sudo udevadm control --reload-rules
 ```
 
-**Desde la terminal**, con PlatformIO instalado (`pip install platformio`):
+**Desde la terminal**, con PlatformIO instalado con `pip install platformio` (el paquete `platformio` de apt no arranca en Linux Mint: da `AttributeError ... resultcallback`):
 ```sh
 cd firmware
 pio run -t upload     # compila y carga
@@ -160,7 +163,7 @@ pio device monitor    # Monitor Serie
 
 **Antes de compilar**, copiá `firmware/include/secrets.example.h` como `secrets.h` (en la misma carpeta) y completalo con la WiFi y la IP de la compu donde corre Mosquitto. `secrets.h` no va al repo.
 
-Hoy es el **paso 2a** (la red): al prender busca el tag HOME, se conecta a la WiFi y al broker, avisa al servidor (`inicio`) y deja un lugar vacío en la ventana. En reposo el LCD muestra la hora y las llaves que faltan. Por el Monitor Serie: `r` (estado de la red), `p` (dónde está el disco), `h` (homing de nuevo). El retiro y la devolución son el paso 2b. **Al prender, el disco gira solo**: tené la mano cerca del interruptor la primera vez.
+Al prender busca el tag HOME, se conecta a la WiFi y al broker, avisa al servidor (`inicio`) y deja un lugar vacío en la ventana. En reposo el LCD muestra la hora y las llaves que faltan; con **A** se retira y con **B** se devuelve. Por el Monitor Serie: `r` (estado de la red), `p` (dónde está el disco), `h` (homing de nuevo), `t A123456#` (simula esas teclas). **Al prender, el disco gira solo**: tené la mano cerca del interruptor la primera vez.
 
 **Modo diagnóstico** (mantener **D** apretada al encender, sin red): escanea el bus I2C y se prueba el disco desde el Monitor Serie con `i 5` (ir al slot 5), `b 9AAFF281 1` (buscar la llave de la 101), `v 10` (dejar un lugar vacío) y `d` (qué tag hay en cada slot).
 
@@ -169,6 +172,6 @@ Hoy es el **paso 2a** (la red): al prender busca el tag HOME, se conecta a la Wi
 listener 1883 0.0.0.0
 allow_anonymous true
 ```
-reiniciar Mosquitto y abrir el puerto 1883 en el firewall **solo para el ESP32** (el broker no tiene contraseña). En Linux, con la IP que muestra el Monitor Serie al conectarse a la WiFi: `sudo ufw allow from <IP-del-ESP32> to any port 1883 proto tcp`. En la demo el broker va con TLS y contraseña (puerto 8883).
+reiniciar Mosquitto y abrir el puerto 1883 en el firewall **solo para el ESP32** (el broker no tiene contraseña). En Linux, con la IP que muestra el Monitor Serie al conectarse a la WiFi: `sudo ufw allow from <IP-del-ESP32> to any port 1883 proto tcp`. En la demo el broker es HiveMQ Cloud, con TLS y contraseña (puerto 8883): ver [docs/despliegue.md](docs/despliegue.md).
 
 Para probar cada pieza por separado está `firmware/prueba_arduino/prueba_arduino.ino` (Arduino IDE).

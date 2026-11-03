@@ -19,6 +19,7 @@ constexpr const char *WIFI_CA_PEM = "";
 // --- Broker MQTT ---
 // En desarrollo: la IP de la compu donde corre Mosquitto (en Linux: `hostname -I`;
 // en Windows: `ipconfig`). Mejor una IP que un nombre: resolver un nombre puede trabar unos segundos.
+// En la nube: el nombre del cluster de HiveMQ (xxxx.hivemq.cloud), con TLS. Ver docs/despliegue.md.
 constexpr const char *MQTT_HOST = "192.168.0.10";
 constexpr int MQTT_PUERTO = 1883;     // 8883 con TLS
 constexpr const char *MQTT_USUARIO = "";  // vacio = anonimo (solo en desarrollo)
@@ -26,5 +27,9 @@ constexpr const char *MQTT_CLAVE = "";
 // TLS (para la demo, con el broker en la nube)
 constexpr bool MQTT_TLS = false;
 // Certificado de la autoridad que firmo el del broker (PEM). Con TLS y esto vacio, la conexion
-// va cifrada pero sin verificar con quien se habla: solo para probar.
+// va cifrada pero sin verificar con quien se habla: solo para probar. Se pega asi:
+//   constexpr const char *MQTT_CA_PEM = R"(-----BEGIN CERTIFICATE-----
+//   ...
+//   -----END CERTIFICATE-----
+//   )";
 constexpr const char *MQTT_CA_PEM = "";

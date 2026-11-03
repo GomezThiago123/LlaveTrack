@@ -2,7 +2,7 @@
 
 Última actualización: 03/11/2026.
 
-**Dónde estamos:** el servidor, la web y la base (Supabase, con las 6 llaves reales) están hechos y probados con el simulador. El disco del equipo ya anda con el firmware (paso 1, probado el 03/11/2026). Lo que falta es sobre todo **el equipo** (firmware del ESP32) y **subir el servidor a la nube** para la demo. Qué es cada cosa: [documentacion.md](documentacion.md).
+**Dónde estamos:** el servidor, la web y la base (Supabase, con las 6 llaves reales) están hechos y probados con el simulador. El equipo ya entregó y recibió una llave real con el servidor en la notebook (03/11/2026). Lo que falta es terminar las pruebas del equipo y **crear las cuentas de la nube** para la demo, siguiendo [docs/despliegue.md](docs/despliegue.md). Qué es cada cosa: [documentacion.md](documentacion.md).
 
 ## 1. Ahora (te toca a vos)
 
@@ -46,13 +46,20 @@
 
 ## 4. La nube, para la demo
 
-- [ ] **Elegir proveedor:** tiene que correr Python **y** Mosquitto (puerto TCP propio). **En la misma región que Supabase (us-east-1, Virginia):** desde Argentina cada consulta tarda ~170 ms y un evento del equipo puede tardar 2–5 s; en la misma región, milisegundos.
-- [ ] **Dominio con HTTPS** para la web y la API.
-- [ ] **Mosquitto expuesto a internet:** TLS en el 8883, usuario y contraseña por equipo, ACL por prefijo. Nunca el 1883 abierto.
-- [ ] **`.env` de producción:** `COOKIE_SEGURA=true`, `WEB_URL` con el dominio y `SMTP_*`.
-- [ ] **Mail de verdad** (SMTP, por ejemplo Gmail con contraseña de aplicación). Hoy los mails salen en la consola del servidor.
-- [ ] **Login con Google** (client ID en Google Cloud; anda con el dominio).
-- [ ] **Pasarles la conexión de Supabase a los compañeros**, por privado (nunca al repo). Para desarrollar sin pisarse, cada uno puede usar SQLite local.
+Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/despliegue.md](docs/despliegue.md).
+
+- [x] **Elegir proveedores** (03/11/2026): Render (en Virginia, la región de Supabase), HiveMQ Cloud, Brevo y `*.onrender.com` como dirección con HTTPS.
+- [x] **Ensayo local de la nube** (03/11/2026): la imagen de `deploy/Dockerfile` contra un Mosquitto con TLS, contraseña y permisos por equipo, con el simulador `--tls --usuario`. Anda el ciclo completo, la web desde el mismo servidor y la cookie `Secure`; el broker rechaza una clave mal, y el simulador, un certificado que no puede verificar. Falta repetirlo con los servicios reales.
+- [ ] **Subir los cambios a GitHub** (Render construye desde ahí).
+- [ ] **Cambiar las contraseñas de prueba, antes de subir la web:** `python -m app.cambiar_clave EMAIL`. `llavetrack` figura en el repo, que es público.
+- [ ] **Crear las cuentas:** HiveMQ (usuarios `servidor` y `equipo-01`), Brevo (remitente verificado) y Render (Blueprint). Confirmar que ninguna pida tarjeta y si HiveMQ gratis deja limitar los permisos por tópico.
+- [ ] **Ping cada 10 min** a `/api/publico/estado` (cron-job.org). Dejarlo unas horas y confirmar que Render no se durmió.
+- [ ] **Probar con el simulador contra HiveMQ** y el mail real, dando de alta a un docente con un mail de verdad.
+- [ ] **Placa con TLS:** `secrets.h` con HiveMQ. Nunca se probó en el equipo: es lo más incierto. Después, agregar el certificado de la CA.
+- [ ] **Probar que la WiFi deja salir por el 8883.**
+- [ ] **Medir un ciclo completo** de retiro y devolución con el equipo real contra la nube.
+- [ ] **Probar el plan B:** todo en una compu con el hotspot de un celular.
+- [ ] **Pasarles la conexión de Supabase** solo a quien la necesite, por privado (nunca al repo). Para desarrollar sin pisarse, cada uno puede usar SQLite local.
 
 ## 5. Pruebas de la web que te tocan
 
@@ -64,7 +71,12 @@
 ## 6. Fase 4: integración y demo
 
 - [ ] Probar con el equipo real y medir el tiempo de un ciclo completo de retiro y devolución.
-- [ ] Cambiar las contraseñas de prueba (`llavetrack`) antes de la demo.
+
+### Problemas encontrados al revisar el código (03/11/2026, sin arreglar)
+
+- [ ] **Retiro que no se registra:** si sacan la llave en los últimos 1,5 s antes de los 60 s, se manda `retiro_timeout` y no `retiro_confirmado` ([main.cpp](firmware/src/main.cpp), estado `ESPERANDO_RETIRO`). La web muestra disponible una llave que no está.
+- [ ] **La sesión puede vencer con el celular bloqueado:** el refresco se saltea con la pestaña oculta ([utiles.ts](frontend/src/utiles.ts)), y a los 60 s pide login otra vez. El código reaparece si la reserva sigue vigente.
+- [ ] **`recalibrar` no existe en el servidor:** el firmware lo escucha, pero nadie lo manda. Un equipo en `ERROR` solo sale reiniciándolo o con `h` por el Monitor Serie.
 
 ## 7. Defensa y documentos de clase
 
@@ -81,7 +93,7 @@ US-11 (baja de llave perdida) · US-14 (devolver sin conexión) · US-15 (corte 
 
 ## Hecho (resumen; el detalle está en el historial de git)
 
-- **Fases 0, 1 y 2:** servidor, base, MQTT, simulador y web, con 129 tests. MVP completo con el simulador: US-01, 02, 03, 07, 08, 22; US-04, 05, 06, 23 y 24 del lado del servidor y el simulador.
+- **Fases 0, 1 y 2:** servidor, base, MQTT, simulador y web, con 139 tests. MVP completo con el simulador: US-01, 02, 03, 07, 08, 22; US-04, 05, 06, 23 y 24 del lado del servidor y el simulador.
 - **V2 hechas a pedido:** US-09 (docentes), US-10 (tags RFID a mano), US-12/13 (historial), US-16 (recordatorio manual), US-17 (mis llaves).
 - **Decisiones sobre las user stories** (20/10): sesión de 60 s, reserva de 2 min, todos ven quién tiene cada llave, devolución automática, incidentes para el preceptor, desbloqueo manual, textos de los criterios. US-22 a US-24 cargadas en Notion.
 - **Web rediseñada** con el prototipo de Joel y los colores de la UBA (21/10), probada con capturas y contra Supabase.

@@ -35,7 +35,7 @@ Placa: NodeMCU ESP32 de 38 pines (ESP-WROOM-32).
 - **GPIO 12 (LED verde)**: si está en alto cuando arranca el ESP32, la placa no prende. Con el LED y su resistencia hacia GND arranca bien; si alguna vez no arranca o no deja cargar el programa, desconectar ese LED es lo primero que hay que probar.
 - **GPIO 2 y 15** también los mira el ESP32 al arrancar; con lo que tienen conectado arrancan bien.
 - **Sin control de velocidad**: como ENB tiene el jumper, el motor siempre gira al máximo. Si hace falta frenar más preciso, se puede sacar el jumper y conectar ENB a un GPIO libre (por ejemplo, el 4 no: lo usa el teclado; habría que elegir uno libre).
-- **Un solo LED bicolor**: el diseño pedía dos (conexión y faltantes). Con uno solo hay que decidir qué muestra cada color.
+- **Un solo LED bicolor**: el diseño pedía dos (conexión y faltantes). Colores decididos: verde = conectado y no falta ninguna llave; naranja = falta alguna; rojo titilando = sin conexión.
 - Si el adaptador I2C del LCD va a 5 V, sus resistencias ponen 5 V en SDA y SCL del ESP32 (que es de 3,3 V): conviene un adaptador de nivel.
 
 ## Programa de prueba

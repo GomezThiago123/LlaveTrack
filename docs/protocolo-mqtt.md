@@ -23,16 +23,16 @@ Prefijo: `llavetrack/v1/{deviceId}/` (ej. `llavetrack/v1/equipo-01/`).
 | `estado` | ESP32 | **sí** | `{"online":true}` al conectar. LWT: `{"online":false}` |
 | `latido` | ESP32 | no | `{}` cada 30 s: "sigo vivo" (ver [Conexión del equipo](#conexión-del-equipo)) |
 | `resp` | servidor | no | Respuesta a cada evento, con el mismo `eventId` |
-| `faltantes` | servidor | **sí** | Aulas cuya llave no está en el disco (ver [Llaves faltantes](#llaves-faltantes-us-21)) |
+| `faltantes` | servidor | **sí** | Aulas cuya llave no está en el disco (ver [Llaves faltantes](#llaves-faltantes-us-23)) |
+| `cmd` | servidor | no | Comandos al equipo |
 
 El servidor publica además su propio estado, fuera del prefijo de los equipos:
 
 | Tópico | Quién publica | Retenido | Para qué |
 | --- | --- | --- | --- |
-| `llavetrack/v1/servidor/estado` | servidor | **sí** | `{"online":true}` al conectar. LWT: `{"online":false}` (ver [LED de conexión](#led-de-conexión-us-22)) |
+| `llavetrack/v1/servidor/estado` | servidor | **sí** | `{"online":true}` al conectar. LWT: `{"online":false}` (ver [LED de conexión](#led-de-conexión-us-24)) |
 
 `servidor` es un deviceId **reservado**: como `servidor/estado` coincide con el patrón `+/estado` de los equipos, el servidor ignora ese nombre. Ningún equipo puede llamarse así.
-| `cmd` | servidor | no | Comandos al equipo |
 
 ## Conexión del equipo
 
@@ -201,7 +201,7 @@ Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el 
 
 | Comando | Payload |
 | --- | --- |
-| `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de pasos por vuelta |
+| `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. El firmware lo atiende, pero el servidor todavía no lo manda: se puede publicar a mano con MQTTX |
 
 ## Reintentos y duplicados
 
@@ -213,5 +213,5 @@ Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el 
 
 ## Seguridad del broker
 
-- Desarrollo: Mosquitto anónimo, solo en `localhost`.
-- Demo: un usuario y contraseña por equipo, y una ACL que limite cada equipo a `llavetrack/v1/{su deviceId}/#`.
+- Desarrollo: Mosquitto anónimo, en `localhost` o, con el equipo real, con el firewall abierto solo para su IP.
+- Demo: HiveMQ Cloud con TLS (puerto 8883), un usuario y contraseña por equipo y, si el plan gratis lo permite, permisos que limiten cada equipo a `llavetrack/v1/{su deviceId}/#` (ver [despliegue](despliegue.md)).

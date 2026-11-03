@@ -3,7 +3,7 @@
 Qué es el sistema, cómo funciona, cómo se conectan sus partes y en qué estado está cada historia.
 Para levantarlo en la compu está el [README](README.md); la lista de tareas abiertas está en [PENDIENTES.md](PENDIENTES.md).
 
-*Última actualización: 27/10/2026 (noche).*
+*Última actualización: 03/11/2026.*
 
 ---
 
@@ -55,14 +55,14 @@ Las llaves cuelgan de un disco de MDF con 32 lugares (*slots*). Cada llavero tie
 - **El simulador** (`backend/simulador/`) se hace pasar por el equipo: manda exactamente los mismos mensajes. Por eso todo se puede probar sin el hardware, y el día que el ESP32 esté listo lo reemplaza sin cambiar nada del servidor ni de la web.
 
 ### Cómo se conecta el equipo real
-1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Están hechos y probados en el equipo el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío), que ahora es el **modo diagnóstico** (tecla D apretada al encender), y el **paso 2a** (la red): WiFi común o WPA2-Enterprise, MQTT con reconexión, aviso de "en línea" con latido, `inicio`, la hora y las llaves faltantes en el LCD, y el LED. El paso 2b agrega el retiro y la devolución.
+1. **El firmware** (Fase 3, en `firmware/`) se configura en `firmware/include/secrets.h` con la red WiFi, la dirección del broker y el usuario del equipo. Están hechos y probados en el equipo el paso 1 (el disco sin red: homing con el tag HOME, búsqueda de llaves y lugar vacío), que ahora es el **modo diagnóstico** (tecla D apretada al encender), el **paso 2a** (la red): WiFi común o WPA2-Enterprise, MQTT con reconexión, aviso de "en línea" con latido, `inicio`, la hora y las llaves faltantes en el LCD, y el LED; y el **paso 2b** (el retiro y la devolución).
 2. **El equipo se conecta al WiFi y al broker**, y anuncia que está en línea. En la web aparece "Equipo en línea" y se habilita "Pedir llave". Si se corta, a los ~15 segundos la web lo muestra desconectado. Probado el 03/11/2026: se conecta, el servidor le dice qué lugar vacío dejar en la ventana, y si el servidor se cae el LCD dice "Sin conexion / Servidor" en el mismo segundo; cuando vuelve, se recupera solo.
-3. **Mosquitto tiene que aceptar conexiones de la red.** Instalado sin configuración propia (Mosquitto 2) solo acepta conexiones de la misma compu: el simulador entra, el ESP32 no. En la notebook se agregó `/etc/mosquitto/conf.d/llavetrack.conf` (`listener 1883 0.0.0.0` y `allow_anonymous true`) y el firewall abre el 1883 **solo para la IP del ESP32**, porque el broker no tiene contraseña. En la demo, el broker va en la nube con contraseña por equipo y cifrado (puerto 8883).
+3. **Mosquitto tiene que aceptar conexiones de la red.** Instalado sin configuración propia (Mosquitto 2) solo acepta conexiones de la misma compu: el simulador entra, el ESP32 no. En la notebook se agregó `/etc/mosquitto/conf.d/llavetrack.conf` (`listener 1883 0.0.0.0` y `allow_anonymous true`) y el firewall abre el 1883 **solo para la IP del ESP32**, porque el broker no tiene contraseña. En la demo, el broker es HiveMQ Cloud, con contraseña por equipo y cifrado (puerto 8883): el equipo sale hacia internet y ya no hace falta abrir nada en una compu.
 4. **El WiFi**: se decidió usar la red de la escuela, que es WPA2-Enterprise (usuario y contraseña por persona): hace falta una cuenta para el equipo y que la red deje salir al puerto 8883. En las pruebas se usó **PEINE-3**, una WiFi común de la escuela (con contraseña, en 2,4 GHz): el ESP32 se conecta y llega a la notebook. Plan B: el hotspot de un celular.
 
 ### Cómo se conecta el celular
 - **En desarrollo**: el celular en el mismo WiFi que la compu entra a `http://<IP-de-la-compu>:5173`.
-- **En la demo**: el servidor y la web van a un hosting en la nube con dominio y HTTPS. Conviene que esté en la misma región que Supabase (Virginia, EE. UU.): desde Argentina cada consulta a la base tarda ~170 ms, y en la misma región, 1 o 2 ms.
+- **En la demo**: el servidor y la web van en Render, en una dirección `*.onrender.com` con HTTPS. Está en la misma región que Supabase (Virginia, EE. UU.): desde Argentina cada consulta a la base tarda ~170 ms, y en la misma región debería tardar milisegundos. Cómo subirlo: [docs/despliegue.md](docs/despliegue.md).
 
 ## 4. Cómo sabe el sistema qué llave es cada una
 
@@ -89,18 +89,18 @@ El tag **HOME** (slot 0, nunca sale del disco) es `A94B37A4`. No va en la base: 
 ### Cómo se carga o se cambia una llave (por ejemplo, si se pierde un llavero)
 1. **Marcar cada llavero** con el número de su aula (con fibra o una etiqueta).
 2. **Leer el UID de cada tag.** Dos formas:
-   - **Ya mismo, con un celular Android con NFC**: la app gratuita *NFC Tools* muestra el número de serie al acercar el tag (ej. `04:A1:B2:C3`). Funciona con la mayoría de los tags de 13,56 MHz. Ojo: algunas apps muestran los bytes en orden inverso, así que conviene comparar uno con lo que lee el equipo antes de cargar los 30.
+   - **Ya mismo, con un celular Android con NFC**: la app gratuita *NFC Tools* muestra el número de serie al acercar el tag (ej. `04:A1:B2:C3`). Funciona con la mayoría de los tags de 13,56 MHz. Ojo: algunas apps muestran los bytes en orden inverso, así que conviene comparar uno con lo que lee el equipo antes de cargar los demás.
    - **Con el equipo** (lo más seguro): el modo diagnóstico (mantener **D** al encender) da una vuelta al disco y lista qué UID hay en cada slot. Así se armó la lista de arriba.
 3. **Cargarlo en el sistema**:
    - **Desde la web**: preceptor → **Equipo** → Tags RFID → el lápiz del aula. Acepta el número con o sin dos puntos y avisa si ese tag ya es de otra aula.
    - **O en `backend/seed/datos.json`** y recargar la base (`python -m app.seed --reiniciar`, que borra los datos de prueba).
-4. **Colgar cada llave en su slot**: el slot de cada aula se ve en la misma pantalla de Equipo (hoy: 101 en el 1, 102 en el 2, 213 en el 3, 214 en el 4 y 313 en el 5). Si una llave queda en otro lugar, al retirarla el equipo la busca dando una vuelta (es más lento), y al devolverla el sistema guarda el slot donde la leyó. Conviene colgarlas bien desde el principio.
+4. **Colgar cada llave en su slot**: el slot de cada aula se ve en la misma pantalla de Equipo (hoy, los de la tabla de arriba). Si una llave queda en otro lugar, al retirarla el equipo la busca dando una vuelta (es más lento), y al devolverla el sistema guarda el slot donde la leyó. Conviene colgarlas bien desde el principio.
 
 ## 5. La web
 
 | Quién | Pantallas (barra de abajo) |
 | --- | --- |
-| Sin login | Estado de las 30 aulas y del equipo, login, recuperar contraseña |
+| Sin login | Estado de las aulas y del equipo, login, recuperar contraseña |
 | Docente | **Aulas** (buscador, peines 1, 2 y 3, "solo disponibles", pedir llave y el código arriba) · **Mis llaves** (las que tengo y mis préstamos) · **Cuenta** |
 | Preceptor y admin | **Aulas** · **Faltantes** (quién tiene cada llave, desde cuándo, "Enviar recordatorio") · **Historial** (filtros por aula, docente, fechas y estado) · **Equipo** (estado, carrusel, problemas, tags RFID) · **Docentes** (cuentas bloqueadas, alta, activar o desactivar) |
 
@@ -112,7 +112,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 
 | US | Historia | Release | Estado |
 | --- | --- | --- | --- |
-| US-01 | Iniciar sesión | MVP | ✅ Hecha (Google, más adelante) |
+| US-01 | Iniciar sesión | MVP | ✅ Hecha |
 | US-02 | Consultar aulas disponibles | MVP | ✅ Hecha |
 | US-03 | Solicitar la llave | MVP | ✅ Hecha |
 | US-04 | Retirar la llave | MVP | ✅ Probada con el equipo real (03/11); falta probar el tiempo agotado |
@@ -153,12 +153,15 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 42 a 47 s (~1,4 s por slot, medido el 03/11). Si no alcanza la precisión, se agrega un sensor de horquilla |
 | 03/11 | Se suma la llave de la **104**: quedan **6 llaves**, en los slots 1 a 6 en el orden en que se colgaron | Estaba en el disco con su tag. Es más fácil acomodar la numeración y la base que volver a colgar las llaves |
 | 03/11 | El firmware **compensa la holgura** del disco al invertir el giro (~0,85 slot) y, al buscar una llave, **sigue un poco más** del lugar esperado | Medido en el equipo: el engranaje tiene juego y la velocidad del motor varía un poco entre vueltas |
+| 03/11 | La nube es **gratis y sin dominio propio**: Render, HiveMQ Cloud, Brevo y Supabase, con un ping cada 10 min para que Render no se duerma | No hay presupuesto. Si fallan el día de la demo, el plan B es todo en una compu con un hotspot |
+| 03/11 | El login es **solo con email y contraseña**, sin Google | US-01 no pide Google y debilita el login. Con una sola forma de entrar, el bloqueo por intentos (US-07) cubre todos los ingresos |
 | 21/10 | La web toma el **diseño del prototipo de Joel** con los colores de la UBA | Con 30 aulas, la grilla con buscador y peines es mucho más cómoda que la lista |
 
 ## 8. Cómo se prueba
 
-- **Tests automáticos del servidor**: `pytest` en `backend/` (129 tests). Incluyen dos pedidos simultáneos por la misma llave, el vencimiento de reservas, los eventos repetidos del equipo y que ninguna lista haga una consulta por cada fila.
-- **Simulador**: reemplaza al equipo. Comandos `retirar`, `devolver`, `falla`, `timeout`, `desenchufar` y `enchufar` (ver README).
+- **Tests automáticos del servidor**: `pytest` en `backend/` (139 tests). Incluyen dos pedidos simultáneos por la misma llave, el vencimiento de reservas, los eventos repetidos del equipo y que ninguna lista haga una consulta por cada fila.
+- **Simulador**: reemplaza al equipo. Comandos `retirar`, `devolver`, `falla`, `timeout`, `desenchufar` y `enchufar` (ver README). También se conecta al broker de la nube, con cifrado y contraseña.
+- **Ensayo de la nube** (03/11): la imagen que corre Render, en una compu, contra un broker con cifrado, contraseña y permisos por equipo. Falta repetirlo con los servicios reales y con la placa.
 - **La web**: se revisó pantalla por pantalla con capturas automáticas en tamaño de celular, con datos de prueba y contra Supabase.
 - **El disco del equipo** (03/11): con el modo diagnóstico, desde el Monitor Serie. Se probaron el homing (encuentra el HOME y mide la vuelta), el diagnóstico (lista los 7 tags en su slot), la búsqueda de una llave para los dos sentidos de giro (frena con la llave centrada en la ventana, sin control de velocidad) y el lugar vacío en la ventana. El lector lee los tags con el disco girando a velocidad plena.
 - **El retiro y la devolución con el equipo real** (03/11): pedido desde la web, código en el teclado, el disco trae la llave, se registra el préstamo al sacarla y la devolución al colgarla. Un ciclo completo: ~55 s el retiro (la mayor parte es escribir el código) y ~10 s la devolución.
@@ -171,4 +174,5 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | [PENDIENTES.md](PENDIENTES.md) | Tareas abiertas y preguntas que faltan responder |
 | [docs/user-stories.md](docs/user-stories.md) | Las historias de Notion con sus criterios de aceptación |
 | [docs/protocolo-mqtt.md](docs/protocolo-mqtt.md) | Los mensajes entre el equipo y el servidor |
+| [docs/despliegue.md](docs/despliegue.md) | Cómo subir el sistema a la nube, gratis |
 | [CLAUDE.md](CLAUDE.md) | La especificación técnica completa (reglas, API, firmware, hardware) |
