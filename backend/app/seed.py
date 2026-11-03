@@ -61,7 +61,7 @@ def cargar_datos(sesion: Session, datos: dict) -> None:
                 email=u["email"].lower(),
                 telefono=u["telefono"],
                 rol=Rol(u["rol"]),
-                # Sin "clave" el usuario no puede entrar con contrasena (solo con Google, mas adelante)
+                # Sin "clave" el usuario no puede entrar hasta crearla con un link (US-08 o US-09)
                 password_hash=hashear_clave(u["clave"]) if u.get("clave") else None,
             )
         )

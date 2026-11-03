@@ -1,5 +1,4 @@
 // Login con email y contraseña (US-01). El bloqueo por intentos (US-07) lo decide el servidor.
-// "Ingresar con Google" se agrega cuando este hecho del lado del servidor.
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';

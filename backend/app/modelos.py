@@ -48,8 +48,8 @@ class Usuario(Base):
     activo: Mapped[bool] = mapped_column(default=True)
 
     # Autenticacion (ver app/servicios/auth.py)
-    password_hash: Mapped[str | None] = mapped_column(String(100))  # null = solo entra con Google
-    google_sub: Mapped[str | None] = mapped_column(String(64), unique=True)
+    password_hash: Mapped[str | None] = mapped_column(String(100))  # null = todavia no creo su contrasena
+    google_sub: Mapped[str | None] = mapped_column(String(64), unique=True)  # sin uso: no hay login con Google
     intentos_fallidos: Mapped[int] = mapped_column(default=0)
     bloqueado_hasta: Mapped[datetime | None] = mapped_column(FechaUTC)
 
