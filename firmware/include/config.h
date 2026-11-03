@@ -75,7 +75,17 @@ constexpr const char *ZONA_HORARIA = "<-03>3";  // Argentina, sin horario de ver
 // En reposo, la linea 1 del LCD rota entre la hora y las llaves que faltan
 constexpr unsigned long LCD_ROTACION_MS = 3000;
 
-// --- Retiro y devolucion (se usan en el paso 2b) ---
+// --- Retiro y devolucion ---
 constexpr unsigned long RETIRO_ESTABLE_MS = 1500;  // la llave dejo de leerse = la retiraron
-constexpr unsigned long DEVOLUCION_ESTABLE_MS = 1000;
-constexpr unsigned long RETIRO_TIMEOUT_MS = 60000;
+constexpr unsigned long DEVOLUCION_ESTABLE_MS = 1000;  // una llave colgada que se lee este tiempo
+constexpr unsigned long RETIRO_TIMEOUT_MS = 60000;  // la llave en la ventana y nadie la saca (US-04)
+constexpr int CODIGO_DIGITOS = 6;
+// Escribiendo el codigo sin tocar ninguna tecla este tiempo: vuelve al reposo
+constexpr unsigned long CODIGO_INACTIVIDAD_MS = 20000;
+// Codigos rechazados seguidos que bloquean el teclado, y por cuanto tiempo
+constexpr int CODIGOS_MAL_MAX = 3;
+constexpr unsigned long BLOQUEO_TECLADO_MS = 30000;
+// Tecla B y nadie cuelga ninguna llave en este tiempo: vuelve al reposo
+constexpr unsigned long DEVOLUCION_ESPERA_MS = 60000;
+// Cuanto queda un aviso en el LCD ("Gracias", "Codigo invalido") antes de volver a la hora
+constexpr unsigned long MENSAJE_MS = 3000;

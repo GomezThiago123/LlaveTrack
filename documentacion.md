@@ -115,9 +115,9 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-01 | Iniciar sesión | MVP | ✅ Hecha (Google, más adelante) |
 | US-02 | Consultar aulas disponibles | MVP | ✅ Hecha |
 | US-03 | Solicitar la llave | MVP | ✅ Hecha |
-| US-04 | Retirar la llave | MVP | 🟡 Servidor y simulador |
-| US-05 | Recibir siempre la llave correcta | MVP | 🟡 Servidor y simulador |
-| US-06 | Devolver la llave | MVP | 🟡 Servidor y simulador |
+| US-04 | Retirar la llave | MVP | ✅ Probada con el equipo real (03/11); falta probar el tiempo agotado |
+| US-05 | Recibir siempre la llave correcta | MVP | 🟡 Escrita en el firmware (busca por UID, intento 2 con homing); falta probar la falla con el equipo real |
+| US-06 | Devolver la llave | MVP | ✅ Probada con el equipo real (03/11); falta probar "Llave no reconocida" |
 | US-07 | Bloqueo por intentos fallidos | MVP | ✅ Hecha |
 | US-08 | Recuperar contraseña | MVP | ✅ Hecha (falta configurar el mail de verdad) |
 | US-09 | Registrar docentes | V2 | ✅ Hecha |
@@ -133,7 +133,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-20 | Devolver una llave retirada por otro | V2 | ⬜ Falta (hoy cualquiera la devuelve y queda a nombre de quien la retiró) |
 | US-21 | Registrar incidentes del equipo | V2 | 🟡 Se registran y se ven; falta marcarlos resueltos |
 | US-22 | Ver si el equipo está conectado | MVP | ✅ Hecha |
-| US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 El equipo real recibe la lista; falta verla con una llave afuera (paso 2b) |
+| US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 El LCD muestra "Faltan: 214" con el equipo real; el LED naranja no se vio (revisar el LED) |
 | US-24 | Ver en el equipo si está conectado | MVP | 🟡 Probada con el equipo real (LCD y LED verde); falta ver el LED rojo titilando |
 
 ## 7. Decisiones importantes
@@ -161,6 +161,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 - **Simulador**: reemplaza al equipo. Comandos `retirar`, `devolver`, `falla`, `timeout`, `desenchufar` y `enchufar` (ver README).
 - **La web**: se revisó pantalla por pantalla con capturas automáticas en tamaño de celular, con datos de prueba y contra Supabase.
 - **El disco del equipo** (03/11): con el modo diagnóstico, desde el Monitor Serie. Se probaron el homing (encuentra el HOME y mide la vuelta), el diagnóstico (lista los 7 tags en su slot), la búsqueda de una llave para los dos sentidos de giro (frena con la llave centrada en la ventana, sin control de velocidad) y el lugar vacío en la ventana. El lector lee los tags con el disco girando a velocidad plena.
+- **El retiro y la devolución con el equipo real** (03/11): pedido desde la web, código en el teclado, el disco trae la llave, se registra el préstamo al sacarla y la devolución al colgarla. Un ciclo completo: ~55 s el retiro (la mayor parte es escribir el código) y ~10 s la devolución.
 
 ## 9. Dónde está cada cosa
 

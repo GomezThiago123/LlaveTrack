@@ -39,7 +39,10 @@
   - `firmware/include/secrets.h` con PEINE-3 y la IP de la notebook (`10.56.16.125`; si cambia, actualizarla y volver a cargar el firmware).
   - La SQLite local se recargó con las 6 llaves.
 - [ ] **Paso 2a, lo que falta ver:** el LED rojo titilando sin conexión, el LCD "Sin conexion / WiFi" (cortando la WiFi) y la web con el equipo real (los botones de "Pedir llave" se habilitan y deshabilitan solos).
-- [ ] **Paso 2b: el retiro y la devolución completos** (teclas A y B; reemplaza al simulador).
+- [x] **Paso 2b: el retiro y la devolución con el equipo real** (03/11/2026, con la web en `localhost:5173` y la base local). Retiro de la 214: código aceptado al instante, el disco la trajo en 10 s, "Aula 214 servida / RETIRE SU LLAVE", al sacarla "Gracias / Perez" y el préstamo registrado; el LCD alternó "Faltan: 214". Devolución con B: "Llave de aula / 214 recibida" y el disco fue al lugar vacío. Ciclo medido: retiro 55 s (38 s escribiendo el código, 10 s de disco, 7 s sacándola) y devolución ~10 s.
+- [ ] **Paso 2b, lo que falta probar:** 3 códigos mal (bloqueo de 30 s), "Llave no reconocida", "Tiempo agotado" (60 s sin sacar la llave) y, si se puede, US-05 (sacar una llave del disco a mano antes de pedirla: "Pedi la llave en porteria" e incidente en la web).
+  - Corregido y **sin cargar en la placa todavía**: con B ahora cuenta también una llave que ya estaba colgada frente al lector (antes había que sacarla y volver a colgarla).
+- [ ] **LED naranja (falta una llave):** el firmware prende verde y rojo juntos, pero en la prueba no se vio naranja. Ver cuántas patas tiene el LED: con 2 patas (los dos LEDs al revés) no puede mostrar los dos colores a la vez; con 3, quizás el verde tapa al rojo. Según eso, se baja el verde por software o se cambia la señal (ej. verde titilando lento).
 
 ## 4. La nube, para la demo
 
