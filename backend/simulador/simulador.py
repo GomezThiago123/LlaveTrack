@@ -14,10 +14,15 @@ Uso (desde backend/, con el .venv activado):
     equipo> desenchufar
     equipo> salir
 Opciones: --equipo equipo-01  --host localhost  --puerto 1883  --slots 32  --repetir
+
+Contra el broker de la nube (TLS y usuario; la clave se pide al arrancar, o sale de MQTT_CLAVE):
+    python simulador/simulador.py --host xxxx.hivemq.cloud --tls --usuario equipo-01
 """
 
 import argparse
+import getpass
 import json
+import os
 from datetime import datetime
 import queue
 import secrets
@@ -108,6 +113,11 @@ class Equipo:
         self.cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"sim-{self.device_id}")
         # LWT: si el equipo se corta sin despedirse, el broker publica que quedo offline
         self.cliente.will_set(self.topico("estado"), json.dumps({"online": False}), qos=1, retain=True)
+        if args.usuario:
+            self.cliente.username_pw_set(args.usuario, args.clave)
+        if args.tls:
+            # Cifra la conexion y verifica el certificado del broker con las autoridades del sistema
+            self.cliente.tls_set()
         self.cliente.on_message = self._al_recibir
         self.cliente.on_connect = self._al_conectar
         self.cliente.on_disconnect = self._al_desconectar
@@ -117,6 +127,7 @@ class Equipo:
 
     def _al_conectar(self, cliente, _userdata, _flags, codigo, _props) -> None:
         if codigo.is_failure:
+            print(f"\n  El broker rechazó la conexión: {codigo}")  # ej. usuario o clave incorrectos
             return
         reconexion = self.enchufado and not self.broker_conectado
         self.broker_conectado = True
@@ -393,10 +404,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Simulador del equipo LlaveTrack (ESP32) via MQTT")
     parser.add_argument("--equipo", default="equipo-01", help="deviceId (default: equipo-01)")
     parser.add_argument("--host", default="localhost", help="broker MQTT (default: localhost)")
-    parser.add_argument("--puerto", type=int, default=1883)
+    parser.add_argument("--puerto", type=int, help="default: 1883, o 8883 con --tls")
+    parser.add_argument("--tls", action="store_true", help="cifra la conexion (broker en la nube)")
+    parser.add_argument("--usuario", help="usuario del broker; la clave se pide al arrancar (o sale de MQTT_CLAVE)")
     parser.add_argument("--slots", type=int, default=32, help="slots totales del disco (default: 32)")
     parser.add_argument("--repetir", action="store_true", help="manda cada evento dos veces (prueba de duplicados)")
     args = parser.parse_args()
+    args.puerto = args.puerto or (8883 if args.tls else 1883)
+    # La clave no va como opcion: quedaria en el historial de la terminal
+    args.clave = (os.environ.get("MQTT_CLAVE") or getpass.getpass("Clave del broker: ")) if args.usuario else None
 
     eq = Equipo(args)
     print(f"Simulador de {args.equipo}. Escribí 'ayuda' para ver los comandos.")
