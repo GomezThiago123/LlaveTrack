@@ -160,7 +160,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 - **Tests automáticos del servidor**: `pytest` en `backend/` (129 tests). Incluyen dos pedidos simultáneos por la misma llave, el vencimiento de reservas, los eventos repetidos del equipo y que ninguna lista haga una consulta por cada fila.
 - **Simulador**: reemplaza al equipo. Comandos `retirar`, `devolver`, `falla`, `timeout`, `desenchufar` y `enchufar` (ver README).
 - **La web**: se revisó pantalla por pantalla con capturas automáticas en tamaño de celular, con datos de prueba y contra Supabase.
-- **El disco del equipo** (03/11): con el modo diagnóstico, desde el Monitor Serie. Se probaron el homing (encuentra el HOME y mide la vuelta), el diagnóstico (lista los 7 tags en su slot), la búsqueda de una llave para los dos sentidos de giro y el lugar vacío en la ventana. El lector lee los tags con el disco girando a velocidad plena.
+- **El disco del equipo** (03/11): con el modo diagnóstico, desde el Monitor Serie. Se probaron el homing (encuentra el HOME y mide la vuelta), el diagnóstico (lista los 7 tags en su slot), la búsqueda de una llave para los dos sentidos de giro (frena con la llave centrada en la ventana, sin control de velocidad) y el lugar vacío en la ventana. El lector lee los tags con el disco girando a velocidad plena.
 
 ## 9. Dónde está cada cosa
 

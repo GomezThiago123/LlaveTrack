@@ -15,7 +15,7 @@
 
 ## 2. Decisiones del grupo
 
-- [ ] **Motor sin control de velocidad** (ENB del L298N con jumper): ver al probar si frena justo en la llave. Si no, sacar el jumper y conectar ENB a un GPIO libre.
+- [x] **Motor sin control de velocidad** (ENB del L298N con jumper): alcanza, porque frena con la llave centrada (03/11/2026). No hace falta sacar el jumper.
 - [ ] **WiFi de la escuela** (decidido: el ESP32 se conecta ahí; es WPA2-Enterprise). Hace falta:
   - el nombre de la red y el método (casi siempre PEAP; lo sabe sistemas);
   - una cuenta para el equipo (mejor una de sistemas, no la personal de alguien);
@@ -32,7 +32,7 @@
   - al invertir el giro el disco pierde ~0,85 slot (holgura del engranaje): `HOLGURA_REVERSA_SLOTS` lo compensa (el error bajó a ~0,15 slot);
   - `b` encuentra la llave para los dos lados (si no está donde la espera, prueba los vecinos y da la vuelta); `BUSCAR_MARGEN_SLOTS` evita que pruebe los vecinos por la deriva de medio slot;
   - `v` deja la ventana vacía.
-- [ ] **Confirmar a ojo que `b` deja la llave centrada en la ventana** (si se pasa o queda corta, ajustar `ADELANTO_FRENO_SLOTS`). Define si hace falta control de velocidad (ver la sección 2).
+- [x] **`b` deja la llave centrada en la ventana** (la 313, confirmado a ojo el 03/11/2026): `ADELANTO_FRENO_SLOTS` queda en 0.
 - [ ] **Paso 2a: la red** (escrito el 03/11/2026 y compila; falta probarlo en la placa). El paso 1 quedó como modo diagnóstico (D apretada al encender). Antes de probar:
   - **Mosquitto para el equipo real** (hoy solo acepta conexiones de la misma compu): `/etc/mosquitto/conf.d/llavetrack.conf` con `listener 1883 0.0.0.0` y `allow_anonymous true`, reiniciar Mosquitto y abrir el 1883 en el firewall (necesita `sudo`). Solo en una red privada.
   - **`firmware/include/secrets.h`**: hoy es una copia de la plantilla; completar la WiFi (hotspot del celular) y la IP de la notebook (`hostname -I`).
