@@ -108,6 +108,7 @@ class PrestamoSalida(Esquema):
     retirado_en: datetime
     devuelto_en: datetime | None
     recordatorio_enviado_en: datetime | None
+    perdida: bool = False  # US-11: se cerro porque la llave se perdio
 
 
 class HistorialSalida(Esquema):
@@ -170,6 +171,24 @@ class EquipoSalida(Esquema):
 
 class PedidoRfid(Esquema):
     rfid_uid: str = Field(min_length=1, max_length=40)
+    # Donde quedo colgada en el disco. Obligatorio para reponer una llave dada de baja (US-11)
+    slot: int | None = Field(default=None, ge=0)
+
+
+class PedidoBaja(Esquema):
+    """US-11: por que se da de baja (ej. \"Se perdio en el aula\")."""
+
+    motivo: str = Field(min_length=3, max_length=200)
+
+
+class BajaSalida(Esquema):
+    id: int
+    aula: str
+    rfid_uid: str  # el tag que tenia la llave perdida
+    motivo: str
+    dada_en: datetime
+    ultimo_docente: str | None  # "Ana Perez", o null si nunca se presto
+    preceptor: str  # quien la dio de baja
 
 
 class IncidenteSalida(Esquema):

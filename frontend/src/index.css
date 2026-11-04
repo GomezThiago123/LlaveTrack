@@ -1068,3 +1068,8 @@ select:focus {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* US-11: el lugar del disco al reponer una llave */
+.campo-slot {
+  width: 5.5em;
+}

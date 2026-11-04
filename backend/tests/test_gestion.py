@@ -318,3 +318,86 @@ def test_recalibrar_sin_broker(cliente, ingresar, monkeypatch):
     res = cliente.post("/api/equipo/recalibrar")
     assert res.status_code == 503
     assert res.json()["error"]["codigo"] == "SIN_BROKER"
+
+
+# --- US-11: dar de baja una llave perdida y reponerla ---
+
+
+def id_llave(fabrica_sesiones, aula):
+    with fabrica_sesiones() as s:
+        return s.scalar(select(Llave.id).join(Aula).where(Aula.nombre == aula))
+
+
+def test_dar_de_baja_una_llave_disponible(cliente, ingresar, fabrica_sesiones):
+    prestar(fabrica_sesiones, ANA, "215", devuelto_hace=timedelta(minutes=30))  # la ultima que la tuvo
+    llave_id = id_llave(fabrica_sesiones, "215")
+    ingresar(CARLA_PRECEPTORA)
+
+    res = cliente.post(f"/api/llaves/{llave_id}/baja", json={"motivo": "Se perdio en el patio"})
+    assert res.status_code == 201, res.text
+    baja = res.json()
+    assert baja["aula"] == "215" and baja["motivo"] == "Se perdio en el patio"
+    assert baja["ultimoDocente"] == "Ana Perez" and baja["preceptor"] == "Carla Diaz"
+
+    # Deja de aparecer para retiro, pero el preceptor la ve de baja en el equipo
+    assert "215" not in [a["nombre"] for a in cliente.get("/api/publico/estado").json()["aulas"]]
+    equipo = {l["aula"]: l for l in cliente.get("/api/equipo").json()["llaves"]}
+    assert equipo["215"]["estado"] == "BAJA" and equipo["215"]["slot"] is None
+    assert [b["aula"] for b in cliente.get("/api/llaves/bajas").json()] == ["215"]
+
+
+def test_baja_de_una_llave_prestada_cierra_el_prestamo_como_perdido(cliente, ingresar, fabrica_sesiones):
+    prestamo_id = prestar(fabrica_sesiones, ANA, "214")
+    ingresar(CARLA_PRECEPTORA)
+    baja = cliente.post(f"/api/llaves/{id_llave(fabrica_sesiones, '214')}/baja", json={"motivo": "La perdio"}).json()
+    assert baja["ultimoDocente"] == "Ana Perez"
+    with fabrica_sesiones() as s:
+        prestamo = s.get(Prestamo, prestamo_id)
+        assert prestamo.devuelto_en is not None and prestamo.perdida is True
+    historial = cliente.get("/api/prestamos").json()["prestamos"]
+    assert [p["perdida"] for p in historial if p["id"] == prestamo_id] == [True]
+
+
+def test_baja_de_una_llave_reservada_cancela_la_reserva(cliente, ingresar, fabrica_sesiones):
+    ingresar(ANA)
+    aula_id = next(a["id"] for a in cliente.get("/api/aulas").json() if a["nombre"] == "216")
+    assert cliente.post("/api/reservas", json={"aulaId": aula_id}).status_code == 201
+    ingresar(CARLA_PRECEPTORA)
+    cliente.post(f"/api/llaves/{id_llave(fabrica_sesiones, '216')}/baja", json={"motivo": "Rota"})
+    with fabrica_sesiones() as s:
+        assert s.scalar(select(Reserva.estado).where(Reserva.llave_id == id_llave(fabrica_sesiones, "216"))) == "CANCELADA"
+
+
+def test_no_se_da_de_baja_dos_veces(cliente, ingresar, fabrica_sesiones):
+    llave_id = id_llave(fabrica_sesiones, "215")
+    ingresar(CARLA_PRECEPTORA)
+    cliente.post(f"/api/llaves/{llave_id}/baja", json={"motivo": "Perdida"})
+    res = cliente.post(f"/api/llaves/{llave_id}/baja", json={"motivo": "Perdida"})
+    assert res.status_code == 409 and res.json()["error"]["codigo"] == "YA_DADA_DE_BAJA"
+
+
+def test_reponer_una_llave_con_un_tag_nuevo(cliente, ingresar, fabrica_sesiones):
+    llave_id = id_llave(fabrica_sesiones, "215")
+    ingresar(CARLA_PRECEPTORA)
+    cliente.post(f"/api/llaves/{llave_id}/baja", json={"motivo": "Perdida"})
+
+    # Sin lugar en el disco no se puede: el equipo no sabria donde buscarla
+    res = cliente.put(f"/api/llaves/{llave_id}/rfid", json={"rfidUid": "0A0B0C0D"})
+    assert res.status_code == 422 and res.json()["error"]["codigo"] == "SLOT_REQUERIDO"
+    # Ni en un lugar ocupado (el 1 es de la 214) ni en el del HOME
+    res = cliente.put(f"/api/llaves/{llave_id}/rfid", json={"rfidUid": "0A0B0C0D", "slot": 1})
+    assert res.status_code == 409 and res.json()["error"]["codigo"] == "SLOT_OCUPADO"
+    assert cliente.put(f"/api/llaves/{llave_id}/rfid", json={"rfidUid": "0A0B0C0D", "slot": 0}).status_code == 409
+
+    res = cliente.put(f"/api/llaves/{llave_id}/rfid", json={"rfidUid": "0A0B0C0D", "slot": 10})
+    assert res.status_code == 200, res.text
+    assert res.json()["estado"] == "DISPONIBLE" and res.json()["slot"] == 10
+    assert "215" in [a["nombre"] for a in cliente.get("/api/publico/estado").json()["aulas"]]
+    # La constancia de la baja queda, con el tag viejo
+    assert cliente.get("/api/llaves/bajas").json()[0]["rfidUid"] != "0A0B0C0D"
+
+
+def test_baja_es_solo_para_el_preceptor(cliente, ingresar, fabrica_sesiones):
+    ingresar(ANA)
+    assert cliente.post(f"/api/llaves/{id_llave(fabrica_sesiones, '215')}/baja", json={"motivo": "x" * 5}).status_code == 403
+    assert cliente.get("/api/llaves/bajas").status_code == 403

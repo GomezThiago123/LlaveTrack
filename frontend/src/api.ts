@@ -64,6 +64,18 @@ export interface Prestamo {
   retiradoEn: string; // fechas ISO en UTC
   devueltoEn: string | null; // null = todavia la tiene
   recordatorioEnviadoEn: string | null;
+  perdida: boolean; // US-11: se cerro porque la llave se perdio
+}
+
+// US-11: una llave perdida
+export interface BajaLlave {
+  id: number;
+  aula: string;
+  rfidUid: string; // el tag que tenia
+  motivo: string;
+  dadaEn: string;
+  ultimoDocente: string | null;
+  preceptor: string;
 }
 
 export interface FiltrosHistorial {
@@ -191,6 +203,11 @@ export const api = {
     pedir<UsuarioDetalle>(`/usuarios/${usuarioId}`, { metodo: 'PATCH', cuerpo: { activo } }),
   equipo: (automatico = false) => pedir<Equipo>('/equipo', { automatico }),
   recalibrar: () => pedir<null>('/equipo/recalibrar', { metodo: 'POST' }), // repite el homing
-  cambiarRfid: (llaveId: number, rfidUid: string) => // US-10
-    pedir<LlaveEquipo>(`/llaves/${llaveId}/rfid`, { metodo: 'PUT', cuerpo: { rfidUid } }),
+  // US-10. Con slot: donde quedo colgada (obligatorio para reponer una llave de baja, US-11)
+  cambiarRfid: (llaveId: number, rfidUid: string, slot?: number) =>
+    pedir<LlaveEquipo>(`/llaves/${llaveId}/rfid`, { metodo: 'PUT', cuerpo: { rfidUid, slot } }),
+  darDeBaja: (llaveId: number, motivo: string) => // US-11
+    pedir<BajaLlave>(`/llaves/${llaveId}/baja`, { metodo: 'POST', cuerpo: { motivo } }),
+  bajas: (aulaId?: number, automatico = false) =>
+    pedir<BajaLlave[]>(`/llaves/bajas${parametros({ aulaId })}`, { automatico }),
 };

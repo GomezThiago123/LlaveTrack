@@ -31,6 +31,7 @@ def _salida(p: Prestamo) -> PrestamoSalida:
         retirado_en=p.retirado_en,
         devuelto_en=p.devuelto_en,
         recordatorio_enviado_en=p.recordatorio_enviado_en,
+        perdida=p.perdida,
     )
 
 

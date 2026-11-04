@@ -30,6 +30,11 @@ export default function Historial() {
     ),
   );
   const { recargar } = historial;
+  const bajas = useRefresco((automatico) => api.bajas(aulaId ? Number(aulaId) : undefined, automatico)); // US-11
+  const recargarBajas = bajas.recargar;
+  useEffect(() => {
+    recargarBajas();
+  }, [aulaId, recargarBajas]);
 
   // Al cambiar un filtro se pide de nuevo enseguida (no hay que esperar los 5 s)
   useEffect(() => {
@@ -117,11 +122,38 @@ export default function Historial() {
                     {fechaCorta(p.retiradoEn)} · {hora(p.retiradoEn)} → {abierto ? '--:--' : hora(p.devueltoEn!)}
                   </p>
                 </div>
-                <span className="mono chico">{abierto ? 'Sin devolver' : duracion(p.retiradoEn, p.devueltoEn)}</span>
+                <span className="mono chico">
+                  {abierto ? 'Sin devolver' : p.perdida ? 'Perdida' : duracion(p.retiradoEn, p.devueltoEn)}
+                </span>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {bajas.datos && bajas.datos.length > 0 && (
+        <>
+          <EtiquetaSeccion>Llaves dadas de baja</EtiquetaSeccion>
+          <ul className="tarjeta lista-divisiones">
+            {bajas.datos.map((b) => (
+              <li key={b.id} className="fila">
+                <span className="cuadro-aula cuadro-aula-rojo" title={nombreAula(b.aula)}>
+                  {b.aula}
+                </span>
+                <div className="crece">
+                  <p>
+                    <strong>{b.motivo}</strong>
+                  </p>
+                  <p className="chico suave">
+                    {fechaCorta(b.dadaEn)} · {hora(b.dadaEn)} · la dio de baja {b.preceptor}
+                    {b.ultimoDocente && ` · la tuvo por última vez ${b.ultimoDocente}`}
+                  </p>
+                </div>
+                <span className="mono chico suave">{b.rfidUid}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </PaginaApp>
   );

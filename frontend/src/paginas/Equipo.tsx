@@ -1,7 +1,7 @@
 // El equipo, para el preceptor: si esta conectado, que hay en cada slot del carrusel, los problemas
 // de hoy (US-05) y el tag RFID de cada aula, que se puede cambiar (US-10). Se actualiza cada 5 s.
 import { useState, type FormEvent } from 'react';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { api, type Equipo as DatosEquipo, type LlaveEquipo } from '../api';
 import { Alerta, EtiquetaSeccion, Insignia, PaginaApp, PildoraEquipo } from '../componentes/Comunes';
 import ProblemasEquipo from '../componentes/ProblemasEquipo';
@@ -180,11 +180,14 @@ function Carrusel({ equipo }: { equipo: DatosEquipo }) {
   );
 }
 
-/** Una llave con su tag. El lapiz permite cambiar el UID (US-10). */
+/** Una llave con su tag. El lapiz permite cambiar el UID (US-10); el tacho, darla de baja si se
+ * perdio (US-11). Una llave de baja se repone con un tag nuevo y el lugar del disco donde se cuelga. */
 function FilaLlave({ llave, alGuardar }: { llave: LlaveEquipo; alGuardar: () => void }) {
   const { manejarError } = useSesion();
+  const deBaja = llave.estado === 'BAJA';
   const [editando, setEditando] = useState(false);
-  const [uid, setUid] = useState(llave.rfidUid);
+  const [uid, setUid] = useState(deBaja ? '' : llave.rfidUid);
+  const [slot, setSlot] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -193,7 +196,7 @@ function FilaLlave({ llave, alGuardar }: { llave: LlaveEquipo; alGuardar: () => 
     setGuardando(true);
     setError(null);
     try {
-      await api.cambiarRfid(llave.id, uid);
+      await api.cambiarRfid(llave.id, uid, slot === '' ? undefined : Number(slot));
       setEditando(false);
       alGuardar();
     } catch (err) {
@@ -203,8 +206,21 @@ function FilaLlave({ llave, alGuardar }: { llave: LlaveEquipo; alGuardar: () => 
     }
   }
 
+  async function darDeBaja() {
+    const motivo = window.prompt(`¿Por qué se da de baja la llave del aula ${llave.aula}? (ej. "Se perdió")`);
+    if (!motivo) return;
+    setError(null);
+    try {
+      await api.darDeBaja(llave.id, motivo);
+      alGuardar();
+    } catch (err) {
+      setError(manejarError(err));
+    }
+  }
+
   function cancelar() {
-    setUid(llave.rfidUid);
+    setUid(deBaja ? '' : llave.rfidUid);
+    setSlot('');
     setError(null);
     setEditando(false);
   }
@@ -225,8 +241,20 @@ function FilaLlave({ llave, alGuardar }: { llave: LlaveEquipo; alGuardar: () => 
               className="mono"
               aria-label={`UID del tag del aula ${llave.aula}`}
               value={uid}
+              placeholder={deBaja ? 'UID del tag nuevo' : undefined}
               onChange={(e) => setUid(e.target.value.toUpperCase())}
             />
+            {deBaja && (
+              <input
+                className="mono campo-slot"
+                type="number"
+                min={1}
+                aria-label="Lugar del disco"
+                placeholder="Slot"
+                value={slot}
+                onChange={(e) => setSlot(e.target.value)}
+              />
+            )}
             <button type="submit" className="boton-texto" disabled={guardando} aria-label="Guardar UID">
               <Check size={18} />
             </button>
@@ -238,14 +266,31 @@ function FilaLlave({ llave, alGuardar }: { llave: LlaveEquipo; alGuardar: () => 
           <>
             <span className="mono chico crece">{llave.rfidUid}</span>
             <Insignia estado={llave.estado} />
-            <button
-              type="button"
-              className="boton-texto"
-              onClick={() => setEditando(true)}
-              aria-label={`Cambiar el tag del aula ${llave.aula}`}
-            >
-              <Pencil size={16} />
-            </button>
+            {deBaja ? (
+              <button type="button" className="boton-texto chico" onClick={() => setEditando(true)}>
+                Reponer
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="boton-texto"
+                  onClick={() => setEditando(true)}
+                  aria-label={`Cambiar el tag del aula ${llave.aula}`}
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="boton-texto"
+                  onClick={darDeBaja}
+                  aria-label={`Dar de baja la llave del aula ${llave.aula}`}
+                  title="Dar de baja (se perdió)"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </>
+            )}
           </>
         )}
       </div>

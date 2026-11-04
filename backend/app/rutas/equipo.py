@@ -1,15 +1,15 @@
-"""Estado del equipo y tags RFID de las llaves, para el preceptor (US-10)."""
+"""Estado del equipo, tags RFID de las llaves (US-10) y llaves perdidas (US-11), para el preceptor."""
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.auth import preceptor_actual
 from app.db import obtener_sesion
 from app.errores import ErrorNegocio
-from app.esquemas import EquipoSalida, LlaveEquipo, PedidoRfid
-from app.modelos import Llave, Usuario
+from app.esquemas import BajaSalida, EquipoSalida, LlaveEquipo, PedidoBaja, PedidoRfid
+from app.modelos import BajaLlave, Llave, Usuario
 from app.servicios import llaves
 
 router = APIRouter(prefix="/api", tags=["equipo"])
@@ -55,6 +55,41 @@ def recalibrar(request: Request, sesion: SesionDep, _preceptor: PreceptorDep) ->
 @router.put("/llaves/{llave_id}/rfid")
 def cambiar_rfid(llave_id: int, pedido: PedidoRfid, sesion: SesionDep, _preceptor: PreceptorDep) -> LlaveEquipo:
     """Solo preceptor y admin (US-10). Asocia otro tag RFID a la llave de un aula."""
-    llave = llaves.cambiar_rfid(sesion, llave_id, pedido.rfid_uid)
+    llave = llaves.cambiar_rfid(sesion, llave_id, pedido.rfid_uid, pedido.slot)
     sesion.commit()
     return _llave(llave)
+
+
+# --- US-11: llaves perdidas ---
+
+
+def _baja(b: BajaLlave) -> BajaSalida:
+    u = b.ultimo_usuario
+    return BajaSalida(
+        id=b.id,
+        aula=b.aula.nombre,
+        rfid_uid=b.rfid_uid,
+        motivo=b.motivo,
+        dada_en=b.dada_en,
+        ultimo_docente=f"{u.nombre} {u.apellido}" if u else None,
+        preceptor=f"{b.preceptor.nombre} {b.preceptor.apellido}",
+    )
+
+
+@router.post("/llaves/{llave_id}/baja", status_code=201)
+def dar_de_baja(llave_id: int, pedido: PedidoBaja, sesion: SesionDep, preceptor: PreceptorDep) -> BajaSalida:
+    """Solo preceptor y admin (US-11). La llave se perdio: deja de aparecer para retiro. Se repone
+    con PUT /api/llaves/:id/rfid, indicando el tag nuevo y el lugar del disco."""
+    baja = llaves.dar_de_baja(sesion, llave_id, pedido.motivo, preceptor)
+    sesion.commit()
+    return _baja(llaves.bajas(sesion, baja.aula_id)[0])
+
+
+@router.get("/llaves/bajas")
+def listar_bajas(
+    sesion: SesionDep, _preceptor: PreceptorDep, aula_id: Annotated[int | None, Query(alias="aulaId")] = None
+) -> list[BajaSalida]:
+    """Solo preceptor y admin (US-11). Las bajas, de la mas nueva a la mas vieja."""
+    lista = [_baja(b) for b in llaves.bajas(sesion, aula_id)]
+    sesion.commit()  # guarda la renovacion de la sesion
+    return lista

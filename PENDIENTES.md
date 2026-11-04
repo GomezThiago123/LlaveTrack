@@ -90,7 +90,7 @@ Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/desplie
 
 ## 8. V2 que no se hicieron
 
-US-11 (baja de llave perdida) · US-14 (devolver sin conexión) · US-15 (corte de luz durante un retiro) · US-18 (retiro con credencial) · US-19 (exportar a Excel) · US-20 (devolver una llave de otro).
+US-14 (devolver sin conexión) · US-15 (corte de luz durante un retiro) · US-18 (retiro con credencial) · US-19 (exportar a Excel) · US-20 (devolver una llave de otro).
 
 ---
 

@@ -122,7 +122,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-08 | Recuperar contraseña | MVP | ✅ Hecha (falta configurar el mail de verdad) |
 | US-09 | Registrar docentes | V2 | ✅ Hecha |
 | US-10 | Dar de alta una llave | V2 | 🟡 El UID se carga a mano (falta el "modo alta" del equipo) |
-| US-11 | Dar de baja una llave perdida | V2 | ⬜ Falta |
+| US-11 | Dar de baja una llave perdida | V2 | ✅ Hecha (04/11): con motivo; deja de aparecer para retiro, el historial muestra la baja y el último docente, y se repone con un tag nuevo |
 | US-12/13 | Historial por aula y por docente | V2 | ✅ Hecha |
 | US-14 | Devolver sin conexión | V2 | ⬜ Falta |
 | US-15 | Corte de luz durante un retiro | V2 | ⬜ Falta |

@@ -150,9 +150,31 @@ class Prestamo(Base):
     devuelto_en: Mapped[datetime | None] = mapped_column(FechaUTC)  # null = prestamo activo
     # US-16: el ultimo recordatorio de devolucion que mando el preceptor
     recordatorio_enviado_en: Mapped[datetime | None] = mapped_column(FechaUTC)
+    # US-11: se cerro porque la llave se perdio (devuelto_en es cuando se dio de baja)
+    perdida: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
 
     usuario: Mapped[Usuario] = relationship()
     llave: Mapped[Llave] = relationship()
+
+
+class BajaLlave(Base):
+    """US-11: una llave perdida. La constancia queda aunque despues se reponga con otro tag."""
+
+    __tablename__ = "baja_llave"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    llave_id: Mapped[int] = mapped_column(ForeignKey("llave.id"))
+    aula_id: Mapped[int] = mapped_column(ForeignKey("aula.id"))
+    rfid_uid: Mapped[str] = mapped_column(String(20))  # el tag que tenia la llave perdida
+    motivo: Mapped[str] = mapped_column(String(200))
+    dada_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+    # El ultimo docente que la tuvo (null si nunca se presto) y quien la dio de baja
+    ultimo_usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
+    preceptor_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+
+    aula: Mapped[Aula] = relationship()
+    ultimo_usuario: Mapped[Usuario | None] = relationship(foreign_keys=[ultimo_usuario_id])
+    preceptor: Mapped[Usuario] = relationship(foreign_keys=[preceptor_id])
 
 
 class Dispositivo(Base):
