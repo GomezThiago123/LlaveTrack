@@ -15,7 +15,8 @@
 //
 // Con la tecla D apretada al encender entra al modo diagnostico (diagnostico.cpp, sin red).
 // Monitor Serie (115200): "r" estado de la red, "p" donde esta el disco, "h" homing de nuevo,
-// "t A123456#" simula esas teclas (para probar sin tocar el teclado).
+// "t A123456#" simula esas teclas (para probar sin tocar el teclado), "trazas" prende o apaga
+// el registro de cada tag que pasa por el lector.
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -52,6 +53,9 @@ Estado estado = Estado::HOMING;
 unsigned long desdeEstado = 0;  // millis() al entrar al estado actual
 bool modoDiagnostico = false;
 bool lectorOk = false;
+// Por el Monitor Serie, cada tag que entra y sale del lector con la posicion estimada. Prendidas
+// mientras se ajusta el equipo (Fase 3 y 4); el comando "trazas" las apaga.
+bool trazas = true;
 
 // `inicio` se manda despues de cada homing y en cada reconexion al broker
 bool inicioPendiente = false;
@@ -594,10 +598,14 @@ void comandoSerie(String linea) {
     } else {
       Serial.println("  Ahora no se puede (el disco esta ocupado o falla el lector)");
     }
+  } else if (linea == "trazas") {
+    trazas = !trazas;
+    discoTrazas(trazas);
+    Serial.printf("  Trazas del lector: %s\n", trazas ? "prendidas" : "apagadas");
   } else if (linea.startsWith("t ")) {
     for (unsigned i = 2; i < linea.length(); i++) alTecla(linea[i]);
   } else if (linea.length()) {
-    Serial.println("  Comandos: r (red), p (disco), h (homing), t TECLAS (ej. t A123456#)");
+    Serial.println("  Comandos: r (red), p (disco), h (homing), t TECLAS (ej. t A123456#), trazas");
   }
 }
 
@@ -647,6 +655,7 @@ void setup() {
   }
 
   Serial.println("\nLlaveTrack: firmware, paso 2b (retiro y devolucion)");
+  discoTrazas(trazas);
   redIniciar(protocoloAlMensaje);
   protocoloIniciar();
   if (lectorOk) {
