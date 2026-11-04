@@ -1,6 +1,6 @@
 // Vista publica (US-02): que llaves hay, sin datos personales y sin login. Se actualiza cada 5 s.
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { api, type EstadoPublico } from '../api';
 import { Alerta, EtiquetaSeccion, Insignia, PaginaSimple, PildoraEquipo } from '../componentes/Comunes';
 import { useSesion } from '../sesion';
@@ -26,6 +26,9 @@ export default function Inicio() {
   useIntervalo(() => cargar(true), REFRESCO_MS);
 
   const disponibles = estado?.aulas.filter((a) => a.estado === 'DISPONIBLE').length ?? 0;
+
+  // Con la sesion abierta, la pantalla principal es Aulas
+  if (usuario) return <Navigate to="/aulas" replace />;
 
   return (
     <PaginaSimple subtitulo="Qué llaves hay ahora">
