@@ -1,4 +1,4 @@
-// Firmware del equipo LlaveTrack: la maquina de estados (ver CLAUDE.md, seccion Firmware).
+// Firmware del equipo LlavesUBA: la maquina de estados (ver CLAUDE.md, seccion Firmware).
 //
 // Al prender:
 //   1. homing (busca el tag HOME y mide la vuelta);
@@ -204,7 +204,7 @@ void mostrarReposo() {
     return;
   }
   String hora = redHora();
-  auto pantallas = pantallasReposo(hora.length() ? hora : "LlaveTrack", protocoloFaltantes());
+  auto pantallas = pantallasReposo(hora.length() ? hora : "LlavesUBA", protocoloFaltantes());
   lcdMensaje(pantallas[(millis() / LCD_ROTACION_MS) % pantallas.size()], "A:Retirar B:Dev.");
 }
 
@@ -580,7 +580,7 @@ void alResponder(const String &tipo, JsonDocument &resp) {
     if (irAlReposoTrasInicio && estado == Estado::REPOSO) {
       irAlReposoTrasInicio = false;
       if (slotReposo >= 0) {  // -1: el disco esta lleno, se queda en el HOME
-        lcdMensaje("LlaveTrack", "Espere...");
+        lcdMensaje("LlavesUBA", "Espere...");
         discoIrAVacio(slotReposo);
         cambiarEstado(Estado::IR_A_REPOSO);
       }
@@ -963,7 +963,7 @@ void setup() {
   ledIniciar();
   motorIniciar();
   lcdIniciar();
-  lcdMensaje("LlaveTrack", "Iniciando...");
+  lcdMensaje("LlavesUBA", "Iniciando...");
   lectorOk = rfidIniciar();
   discoIniciar();
   // Unas lecturas antes de girar: si el HOME ya esta en la ventana, el homing lo sabe
@@ -977,7 +977,7 @@ void setup() {
     return;
   }
 
-  Serial.println("\nLlaveTrack: firmware, paso 2b (retiro y devolucion)");
+  Serial.println("\nLlavesUBA: firmware, paso 2b (retiro y devolucion)");
   discoTrazas(trazas);
   redIniciar(protocoloAlMensaje);
   protocoloIniciar();

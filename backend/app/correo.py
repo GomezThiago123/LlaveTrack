@@ -22,7 +22,7 @@ BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 
 def _enviar_por_brevo(destino: str, asunto: str, cuerpo: str) -> None:
     datos = {
-        "sender": {"name": "LlaveTrack", "email": config.brevo_remitente},
+        "sender": {"name": "LlavesUBA", "email": config.brevo_remitente},
         "to": [{"email": destino}],
         "subject": asunto,
         "textContent": cuerpo,
@@ -63,7 +63,7 @@ def enviar_link_recuperacion(usuario: Usuario, token: str) -> None:
     link = f"{config.web_url.rstrip('/')}/restablecer?token={token}"
     enviar_correo(
         usuario.email,
-        "LlaveTrack: recuperar contraseña",
+        "LlavesUBA: recuperar contraseña",
         f"Hola {usuario.nombre}:\n\n"
         f"Para elegir una contraseña nueva entrá a este link:\n{link}\n\n"
         f"El link vence en {config.recuperacion_minutos} minutos y sirve una sola vez.\n"
@@ -76,9 +76,9 @@ def enviar_link_alta(usuario: Usuario, token: str) -> None:
     link = f"{config.web_url.rstrip('/')}/restablecer?token={token}"
     enviar_correo(
         usuario.email,
-        "LlaveTrack: creá tu contraseña",
+        "LlavesUBA: creá tu contraseña",
         f"Hola {usuario.nombre}:\n\n"
-        "Te dieron de alta en LlaveTrack, el sistema para retirar las llaves de las aulas.\n"
+        "Te dieron de alta en LlavesUBA, el sistema para retirar las llaves de las aulas.\n"
         f"Para crear tu contraseña entrá a este link:\n{link}\n\n"
         f"El link vence en {config.alta_link_horas} horas y sirve una sola vez.\n",
     )
@@ -91,7 +91,7 @@ def enviar_devuelta_por_otro(titular: Usuario, aula: str, quien: Usuario, cuando
     hora = cuando.astimezone(ZONA_ARGENTINA).strftime("%H:%M")
     enviar_correo(
         titular.email,
-        f"LlaveTrack: tu llave del aula {aula} fue devuelta",
+        f"LlavesUBA: tu llave del aula {aula} fue devuelta",
         f"Hola {titular.nombre}:\n\n"
         f"Tu llave del aula {aula} fue devuelta por {quien.nombre} {quien.apellido} a las {hora}.\n"
         "Ya no figura a tu nombre.\n",
@@ -102,7 +102,7 @@ def enviar_recordatorio(usuario: Usuario, aula: str) -> None:
     """US-16: el preceptor le recuerda al docente que devuelva la llave."""
     enviar_correo(
         usuario.email,
-        f"LlaveTrack: todavía tenés la llave del aula {aula}",
+        f"LlavesUBA: todavía tenés la llave del aula {aula}",
         f"Hola {usuario.nombre}:\n\n"
         f"Todavía tenés la llave del aula {aula}. Cuando termines, devolvela en el equipo:\n"
         "tecla B y colgala en el lugar vacío de la ventana.\n",

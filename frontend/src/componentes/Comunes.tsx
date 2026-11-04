@@ -86,7 +86,7 @@ export function PaginaSimple({ subtitulo, children }: { subtitulo?: string; chil
         <span className="logo" aria-hidden>
           <KeyRound size={30} />
         </span>
-        <h1>LlaveTrack</h1>
+        <h1>LlavesUBA</h1>
         <p>{subtitulo ?? 'Control de llaves de las aulas'}</p>
         <span className="etiqueta">ETEC · UBA</span>
       </header>

@@ -129,7 +129,7 @@ void tecla(char t) {
 
 void diagnosticoIniciar(bool lector) {
   lectorOk = lector;
-  Serial.println("\nLlaveTrack: MODO DIAGNOSTICO (sin red)");
+  Serial.println("\nLlavesUBA: MODO DIAGNOSTICO (sin red)");
   lcdMensaje("Diagnostico", "Sin red");
 
   // Escaneo del bus I2C: el LCD suele estar en 0x27 o 0x3F

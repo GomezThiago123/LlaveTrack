@@ -35,7 +35,7 @@ async def ciclo_de_vida(aplicacion: FastAPI):
         cliente_mqtt.detener()
 
 
-app = FastAPI(title="LlaveTrack API", lifespan=ciclo_de_vida)
+app = FastAPI(title="LlavesUBA API", lifespan=ciclo_de_vida)
 registrar_manejadores(app)
 app.include_router(auth.router)
 app.include_router(aulas.router)

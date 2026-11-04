@@ -1,4 +1,4 @@
-"""Simulador del equipo LlaveTrack: se hace pasar por el ESP32 via MQTT.
+"""Simulador del equipo LlavesUBA: se hace pasar por el ESP32 via MQTT.
 
 Publica los mismos mensajes que el equipo real (docs/protocolo-mqtt.md) y muestra
 lo que haria el LCD con cada respuesta. Sirve para probar todo sin hardware.
@@ -222,7 +222,7 @@ class Equipo:
         if res and res["ok"]:
             self.slot_reposo = res["slotReposo"]
             print(f"  Disco: homing y gira al slot {self.slot_reposo} (vacio, frente a la ventana)")
-            lcd("LlaveTrack", "A:Retirar B:Dev.")
+            lcd("LlavesUBA", "A:Retirar B:Dev.")
 
         self.parar_latido.clear()
         threading.Thread(target=self._latir, daemon=True).start()
@@ -401,7 +401,7 @@ def ejecutar(eq: Equipo, linea: str) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Simulador del equipo LlaveTrack (ESP32) via MQTT")
+    parser = argparse.ArgumentParser(description="Simulador del equipo LlavesUBA (ESP32) via MQTT")
     parser.add_argument("--equipo", default="equipo-01", help="deviceId (default: equipo-01)")
     parser.add_argument("--host", default="localhost", help="broker MQTT (default: localhost)")
     parser.add_argument("--puerto", type=int, help="default: 1883, o 8883 con --tls")
