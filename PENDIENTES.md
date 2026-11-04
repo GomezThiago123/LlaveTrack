@@ -48,13 +48,16 @@
 
 Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/despliegue.md](docs/despliegue.md).
 
+**Las cuentas y el despliegue los hacen los superiores (decidido el 04/11/2026), no el grupo.** Al grupo le toca entregarles el repo al día con la guía, pedirles los datos que necesita el equipo y probar cuando esté arriba.
+
 - [x] **Elegir proveedores** (03/11/2026): Render (en Virginia, la región de Supabase), HiveMQ Cloud, Brevo y `*.onrender.com` como dirección con HTTPS.
 - [x] **Ensayo local de la nube** (03/11/2026): la imagen de `deploy/Dockerfile` contra un Mosquitto con TLS, contraseña y permisos por equipo, con el simulador `--tls --usuario`. Anda el ciclo completo, la web desde el mismo servidor y la cookie `Secure`; el broker rechaza una clave mal, y el simulador, un certificado que no puede verificar. Falta repetirlo con los servicios reales.
-- [ ] **Subir los cambios a GitHub** (Render construye desde ahí).
-- [ ] **Cambiar las contraseñas de prueba, antes de subir la web:** `python -m app.cambiar_clave EMAIL`. `llavetrack` figura en el repo, que es público.
-- [ ] **Crear las cuentas:** HiveMQ (usuarios `servidor` y `equipo-01`), Brevo (remitente verificado) y Render (Blueprint). Confirmar que ninguna pida tarjeta y si HiveMQ gratis deja limitar los permisos por tópico.
-- [ ] **Ping cada 10 min** a `/api/publico/estado` (cron-job.org). Dejarlo unas horas y confirmar que Render no se durmió.
+- [ ] **Entregarles a los superiores** el repo al día en GitHub (Render construye desde ahí) y la guía [docs/despliegue.md](docs/despliegue.md).
+- [ ] **(Superiores) Cambiar las contraseñas de prueba, antes de subir la web:** `python -m app.cambiar_clave EMAIL`. `llavetrack` figura en el repo, que es público.
+- [ ] **(Superiores) Crear las cuentas:** HiveMQ (usuarios `servidor` y `equipo-01`), Brevo (remitente verificado) y Render (Blueprint). Confirmar que ninguna pida tarjeta y si HiveMQ gratis deja limitar los permisos por tópico.
+- [ ] **(Superiores) Ping cada 10 min** a `/api/publico/estado` (cron-job.org). Dejarlo unas horas y confirmar que Render no se durmió.
 - [ ] **Probar con el simulador contra HiveMQ** y el mail real, dando de alta a un docente con un mail de verdad.
+- [ ] **Pedirles a los superiores los datos del equipo:** la dirección del cluster de HiveMQ y el usuario y la contraseña de `equipo-01` (van en `secrets.h`, nunca al repo), y la dirección de la web.
 - [ ] **Placa con TLS:** `secrets.h` con HiveMQ. Nunca se probó en el equipo: es lo más incierto. Después, agregar el certificado de la CA.
 - [ ] **Probar que la WiFi deja salir por el 8883.**
 - [ ] **Medir un ciclo completo** de retiro y devolución con el equipo real contra la nube.

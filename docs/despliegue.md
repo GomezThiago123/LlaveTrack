@@ -1,6 +1,6 @@
 # Subir LlaveTrack a la nube (gratis)
 
-Guía para dejar la web, el servidor y el equipo funcionando en internet, sin pagar nada y sin comprar un dominio. **Si algún servicio pide tarjeta, frená:** no hace falta, y sin tarjeta no te pueden cobrar.
+Guía para dejar la web, el servidor y el equipo funcionando en internet, sin pagar nada y sin comprar un dominio. **Las cuentas las crean los responsables de la escuela, no el grupo.** Al terminar, el grupo necesita la dirección del cluster de HiveMQ y el usuario y la contraseña de `equipo-01`, para cargarlos en el equipo. **Si algún servicio pide tarjeta, frená:** no hace falta, y sin tarjeta no te pueden cobrar.
 
 ```
 Celular ──HTTPS──► Render (web + servidor) ──► Supabase (base)
