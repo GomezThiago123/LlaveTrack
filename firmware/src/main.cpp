@@ -181,8 +181,13 @@ void mostrarReposo() {
 
 // LED: verde = conectado y no falta ninguna llave; naranja = falta alguna; rojo titilando =
 // sin conexion (WiFi, broker o servidor)
+unsigned long pruebaLedHasta = 0;  // comando "led": un color unos segundos, para verlo
+ColorLed pruebaLedColor = ColorLed::NARANJA;
+
 void actualizarLed() {
-  if (!redConectado()) {
+  if (millis() < pruebaLedHasta) {
+    ledColor(pruebaLedColor);
+  } else if (!redConectado()) {
     ledColor(ColorLed::ROJO_TITILANDO);
   } else {
     ledColor(protocoloFaltantes().empty() ? ColorLed::VERDE : ColorLed::NARANJA);
@@ -598,6 +603,25 @@ void comandoSerie(String linea) {
     } else {
       Serial.println("  Ahora no se puede (el disco esta ocupado o falla el lector)");
     }
+  } else if (linea == "ledinfo") {
+    ledImprimirEstado();
+  } else if (linea == "led" || linea.startsWith("led ")) {
+    // "led" naranja, "led rojo", "led verde", "led 1 3" naranja con 1 ms verde y 3 ms rojo
+    String resto = linea.substring(3);
+    resto.trim();
+    pruebaLedColor = ColorLed::NARANJA;
+    if (resto == "rojo") {
+      pruebaLedColor = ColorLed::ROJO;
+    } else if (resto == "verde") {
+      pruebaLedColor = ColorLed::VERDE;
+    } else if (resto.length()) {
+      int espacio = resto.indexOf(' ');
+      int v = resto.substring(0, espacio).toInt(), r = resto.substring(espacio + 1).toInt();
+      ledRepartoNaranja(v, r);
+      Serial.printf("  Naranja: %d ms verde, %d ms rojo\n", v, r);
+    }
+    pruebaLedHasta = millis() + 60000;
+    Serial.printf("  LED de prueba durante 60 s: %s\n", resto.length() ? resto.c_str() : "naranja");
   } else if (linea == "trazas") {
     trazas = !trazas;
     discoTrazas(trazas);
@@ -605,7 +629,7 @@ void comandoSerie(String linea) {
   } else if (linea.startsWith("t ")) {
     for (unsigned i = 2; i < linea.length(); i++) alTecla(linea[i]);
   } else if (linea.length()) {
-    Serial.println("  Comandos: r (red), p (disco), h (homing), t TECLAS (ej. t A123456#), trazas");
+    Serial.println("  Comandos: r (red), p (disco), h (homing), t TECLAS (ej. t A123456#), trazas, led [rojo|verde|V R], ledinfo");
   }
 }
 

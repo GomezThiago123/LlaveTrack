@@ -15,6 +15,11 @@ constexpr int PIN_MOTOR_IN4 = 26;
 // Un LED bicolor
 constexpr int PIN_LED_VERDE = 12;  // ojo: si esta en alto al arrancar, el ESP32 no prende
 constexpr int PIN_LED_ROJO = 15;
+// Naranja = rojo fijo + el verde prendido NARANJA_TICKS_VERDE ms de cada (VERDE + ROJO) ms. Si se ve
+// muy verde, subir NARANJA_TICKS_ROJO; si se ve rojo, bajarlo. Se prueba sin recompilar con
+// "led V R" por el Monitor Serie (ej. "led 1 3").
+constexpr int NARANJA_TICKS_VERDE = 1;
+constexpr int NARANJA_TICKS_ROJO = 3;
 // Teclado 4x4
 constexpr byte PINES_FILAS[4] = {4, 13, 14, 16};
 constexpr byte PINES_COLUMNAS[4] = {17, 32, 33, 2};
