@@ -1,7 +1,8 @@
 // Historial de retiros y devoluciones (US-12 por aula, US-13 por docente), para el preceptor.
 // Los retiros sin devolver van en rojo. Por defecto muestra los ultimos 7 dias.
 import { useEffect, useState } from 'react';
-import { api, type FiltrosHistorial } from '../api';
+import { Download } from 'lucide-react';
+import { api, urlExportarHistorial, type FiltrosHistorial } from '../api';
 import { Alerta, EtiquetaSeccion, PaginaApp, Segmentado } from '../componentes/Comunes';
 import { useRefresco } from '../refresco';
 import { diaIso, duracion, fechaCorta, hora, nombreAula } from '../utiles';
@@ -17,18 +18,14 @@ export default function Historial() {
 
   const aulas = useRefresco((automatico) => api.aulas(automatico));
   const usuarios = useRefresco((automatico) => api.usuarios(automatico));
-  const historial = useRefresco((automatico) =>
-    api.historial(
-      {
-        aulaId: aulaId ? Number(aulaId) : undefined,
-        usuarioId: usuarioId ? Number(usuarioId) : undefined,
-        desde: desde || undefined,
-        hasta: hasta || undefined,
-        estado,
-      },
-      automatico,
-    ),
-  );
+  const filtros: FiltrosHistorial = {
+    aulaId: aulaId ? Number(aulaId) : undefined,
+    usuarioId: usuarioId ? Number(usuarioId) : undefined,
+    desde: desde || undefined,
+    hasta: hasta || undefined,
+    estado,
+  };
+  const historial = useRefresco((automatico) => api.historial(filtros, automatico));
   const { recargar } = historial;
   const bajas = useRefresco((automatico) => api.bajas(aulaId ? Number(aulaId) : undefined, automatico)); // US-11
   const recargarBajas = bajas.recargar;
@@ -100,7 +97,25 @@ export default function Historial() {
       )}
       <Alerta>{historial.error}</Alerta>
 
-      <EtiquetaSeccion derecha={`${prestamos.length} movimientos`}>Retiros y devoluciones</EtiquetaSeccion>
+      <EtiquetaSeccion
+        derecha={
+          <span className="fila">
+            {prestamos.length} movimientos
+            {/* US-19: el mismo listado, con los mismos filtros. Sin movimientos, deshabilitado */}
+            {prestamos.length > 0 ? (
+              <a className="boton-texto chico" href={urlExportarHistorial(filtros)} download>
+                <Download size={14} /> Exportar a Excel
+              </a>
+            ) : (
+              <button type="button" className="boton-texto chico" disabled>
+                <Download size={14} /> Exportar a Excel
+              </button>
+            )}
+          </span>
+        }
+      >
+        Retiros y devoluciones
+      </EtiquetaSeccion>
       {!historial.datos && !historial.error && <p className="cargando">Cargando…</p>}
       {historial.datos && prestamos.length === 0 && <p className="tarjeta vacio">No hay movimientos para este período.</p>}
       {prestamos.length > 0 && (

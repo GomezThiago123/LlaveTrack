@@ -165,6 +165,11 @@ function parametros(filtros: object): string {
   return pares.length ? `?${new URLSearchParams(pares.map(([k, v]) => [k, String(v)]))}` : '';
 }
 
+// US-19: el archivo de Excel se baja con un link comun (la cookie de sesion viaja sola)
+export function urlExportarHistorial(filtros: FiltrosHistorial): string {
+  return `/api/prestamos/exportar${parametros(filtros)}`;
+}
+
 export const api = {
   // Sin login
   estadoPublico: (automatico = false) => pedir<EstadoPublico>('/publico/estado', { automatico }),

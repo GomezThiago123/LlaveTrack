@@ -129,7 +129,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-16 | Recordatorio de devolución | V2 | 🟡 Lo manda el preceptor (el sistema no conoce los turnos) |
 | US-17 | Ver mis llaves | V2 | ✅ Hecha |
 | US-18 | Retiro con credencial | V2 | ⬜ Falta |
-| US-19 | Exportar reportes | V2 | ⬜ Falta |
+| US-19 | Exportar reportes | V2 | ✅ Hecha (04/11): botón "Exportar a Excel" en el historial, con los mismos filtros; deshabilitado si no hay movimientos |
 | US-20 | Devolver una llave retirada por otro | V2 | ⬜ Falta (hoy cualquiera la devuelve y queda a nombre de quien la retiró) |
 | US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto |
 | US-22 | Ver si el equipo está conectado | MVP | ✅ Hecha |

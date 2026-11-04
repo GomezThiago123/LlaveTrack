@@ -401,3 +401,52 @@ def test_baja_es_solo_para_el_preceptor(cliente, ingresar, fabrica_sesiones):
     ingresar(ANA)
     assert cliente.post(f"/api/llaves/{id_llave(fabrica_sesiones, '215')}/baja", json={"motivo": "x" * 5}).status_code == 403
     assert cliente.get("/api/llaves/bajas").status_code == 403
+
+
+# --- US-19: exportar el historial a Excel ---
+
+
+def test_exportar_el_historial_a_excel(cliente, ingresar, fabrica_sesiones):
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    from app.tipos import ZONA_ARGENTINA
+
+    prestar(fabrica_sesiones, ANA, "214", hace=timedelta(hours=2), devuelto_hace=timedelta(hours=1))
+    prestar(fabrica_sesiones, ANA, "215", hace=timedelta(minutes=30))
+    ingresar(CARLA_PRECEPTORA)
+
+    res = cliente.get("/api/prestamos/exportar")
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("application/vnd.openxmlformats")
+    assert "attachment" in res.headers["content-disposition"]
+
+    hoja = load_workbook(BytesIO(res.content)).active
+    filas = list(hoja.iter_rows(values_only=True))
+    assert filas[0] == ("Aula", "Docente", "Email", "Retiro", "Devolución", "Duración", "Estado")
+    por_aula = {f[0]: f for f in filas[1:]}
+    assert por_aula["214"][1] == "Ana Perez" and por_aula["214"][5] == "1h 00m" and por_aula["214"][6] == "Devuelta"
+    assert por_aula["215"][4] is None and por_aula["215"][6] == "Sin devolver"
+    # La fecha va en hora de Argentina (UTC-3), sin zona
+    retiro = por_aula["215"][3]
+    esperado = (ahora_utc() - timedelta(minutes=30)).astimezone(ZONA_ARGENTINA).replace(tzinfo=None)
+    assert abs((retiro - esperado).total_seconds()) < 120
+
+
+def test_exportar_respeta_los_filtros(cliente, ingresar, fabrica_sesiones):
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    prestar(fabrica_sesiones, ANA, "214", devuelto_hace=timedelta(minutes=10))
+    prestar(fabrica_sesiones, ANA, "215")
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.get("/api/prestamos/exportar", params={"estado": "abiertos"})
+    filas = list(load_workbook(BytesIO(res.content)).active.iter_rows(values_only=True))
+    assert [f[0] for f in filas[1:]] == ["215"]
+
+
+def test_exportar_es_solo_para_el_preceptor(cliente, ingresar):
+    ingresar(ANA)
+    assert cliente.get("/api/prestamos/exportar").status_code == 403

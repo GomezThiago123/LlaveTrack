@@ -10,6 +10,7 @@ alembic==1.20.0
 paho-mqtt==2.1.0
 bcrypt==5.0.0
 psycopg[binary]==3.3.6  # driver de PostgreSQL (Supabase)
+openpyxl==3.1.5  # US-19: exportar el historial a Excel
 
 # Tests
 pytest==9.1.1

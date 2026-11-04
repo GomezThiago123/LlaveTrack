@@ -1,10 +1,10 @@
-"""Rutas de prestamos: los mios (US-17), el historial del preceptor (US-12 y US-13) y el
-recordatorio de devolucion (US-16)."""
+"""Rutas de prestamos: los mios (US-17), el historial del preceptor (US-12 y US-13), su
+exportacion a Excel (US-19) y el recordatorio de devolucion (US-16)."""
 
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app import correo
@@ -12,7 +12,9 @@ from app.auth import preceptor_actual, usuario_actual
 from app.db import obtener_sesion
 from app.esquemas import FiltrosHistorial, HistorialSalida, PersonaSalida, PrestamoSalida
 from app.modelos import Prestamo, Usuario
+from app.servicios import exportar as exportar_servicio
 from app.servicios import prestamos
+from app.tipos import ZONA_ARGENTINA, ahora_utc
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +58,24 @@ def historial(
     en_poder = prestamos.llaves_en_poder(sesion, filtros.usuario_id) if filtros.usuario_id else None
     sesion.commit()
     return HistorialSalida(prestamos=[_salida(p) for p in lista], en_poder=en_poder)
+
+
+@router.get("/exportar")
+def exportar(
+    sesion: SesionDep, _preceptor: PreceptorDep, filtros: Annotated[FiltrosHistorial, Query()]
+) -> Response:
+    """Solo preceptor y admin (US-19). El historial con los mismos filtros, en un archivo de Excel."""
+    lista = prestamos.historial(
+        sesion, filtros.aula_id, filtros.usuario_id, filtros.desde, filtros.hasta, filtros.estado
+    )
+    contenido = exportar_servicio.historial_xlsx(lista)
+    sesion.commit()  # guarda la renovacion de la sesion
+    nombre = f"llavetrack-historial-{ahora_utc().astimezone(ZONA_ARGENTINA):%Y-%m-%d}.xlsx"
+    return Response(
+        contenido,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
+    )
 
 
 @router.post("/{prestamo_id}/recordatorio")
