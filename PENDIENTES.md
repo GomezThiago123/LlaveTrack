@@ -100,7 +100,7 @@ Servidor y web probados con tests (190). Las que tocan el equipo están escritas
 - [ ] **US-14, devolver sin conexión:** frenar el servidor (o Mosquitto), B y colgar la llave: "Sin conexion / Devol. guardada" y el disco busca otro lugar vacío. Al volver el servidor, la devolución aparece en la web con la hora real.
 - [ ] **US-10, modo alta:** en Equipo, "Dar de alta una llave", acercar un tag al lector, elegir el aula en la web y guardar.
 - [ ] **El simulador** (`backend/simulador/`) todavía no tiene los eventos nuevos (DNI, `retiro_interrumpido`, `tag_leido`). No hace falta para la demo.
-- [ ] **Supabase:** las migraciones nuevas (incidentes resueltos, bajas, hora fin, DNI) se aplican solas al desplegar (`alembic upgrade head` en el Dockerfile). Si se usa Supabase antes, correr `alembic upgrade head` con su `DATABASE_URL`.
+- [x] **Supabase al día** (05/11/2026): se aplicaron las migraciones nuevas (incidentes resueltos, bajas, hora fin, DNI; versión `a831fc0029a7`) y el servidor de la notebook ya trabaja contra Supabase (`backend/.env`, que no va al repo). Faltan cargar los DNI desde Docentes (ningún usuario de Supabase tiene) y recolgar la 101 y la 214 en orden (en las pruebas quedaron en los slots 5 y 7; Supabase espera 1 a 6).
 
 ---
 
