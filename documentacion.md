@@ -1,4 +1,4 @@
-# LlaveTrack: documentación
+# LlavesUBA: documentación
 
 Qué es el sistema, cómo funciona, cómo se conectan sus partes y en qué estado está cada historia.
 Para levantarlo en la compu está el [README](README.md); la lista de tareas abiertas está en [PENDIENTES.md](PENDIENTES.md).
@@ -114,7 +114,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | --- | --- | --- | --- |
 | US-01 | Iniciar sesión | MVP | ✅ Hecha |
 | US-02 | Consultar aulas disponibles | MVP | ✅ Hecha |
-| US-03 | Solicitar la llave | MVP | ✅ Hecha |
+| US-03 | Solicitar la llave | MVP | ✅ Hecha. Desde el 05/11 sin código: al apretar "Pedir llave" el equipo la entrega enseguida (falta probarlo con el equipo) |
 | US-04 | Retirar la llave | MVP | ✅ Probada con el equipo real (03 y 04/11), también el tiempo agotado y la tecla C |
 | US-05 | Recibir siempre la llave correcta | MVP | ✅ Probada con el equipo real (04/11): sin la llave en el disco, dos intentos, "Pedi la llave en porteria" y el incidente para el preceptor |
 | US-06 | Devolver la llave | MVP | ✅ Probada con el equipo real (03 y 04/11), también "Llave no reconocida" |
@@ -128,7 +128,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-15 | Corte de luz durante un retiro | V2 | 🟡 Hecha (04/11): al volver la luz el equipo avisa, se cancela la reserva y el LCD dice "Equipo listo". Falta probarla con el equipo real |
 | US-16 | Recordatorio de devolución | V2 | ✅ Hecha (04/11): al pedir la llave el docente dice hasta qué hora usa el aula; 15 min después le llega un mail y a la hora el preceptor la ve "Demorada". El preceptor también puede mandarlo a mano |
 | US-17 | Ver mis llaves | V2 | ✅ Hecha |
-| US-18 | Retiro con credencial | V2 | 🟡 Hecha (04/11): la credencial es el DNI, escrito en el teclado en lugar del código ("Hola Ana / Aula 214"). Falta probarla con el equipo real |
+| US-18 | Retiro con credencial | V2 | 🟡 Hecha (04 y 05/11): para el que olvidó el celular, DNI y número de aula en el teclado ("Hola Ana / Aula 214"). Falta probarla con el equipo real |
 | US-19 | Exportar reportes | V2 | ✅ Hecha (04/11): botón "Exportar a Excel" en el historial, con los mismos filtros; deshabilitado si no hay movimientos |
 | US-20 | Devolver una llave retirada por otro | V2 | 🟡 Hecha (04/11): quien devuelve puede escribir su DNI; si la llave era de otro, confirma con # y al titular le llega un mail. Falta probarla con el equipo real |
 | US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto |
@@ -140,6 +140,10 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 
 | Fecha | Decisión | Por qué |
 | --- | --- | --- |
+| 05/11 | El sistema se llama **LlavesUBA** (antes LlaveTrack) | Pedido de los superiores |
+| 05/11 | **Entrega directa:** al apretar "Pedir llave" en la web, el equipo entrega la llave enseguida; ya no hay código que escribir | Pedido de los superiores: más simple. Hay que pedirla frente al equipo, porque queda un minuto en la ventana |
+| 05/11 | El teclado es solo para el que olvidó el celular: **DNI y número de aula** | Pedido de los superiores. El DNI no es secreto: queda registrado a nombre de ese docente y 3 intentos mal bloquean el teclado |
+| 05/11 | Al iniciar sesión se arranca en **Aulas** | Pedido de los superiores |
 | 20/10 | El código dura **2 minutos** y la sesión se cierra a los **60 s** sin actividad | Lo piden US-03 y US-01. La pantalla del código no deja que se cierre la sesión mientras el docente va al equipo |
 | 20/10 | **Todos los usuarios** ven quién tiene cada llave y su teléfono | US-02 |
 | 20/10 | La **devolución se confirma sola** al leer el tag | Es más simple, y evita llaves colgadas que figuren como prestadas porque nadie apretó "confirmar" |

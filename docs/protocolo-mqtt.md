@@ -131,7 +131,8 @@ El servidor responde **cada** evento en `resp`:
 | `LLAVE_DESCONOCIDA` | El UID no está cargado en el sistema |
 | `SIN_PRESTAMO_ACTIVO` | El UID existe pero esa llave no estaba prestada |
 | `CREDENCIAL_NO_RECONOCIDA` | US-18/US-20: el DNI no es de ningún usuario activo |
-| `SIN_RESERVA` | US-18: el DNI es de un docente sin reserva pendiente |
+| `SIN_RESERVA` | US-18: el DNI es de un docente sin reserva pendiente (y no mandó `aula`) |
+| `AULA_NO_ENCONTRADA`, `LLAVE_NO_DISPONIBLE`, `AULA_EN_REVISION`, `YA_TIENE_RESERVA` | Teclado con DNI + aula: el aula no existe, no está disponible, tiene un incidente abierto, o el docente ya reservó otra |
 | `CONFIRMAR_TERCERO` | US-20: quien devuelve no es quien la retiró; trae `aula` y `retiradaPor`. El equipo reenvía la devolución con `confirmada: true` |
 | `DATOS_INVALIDOS` | El JSON no respeta el formato del evento (ej. código con letras, UID que no es hex, tipo de evento desconocido) |
 | `ERROR_INTERNO` | Falla del servidor. El ESP32 muestra un error y no entrega nada |
@@ -148,11 +149,11 @@ Se publica al arrancar y en cada reconexión. Informa la configuración del disc
 `slotsReservados`: slots que nunca llevan llave (ej. el del tag HOME). `slotReposo`: el slot vacío más cercano al 0 (donde queda el disco después del homing), contando que el disco es circular.
 
 ### `solicitud_retiro`
-El docente ingresó un código en el teclado, o su **DNI** en lugar del código (US-18: 7 u 8 números; el equipo los distingue por el largo). Va uno de los dos: `codigo` o `dni`. La respuesta trae el `codigo` (con DNI, el equipo lo necesita para confirmar el retiro) y el `nombre`, para el LCD: "Hola Ana / Aula 214".
+Lo manda el equipo al recibir el comando `entregar` (pedido de la web: va el `codigo` interno de la reserva) o cuando el docente que olvidó el celular escribe su DNI y el aula en el teclado (`dni` + `aula`: el servidor le reserva el aula en el momento). Va `codigo` o `dni`, no los dos. La respuesta trae el `codigo` (con DNI, el equipo lo necesita para confirmar el retiro) y el `nombre`, para el LCD: "Hola Ana / Aula 214".
 
 ```json
 → evt/solicitud_retiro  {"eventId":"equipo-01-7f3a-0042","codigo":"482913"}
-→ evt/solicitud_retiro  {"eventId":"equipo-01-7f3a-0042","dni":"30111222"}
+→ evt/solicitud_retiro  {"eventId":"equipo-01-7f3a-0042","dni":"30111222","aula":"214"}
 ← resp  {"eventId":"equipo-01-7f3a-0042","ok":true,"slot":7,"uid":"04A1B2C3","aula":"214","apellido":"Perez","nombre":"Ana","codigo":"482913"}
 ← resp  {"eventId":"equipo-01-7f3a-0042","ok":false,"motivo":"CODIGO_VENCIDO"}
 ```
@@ -225,6 +226,7 @@ En modo alta, el equipo leyó un tag estable en la ventana. El servidor lo guard
 
 | Comando | Payload |
 | --- | --- |
+| `entregar` | `{"comando":"entregar","codigo":"482913"}`: el docente apretó "Pedir llave" en la web (entrega directa, 05/11/2026). El equipo lo atiende apenas está en reposo, mandando `solicitud_retiro` con ese código, y sigue el retiro de siempre |
 | `modo_alta` | `{"comando":"modo_alta"}` (US-10): el equipo (en reposo) espera un tag en la ventana y lo manda en `tag_leido`. Sale con `C` o a los 3 minutos sin actividad, y vuelve a pedir un lugar vacío con `inicio` |
 | `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. Lo manda el servidor cuando el preceptor aprieta "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Sirve para sacar al equipo de un error del disco sin desenchufarlo |
 

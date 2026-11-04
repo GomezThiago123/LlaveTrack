@@ -1,10 +1,12 @@
-# Pendientes de LlaveTrack
+# Pendientes de LlavesUBA
 
-Última actualización: 03/11/2026.
+Última actualización: 05/11/2026.
 
 **Dónde estamos:** el servidor, la web y la base (Supabase, con las 6 llaves reales) están hechos y probados con el simulador. El equipo ya entregó y recibió una llave real con el servidor en la notebook (03/11/2026). Lo que falta es terminar las pruebas del equipo y **crear las cuentas de la nube** para la demo, siguiendo [docs/despliegue.md](docs/despliegue.md). Qué es cada cosa: [documentacion.md](documentacion.md).
 
 ## 1. Ahora (te toca a vos)
+
+- [ ] **Probar con el equipo lo pedido por los superiores (05/11/2026):** apretar "Pedir llave" en la web frente al equipo y ver que la entregue sola; en el teclado, A + DNI + # + aula + # (Ana: `30111222`, Bruno: `28333444` en la base local).
 
 - [x] **ESP32 conectado a la notebook Linux** con el cable de los compañeros (03/11/2026): aparece como `/dev/ttyUSB0`. Para que Linux deje usarlo sin `sudo` hizo falta una regla de udev (ver README, Firmware).
 - [x] **Paso 1 del firmware probado en el equipo** (03/11/2026). Ver la sección 3.

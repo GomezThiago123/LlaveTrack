@@ -1,4 +1,6 @@
-# LlaveTrack
+# LlavesUBA
+
+(Antes se llamaba LlaveTrack: los nombres internos, como la carpeta y los tópicos MQTT, siguen así.)
 
 > Qué es y cómo funciona el sistema, y el estado de cada historia: [documentacion.md](documentacion.md). Tareas abiertas: [PENDIENTES.md](PENDIENTES.md).
 
