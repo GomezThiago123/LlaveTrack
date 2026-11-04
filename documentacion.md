@@ -78,10 +78,10 @@ El sistema trabaja con **6 llaves**: las 5 que pidió el profe el 27/10/2026 má
 | Aula | UID | Slot |
 | --- | --- | --- |
 | 101 | `9AAFF281` | 1 |
-| 104 | `9A35EA81` | 2 |
-| 102 | `2A86C880` | 3 |
-| 214 | `CAA8EA81` | 4 |
-| 213 | `5A81F281` | 5 |
+| 102 | `2A86C880` | 2 |
+| 104 | `9A35EA81` | 3 |
+| 213 | `5A81F281` | 4 |
+| 214 | `CAA8EA81` | 5 |
 | 313 | `2AC3FE80` | 6 |
 
 El tag **HOME** (slot 0, nunca sale del disco) es `A94B37A4`. No va en la base: lo usa el equipo para encontrar el cero al arrancar, y se carga en `config.h` del firmware. La lista del 27/10, armada a mano con NFC Tools, tenía cruzados el HOME y la 101; el diagnóstico del equipo lo detectó.
@@ -115,9 +115,9 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-01 | Iniciar sesión | MVP | ✅ Hecha |
 | US-02 | Consultar aulas disponibles | MVP | ✅ Hecha |
 | US-03 | Solicitar la llave | MVP | ✅ Hecha |
-| US-04 | Retirar la llave | MVP | ✅ Probada con el equipo real (03/11); falta probar el tiempo agotado |
-| US-05 | Recibir siempre la llave correcta | MVP | 🟡 Escrita en el firmware (busca por UID, intento 2 con homing); falta probar la falla con el equipo real |
-| US-06 | Devolver la llave | MVP | ✅ Probada con el equipo real (03/11); falta probar "Llave no reconocida" |
+| US-04 | Retirar la llave | MVP | ✅ Probada con el equipo real (03 y 04/11), también el tiempo agotado y la tecla C |
+| US-05 | Recibir siempre la llave correcta | MVP | ✅ Probada con el equipo real (04/11): sin la llave en el disco, dos intentos, "Pedi la llave en porteria" y el incidente para el preceptor |
+| US-06 | Devolver la llave | MVP | ✅ Probada con el equipo real (03 y 04/11), también "Llave no reconocida" |
 | US-07 | Bloqueo por intentos fallidos | MVP | ✅ Hecha |
 | US-08 | Recuperar contraseña | MVP | ✅ Hecha (falta configurar el mail de verdad) |
 | US-09 | Registrar docentes | V2 | ✅ Hecha |
@@ -150,8 +150,9 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | 20/10 | El equipo usa la **WiFi de la escuela** (plan B: hotspot) | Respuesta del grupo |
 | 27/10 | El firmware usa **el cableado que hicieron los compañeros** (`docs/cableado.md`): un LED bicolor y el motor sin control de velocidad | Ya estaba armado: es más fácil adaptar el código que volver a cablear |
 | 27/10 | LED bicolor: **verde** = todo bien, **naranja** = falta alguna llave, **rojo titilando** = sin conexión | Hay un solo LED cableado para mostrar las dos cosas |
-| 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda 42 a 47 s (~1,4 s por slot, medido el 03/11). Si no alcanza la precisión, se agrega un sensor de horquilla |
-| 03/11 | Se suma la llave de la **104**: quedan **6 llaves**, en los slots 1 a 6 en el orden en que se colgaron | Estaba en el disco con su tag. Es más fácil acomodar la numeración y la base que volver a colgar las llaves |
+| 27/10 | La posición del disco sale del **lector RFID y el tiempo de giro**, sin sensor extra | El retiro frena al leer la llave pedida; el lugar vacío se calcula por tiempo desde el último tag conocido. Una vuelta tarda entre 24 y 47 s según el día (medido el 03 y el 04/11): el equipo la mide en cada arranque. Si no alcanza la precisión, se agrega un sensor de horquilla |
+| 03/11 | Se suma la llave de la **104**: quedan **6 llaves** | Estaba en el disco con su tag |
+| 04/11 | Las llaves quedan en orden desde el HOME: 101, 102, 104, 213, 214 y 313 (slots 1 a 6) | Se recolgaron. Ese día el motor giraba al revés y al doble de velocidad que el 03/11 sin que nadie dijera haber tocado la conexión: el firmware se ajustó (`ADELANTE_SUMA_SLOTS`) y mide la vuelta en cada arranque |
 | 03/11 | El firmware **compensa la holgura** del disco al invertir el giro (~0,85 slot) y, al buscar una llave, **sigue un poco más** del lugar esperado | Medido en el equipo: el engranaje tiene juego y la velocidad del motor varía un poco entre vueltas |
 | 03/11 | La nube es **gratis y sin dominio propio**: Render, HiveMQ Cloud, Brevo y Supabase, con un ping cada 10 min para que Render no se duerma | No hay presupuesto. Si fallan el día de la demo, el plan B es todo en una compu con un hotspot |
 | 03/11 | El login es **solo con email y contraseña**, sin Google | US-01 no pide Google y debilita el login. Con una sola forma de entrar, el bloqueo por intentos (US-07) cubre todos los ingresos |

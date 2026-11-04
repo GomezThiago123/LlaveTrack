@@ -34,9 +34,11 @@ constexpr unsigned long VUELTA_MS_INICIAL = 46000;
 constexpr unsigned long HOMING_TIMEOUT_MS = VUELTA_MS_INICIAL * 3 / 2;
 
 // Sentido: true si al girar "adelante" (IN3 alto) pasan por la ventana los slots 1, 2, 3...
-// Medido el 03/11/2026: girando adelante pasan 313, 213, 214, 102, 104, 101 y el HOME, asi que con
-// false quedan 101=1, 104=2, 102=3, 214=4, 213=5, 313=6 (los slots del seed).
-constexpr bool ADELANTE_SUMA_SLOTS = false;
+// Medido el 04/11/2026: girando adelante pasan el HOME, 101, 102, 104, 213, 214 y 313, asi que con
+// true quedan 101=1, 102=2, 104=3, 213=4, 214=5, 313=6 (los slots del seed). OJO: el 03/11 el motor
+// giraba al reves y a la mitad de velocidad (con false); nadie dice haber tocado la conexion. Si
+// vuelve a cambiar, el homing lo muestra en el orden de las trazas ("trazas" por el Monitor Serie).
+constexpr bool ADELANTE_SUMA_SLOTS = true;
 
 // Juego mecanico (engranajes, eje) al invertir el sentido: el motor gira un rato sin que el disco
 // se mueva. Medido el 03/11/2026: unos 0,85 slots (~1,1 s), siempre igual, sin importar la

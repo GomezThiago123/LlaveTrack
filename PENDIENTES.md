@@ -9,9 +9,9 @@
 - [x] **ESP32 conectado a la notebook Linux** con el cable de los compañeros (03/11/2026): aparece como `/dev/ttyUSB0`. Para que Linux deje usarlo sin `sudo` hizo falta una regla de udev (ver README, Firmware).
 - [x] **Paso 1 del firmware probado en el equipo** (03/11/2026). Ver la sección 3.
 - [x] **OK al plan de la Fase 3 y a los colores del LED** (27/10/2026): verde fijo = conectado y no falta ninguna llave; naranja = conectado y falta alguna; rojo titilando = sin conexión.
-- [x] **Tags relevados y colgados** (03/11/2026): el HOME es `A94B37A4` (el `9A35EA81` anotado el 27/10 era la llave de la 104). Se sumó la **104**: quedan 6 llaves, desde el HOME 101, 104, 102, 214, 213 y 313 (slots 1 a 6). Seed y Supabase actualizados; los dos préstamos de prueba que habían quedado abiertos (102 y 213) se cerraron.
+- [x] **Tags relevados y colgados** (03/11/2026): el HOME es `A94B37A4` (el `9A35EA81` anotado el 27/10 era la llave de la 104). Se sumó la **104**: quedan 6 llaves, desde el HOME 101, 104, 102, 214, 213 y 313 (slots 1 a 6; el 04/11 se recolgaron en orden: 101, 102, 104, 213, 214, 313). Seed y Supabase actualizados; los dos préstamos de prueba que habían quedado abiertos (102 y 213) se cerraron.
 - [x] **LCD en 0x27** y lector OK (03/11/2026). Del programa de prueba (`firmware/prueba_arduino/`) solo faltaría ver el teclado y el LED, que se prueban igual en el paso 2.
-- [x] **Tiempo de vuelta del disco: 42 a 47 s** (medido con el lector el 03/11/2026; el 25 s del 27/10 era a ojo). Unos 1,4 s por slot. El firmware la mide en cada arranque.
+- [x] **Tiempo de vuelta del disco: 42 a 47 s** (medido con el lector el 03/11/2026; el 25 s del 27/10 era a ojo). Unos 1,4 s por slot. El firmware la mide en cada arranque. **El 04/11 dio 24 s y el motor giraba al revés** (nadie dice haber tocado la conexión): se cambió `ADELANTE_SUMA_SLOTS` a `true`. Si vuelve a pasar, las trazas del homing lo muestran.
 
 ## 2. Decisiones del grupo
 
@@ -40,8 +40,8 @@
   - La SQLite local se recargó con las 6 llaves.
 - [ ] **Paso 2a, lo que falta ver:** el LED rojo titilando sin conexión, el LCD "Sin conexion / WiFi" (cortando la WiFi) y la web con el equipo real (los botones de "Pedir llave" se habilitan y deshabilitan solos).
 - [x] **Paso 2b: el retiro y la devolución con el equipo real** (03/11/2026, con la web en `localhost:5173` y la base local). Retiro de la 214: código aceptado al instante, el disco la trajo en 10 s, "Aula 214 servida / RETIRE SU LLAVE", al sacarla "Gracias / Perez" y el préstamo registrado; el LCD alternó "Faltan: 214". Devolución con B: "Llave de aula / 214 recibida" y el disco fue al lugar vacío. Ciclo medido: retiro 55 s (38 s escribiendo el código, 10 s de disco, 7 s sacándola) y devolución ~10 s.
-- [ ] **Paso 2b, lo que falta probar:** 3 códigos mal (bloqueo de 30 s), "Llave no reconocida", "Tiempo agotado" (60 s sin sacar la llave) y, si se puede, US-05 (sacar una llave del disco a mano antes de pedirla: "Pedi la llave en porteria" e incidente en la web).
-  - Corregido y **sin cargar en la placa todavía**: con B ahora cuenta también una llave que ya estaba colgada frente al lector (antes había que sacarla y volver a colgarla).
+- [x] **Paso 2b, los casos que salen mal** (04/11/2026, con el equipo real): 3 códigos mal (bloqueo de 30 s con cuenta regresiva), "Llave no reconocida", "Tiempo agotado" a los 61 s, la tecla B con la llave ya colgada, "Recalibrar el disco" desde la web y US-05 (sin la llave en el disco: dos intentos, "Pedi la llave en porteria" y el incidente). La 313, la más lejana, sale en 7 s.
+- [ ] **Supabase con los lugares nuevos** (04/11): 101=1, 102=2, 104=3, 213=4, 214=5, 313=6 (el seed y la base local ya están; falta correr el SQL en Supabase).
 - [ ] **LED naranja (falta una llave):** el firmware prende verde y rojo juntos, pero en la prueba no se vio naranja. Ver cuántas patas tiene el LED: con 2 patas (los dos LEDs al revés) no puede mostrar los dos colores a la vez; con 3, quizás el verde tapa al rojo. Según eso, se baja el verde por software o se cambia la señal (ej. verde titilando lento).
 
 ## 4. La nube, para la demo
@@ -74,9 +74,9 @@ Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/desplie
 
 ### Problemas encontrados al revisar el código (03/11/2026, arreglados el 04/11/2026)
 
-- [x] **Retiro que no se registra:** si sacaban la llave en los últimos 1,5 s antes de los 60 s, se mandaba `retiro_timeout` y no `retiro_confirmado`. Ahora, si la llave ya no se ve, primero se confirma el retiro. **Falta cargarlo en la placa** (junto con el arreglo de la tecla B).
+- [x] **Retiro que no se registra:** si sacaban la llave en los últimos 1,5 s antes de los 60 s, se mandaba `retiro_timeout` y no `retiro_confirmado`. Ahora, si la llave ya no se ve, primero se confirma el retiro. Cargado y probado el 04/11.
 - [x] **La sesión podía vencer con el celular bloqueado:** ahora el servidor no da por vencida la sesión de alguien con una reserva pendiente (vigente). Cuando retira la llave o la reserva vence, vuelve la regla de los 60 s.
-- [x] **`recalibrar` no existía en el servidor:** ahora el preceptor tiene el botón "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Probado contra Mosquitto: el comando llega al tópico `cmd` del equipo. Falta verlo con la placa.
+- [x] **`recalibrar` no existía en el servidor:** ahora el preceptor tiene el botón "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Probado con el equipo real el 04/11.
 
 ## 7. Defensa y documentos de clase
 
@@ -97,8 +97,8 @@ US-11 (baja de llave perdida) · US-14 (devolver sin conexión) · US-15 (corte 
 - **V2 hechas a pedido:** US-09 (docentes), US-10 (tags RFID a mano), US-12/13 (historial), US-16 (recordatorio manual), US-17 (mis llaves).
 - **Decisiones sobre las user stories** (20/10): sesión de 60 s, reserva de 2 min, todos ven quién tiene cada llave, devolución automática, incidentes para el preceptor, desbloqueo manual, textos de los criterios. US-22 a US-24 cargadas en Notion.
 - **Web rediseñada** con el prototipo de Joel y los colores de la UBA (21/10), probada con capturas y contra Supabase.
-- **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 6 llaves reales cargadas** (101, 104, 102, 214, 213, 313 en los slots 1 a 6; 03/11). El proyecto queda con esas 6 llaves (las 5 del profe del 27/10 más la 104); `seed/datos_30_aulas.json` queda solo como referencia.
+- **Supabase:** migraciones con RLS en todas las tablas, las listas sin una consulta por fila, y **las 6 llaves reales cargadas** (101, 102, 104, 213, 214, 313 en los slots 1 a 6; recolgadas el 04/11). El proyecto queda con esas 6 llaves (las 5 del profe del 27/10 más la 104); `seed/datos_30_aulas.json` queda solo como referencia.
 - **Web:** los grupos de aulas se llaman "Peine 1/2/3" (27/10/2026).
-- **Hardware relevado:** disco de 32 slots (una vuelta: 42 a 47 s), motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2 en 0x27, tags MIFARE Classic 1K, **tag HOME `A94B37A4`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
+- **Hardware relevado:** disco de 32 slots (una vuelta: entre 24 y 47 s según el día), motorreductor de continua de 24 V, placa NodeMCU ESP32 de 38 pines, LCD 16x2 en 0x27, tags MIFARE Classic 1K, **tag HOME `A94B37A4`**, posición por RFID (plan A) y **el cableado de los compañeros** en `docs/cableado.md`.
 - **Programa de prueba del hardware** (`firmware/prueba_arduino/`), con esos pines; compila.
 - **Documentación:** `documentacion.md` (para el grupo y los profes), `docs/user-stories.md`, `docs/protocolo-mqtt.md`, `docs/cableado.md`.
