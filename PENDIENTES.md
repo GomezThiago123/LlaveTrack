@@ -6,7 +6,7 @@
 
 ## 1. Ahora (te toca a vos)
 
-- [ ] **Probar con el equipo lo pedido por los superiores (05/11/2026):** apretar "Pedir llave" en la web frente al equipo y ver que la entregue sola; en el teclado, A + DNI + # + aula + # (Ana: `30111222`, Bruno: `28333444` en la base local).
+- [x] **Probado con el equipo lo pedido por los superiores (05/11/2026):** entrega directa ("Pedir llave" de la 101 en la web: el equipo la sacó solo en 7 s, "Hola Ana / Aula 101") y teclado con DNI + aula ("Hola Bruno / Aula 214"; un DNI que no es de nadie dio "Credencial no reconocida"). Las devoluciones, bien.
 
 - [x] **ESP32 conectado a la notebook Linux** con el cable de los compañeros (03/11/2026): aparece como `/dev/ttyUSB0`. Para que Linux deje usarlo sin `sudo` hizo falta una regla de udev (ver README, Firmware).
 - [x] **Paso 1 del firmware probado en el equipo** (03/11/2026). Ver la sección 3.
@@ -94,7 +94,7 @@ Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/desplie
 
 Servidor y web probados con tests (190). Las que tocan el equipo están escritas en el firmware y compilan, pero **falta probarlas con el equipo real**:
 
-- [ ] **US-18, retiro con DNI:** cargar el DNI del docente en Docentes; en el equipo, A + DNI (7 u 8 números) + #. Tiene que decir "Hola Ana / Aula 214". Un DNI que no es de nadie: "Credencial no reconocida"; sin reserva: "No tenes reserva".
+- [x] **US-18, retiro con DNI:** probado el 05/11 con DNI + aula en el teclado.
 - [ ] **US-20, devolver una llave de otro:** B, el DNI de otro docente y #, colgar la llave. "Retirada por Perez #=OK", # y "recibida". Al que la tenía le llega un mail, y en Mis llaves dice "La devolvió...".
 - [ ] **US-15, corte de luz:** pedir una llave, A + código + #, y cortar la luz mientras gira. Al volver: "Equipo listo" y la reserva cancelada en la web.
 - [ ] **US-14, devolver sin conexión:** frenar el servidor (o Mosquitto), B y colgar la llave: "Sin conexion / Devol. guardada" y el disco busca otro lugar vacío. Al volver el servidor, la devolución aparece en la web con la hora real.

@@ -114,7 +114,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | --- | --- | --- | --- |
 | US-01 | Iniciar sesión | MVP | ✅ Hecha |
 | US-02 | Consultar aulas disponibles | MVP | ✅ Hecha |
-| US-03 | Solicitar la llave | MVP | ✅ Hecha. Desde el 05/11 sin código: al apretar "Pedir llave" el equipo la entrega enseguida (falta probarlo con el equipo) |
+| US-03 | Solicitar la llave | MVP | ✅ Hecha. Desde el 05/11, sin código: al apretar "Pedir llave" el equipo la entrega enseguida (probado con el equipo real) |
 | US-04 | Retirar la llave | MVP | ✅ Probada con el equipo real (03 y 04/11), también el tiempo agotado y la tecla C |
 | US-05 | Recibir siempre la llave correcta | MVP | ✅ Probada con el equipo real (04/11): sin la llave en el disco, dos intentos, "Pedi la llave en porteria" y el incidente para el preceptor |
 | US-06 | Devolver la llave | MVP | ✅ Probada con el equipo real (03 y 04/11), también "Llave no reconocida" |
@@ -128,7 +128,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-15 | Corte de luz durante un retiro | V2 | 🟡 Hecha (04/11): al volver la luz el equipo avisa, se cancela la reserva y el LCD dice "Equipo listo". Falta probarla con el equipo real |
 | US-16 | Recordatorio de devolución | V2 | ✅ Hecha (04/11): al pedir la llave el docente dice hasta qué hora usa el aula; 15 min después le llega un mail y a la hora el preceptor la ve "Demorada". El preceptor también puede mandarlo a mano |
 | US-17 | Ver mis llaves | V2 | ✅ Hecha |
-| US-18 | Retiro con credencial | V2 | 🟡 Hecha (04 y 05/11): para el que olvidó el celular, DNI y número de aula en el teclado ("Hola Ana / Aula 214"). Falta probarla con el equipo real |
+| US-18 | Retiro con credencial | V2 | ✅ Hecha y probada con el equipo real (05/11): para el que olvidó el celular, DNI y número de aula en el teclado ("Hola Bruno / Aula 214") |
 | US-19 | Exportar reportes | V2 | ✅ Hecha (04/11): botón "Exportar a Excel" en el historial, con los mismos filtros; deshabilitado si no hay movimientos |
 | US-20 | Devolver una llave retirada por otro | V2 | 🟡 Hecha (04/11): quien devuelve puede escribir su DNI; si la llave era de otro, confirma con # y al titular le llega un mail. Falta probarla con el equipo real |
 | US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto |
