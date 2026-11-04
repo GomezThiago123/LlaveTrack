@@ -19,6 +19,8 @@ class Esquema(BaseModel):
 
 class PedidoReserva(Esquema):
     aula_id: int
+    # US-16: hasta que hora va a usar el aula, "HH:MM" en hora de Argentina (opcional)
+    hora_fin: str | None = Field(default=None, pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 class ReservaSalida(Esquema):
@@ -28,6 +30,7 @@ class ReservaSalida(Esquema):
     creada_en: datetime  # la web la usa para la barra de tiempo
     expira_en: datetime
     estado: EstadoReserva
+    hora_fin: datetime | None = None  # US-16
 
 
 # El estado que ve la web: el de la llave, o EN_REVISION si su aula tiene un incidente abierto (US-21)
@@ -109,6 +112,9 @@ class PrestamoSalida(Esquema):
     devuelto_en: datetime | None
     recordatorio_enviado_en: datetime | None
     perdida: bool = False  # US-11: se cerro porque la llave se perdio
+    hora_fin: datetime | None = None  # US-16: hasta que hora dijo que usaba el aula
+    aviso_automatico_en: datetime | None = None  # US-16: el mail de los 15 minutos
+    demorada: bool = False  # US-16: sigue sin devolver una hora despues de la hora fin
 
 
 class HistorialSalida(Esquema):

@@ -126,7 +126,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-12/13 | Historial por aula y por docente | V2 | ✅ Hecha |
 | US-14 | Devolver sin conexión | V2 | ⬜ Falta |
 | US-15 | Corte de luz durante un retiro | V2 | ⬜ Falta |
-| US-16 | Recordatorio de devolución | V2 | 🟡 Lo manda el preceptor (el sistema no conoce los turnos) |
+| US-16 | Recordatorio de devolución | V2 | ✅ Hecha (04/11): al pedir la llave el docente dice hasta qué hora usa el aula; 15 min después le llega un mail y a la hora el preceptor la ve "Demorada". El preceptor también puede mandarlo a mano |
 | US-17 | Ver mis llaves | V2 | ✅ Hecha |
 | US-18 | Retiro con credencial | V2 | ⬜ Falta |
 | US-19 | Exportar reportes | V2 | ✅ Hecha (04/11): botón "Exportar a Excel" en el historial, con los mismos filtros; deshabilitado si no hay movimientos |

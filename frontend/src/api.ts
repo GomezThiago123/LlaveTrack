@@ -35,6 +35,7 @@ export interface Reserva {
   creadaEn: string; // fechas ISO en UTC
   expiraEn: string;
   estado: EstadoReserva;
+  horaFin: string | null; // US-16: hasta que hora dijo que usa el aula
 }
 
 export interface CuentaBloqueada {
@@ -65,6 +66,9 @@ export interface Prestamo {
   devueltoEn: string | null; // null = todavia la tiene
   recordatorioEnviadoEn: string | null;
   perdida: boolean; // US-11: se cerro porque la llave se perdio
+  horaFin: string | null; // US-16: hasta que hora dijo que usaba el aula
+  avisoAutomaticoEn: string | null; // US-16: el mail de los 15 minutos
+  demorada: boolean; // US-16: sigue sin devolver una hora despues de la hora fin
 }
 
 // US-11: una llave perdida
@@ -186,7 +190,9 @@ export const api = {
 
   // Con login
   aulas: (automatico = false) => pedir<Aula[]>('/aulas', { automatico }),
-  pedirLlave: (aulaId: number) => pedir<Reserva>('/reservas', { metodo: 'POST', cuerpo: { aulaId } }),
+  // horaFin "HH:MM": hasta que hora usa el aula (US-16: el aviso automatico sale 15 min despues)
+  pedirLlave: (aulaId: number, horaFin?: string) =>
+    pedir<Reserva>('/reservas', { metodo: 'POST', cuerpo: { aulaId, horaFin: horaFin || undefined } }),
   reservaActiva: (automatico = false) => pedir<Reserva | null>('/reservas/activa', { automatico }),
   reserva: (id: number, automatico = false) => pedir<Reserva>(`/reservas/${id}`, { automatico }),
   cancelarReserva: (id: number) => pedir<null>(`/reservas/${id}`, { metodo: 'DELETE' }),

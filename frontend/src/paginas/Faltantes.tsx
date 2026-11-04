@@ -8,7 +8,8 @@ import { useRefresco } from '../refresco';
 import { useSesion } from '../sesion';
 import { duracion, hora } from '../utiles';
 
-// US-16: a la hora sin devolver, la llave se marca "Demorada"
+// US-16: sin hora fin (el docente no la dijo), a la hora sin devolver la llave se marca "Demorada".
+// Con hora fin, lo decide el servidor: una hora despues de la hora fin.
 const DEMORA_MS = 60 * 60 * 1000;
 
 export default function Faltantes() {
@@ -55,7 +56,9 @@ function TarjetaFaltante({ prestamo, alCambiar }: { prestamo: Prestamo; alCambia
   const { manejarError } = useSesion();
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const demorada = Date.now() - new Date(prestamo.retiradoEn).getTime() >= DEMORA_MS;
+  const demorada = prestamo.horaFin
+    ? prestamo.demorada
+    : Date.now() - new Date(prestamo.retiradoEn).getTime() >= DEMORA_MS;
   const { docente } = prestamo;
 
   async function recordar() {
@@ -81,7 +84,10 @@ function TarjetaFaltante({ prestamo, alCambiar }: { prestamo: Prestamo; alCambia
               {docente.nombre} {docente.apellido}
             </strong>
           </p>
-          <p className="mono suave chico">retiro {hora(prestamo.retiradoEn)}</p>
+          <p className="mono suave chico">
+            retiro {hora(prestamo.retiradoEn)}
+            {prestamo.horaFin && ` · hasta las ${hora(prestamo.horaFin)}`}
+          </p>
         </div>
         <span className={`demora ${demorada ? 'demora-larga' : ''}`}>
           {demorada ? 'Demorada · ' : 'Hace '}
@@ -101,6 +107,9 @@ function TarjetaFaltante({ prestamo, alCambiar }: { prestamo: Prestamo; alCambia
         )}
       </div>
       <Alerta>{error}</Alerta>
+      {prestamo.avisoAutomaticoEn && (
+        <p className="suave chico separado">Aviso automático enviado a las {hora(prestamo.avisoAutomaticoEn)}.</p>
+      )}
       {prestamo.recordatorioEnviadoEn && (
         <p className="suave chico separado">
           Recordatorio enviado a las {hora(prestamo.recordatorioEnviadoEn)}.

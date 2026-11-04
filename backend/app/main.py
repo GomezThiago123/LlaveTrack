@@ -9,6 +9,7 @@ from app.config import config
 from app.db import SesionLocal
 from app.errores import registrar_manejadores
 from app.mqtt_cliente import ClienteMqtt
+from app.tareas import TareaRecordatorios
 from app.rutas import aulas, auth, equipo, incidentes, prestamos, reservas, usuarios
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(message)s")
@@ -16,14 +17,20 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(m
 
 @asynccontextmanager
 async def ciclo_de_vida(aplicacion: FastAPI):
-    """Al arrancar el servidor se conecta a MQTT; al apagarlo se desconecta."""
+    """Al arrancar el servidor se conecta a MQTT y arranca los avisos de US-16; al apagarlo, los frena."""
     cliente_mqtt = None
     if config.mqtt_habilitado:
         cliente_mqtt = ClienteMqtt(SesionLocal)
         cliente_mqtt.iniciar()
     # Las rutas que mandan comandos al equipo (ej. recalibrar) lo buscan aca
     aplicacion.state.cliente_mqtt = cliente_mqtt
+    tarea = None
+    if config.recordatorios_habilitados:  # US-16: avisos automaticos por mail
+        tarea = TareaRecordatorios()
+        tarea.start()
     yield
+    if tarea:
+        tarea.detener()
     if cliente_mqtt:
         cliente_mqtt.detener()
 

@@ -13,7 +13,7 @@ from app.db import obtener_sesion
 from app.esquemas import FiltrosHistorial, HistorialSalida, PersonaSalida, PrestamoSalida
 from app.modelos import Prestamo, Usuario
 from app.servicios import exportar as exportar_servicio
-from app.servicios import prestamos
+from app.servicios import prestamos, recordatorios
 from app.tipos import ZONA_ARGENTINA, ahora_utc
 
 log = logging.getLogger(__name__)
@@ -34,6 +34,9 @@ def _salida(p: Prestamo) -> PrestamoSalida:
         devuelto_en=p.devuelto_en,
         recordatorio_enviado_en=p.recordatorio_enviado_en,
         perdida=p.perdida,
+        hora_fin=p.hora_fin,
+        aviso_automatico_en=p.aviso_automatico_en,
+        demorada=recordatorios.demorada(p, ahora_utc()),
     )
 
 

@@ -131,6 +131,8 @@ class Reserva(Base):
     codigo: Mapped[str] = mapped_column(String(6))
     creada_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
     expira_en: Mapped[datetime] = mapped_column(FechaUTC)
+    # US-16: hasta que hora va a usar el aula (lo dice el docente al pedir la llave). Opcional
+    hora_fin: Mapped[datetime | None] = mapped_column(FechaUTC)
     estado: Mapped[EstadoReserva] = mapped_column(
         _enum(EstadoReserva), default=EstadoReserva.PENDIENTE
     )
@@ -150,6 +152,10 @@ class Prestamo(Base):
     devuelto_en: Mapped[datetime | None] = mapped_column(FechaUTC)  # null = prestamo activo
     # US-16: el ultimo recordatorio de devolucion que mando el preceptor
     recordatorio_enviado_en: Mapped[datetime | None] = mapped_column(FechaUTC)
+    # US-16 automatico: hasta que hora iba a usar el aula (de la reserva) y cuando se le mando
+    # el aviso de los 15 minutos despues
+    hora_fin: Mapped[datetime | None] = mapped_column(FechaUTC)
+    aviso_automatico_en: Mapped[datetime | None] = mapped_column(FechaUTC)
     # US-11: se cerro porque la llave se perdio (devuelto_en es cuando se dio de baja)
     perdida: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
 

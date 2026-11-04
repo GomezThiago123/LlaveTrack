@@ -19,7 +19,7 @@ from app.errores import ErrorNegocio
 from app.modelos import Aula, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
 from app.servicios.conexion import equipo_online
 from app.servicios.incidentes import aulas_en_revision
-from app.tipos import ahora_utc
+from app.tipos import ZONA_ARGENTINA, ahora_utc
 
 
 def vencer_reservas(sesion: Session, ahora: datetime | None = None) -> int:
@@ -37,10 +37,31 @@ def vencer_reservas(sesion: Session, ahora: datetime | None = None) -> int:
     return len(vencidas)
 
 
+def hora_fin_desde_texto(hora_fin: str, ahora: datetime) -> datetime:
+    """US-16: "12:40" (hora de Argentina) -> la proxima vez que sean las 12:40, en UTC.
+
+    Si ya pasaron hoy, es manana (ej. a las 23:00 dice "01:00"). Hasta 16 horas: mas que eso es
+    un error al escribirla.
+    """
+    horas, minutos = (int(parte) for parte in hora_fin.split(":"))
+    local = ahora.astimezone(ZONA_ARGENTINA)
+    fin = local.replace(hour=horas, minute=minutos, second=0, microsecond=0)
+    if fin <= local:
+        fin += timedelta(days=1)
+    if fin - local > timedelta(hours=16):
+        raise ErrorNegocio(422, "HORA_FIN_INVALIDA", "La hora hasta la que usás el aula tiene que ser dentro de las próximas 16 horas.")
+    return fin.astimezone(ahora.tzinfo)
+
+
 def crear_reserva(
-    sesion: Session, usuario: Usuario, aula_id: int, ahora: datetime | None = None
+    sesion: Session,
+    usuario: Usuario,
+    aula_id: int,
+    ahora: datetime | None = None,
+    hora_fin: str | None = None,
 ) -> Reserva:
     ahora = ahora or ahora_utc()
+    fin = hora_fin_desde_texto(hora_fin, ahora) if hora_fin else None
     vencer_reservas(sesion, ahora)
 
     if reserva_activa(sesion, usuario, ahora) is not None:
@@ -90,6 +111,7 @@ def crear_reserva(
         codigo=_generar_codigo(sesion),
         creada_en=ahora,
         expira_en=ahora + timedelta(minutes=config.reserva_minutos),
+        hora_fin=fin,
     )
     sesion.add(reserva)
     sesion.flush()  # para que la reserva tenga id

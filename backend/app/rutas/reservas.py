@@ -25,13 +25,14 @@ def _salida(reserva: Reserva) -> ReservaSalida:
         creada_en=reserva.creada_en,
         expira_en=reserva.expira_en,
         estado=reserva.estado,
+        hora_fin=reserva.hora_fin,
     )
 
 
 @router.post("", status_code=201)
 def pedir_llave(pedido: PedidoReserva, sesion: SesionDep, usuario: UsuarioDep) -> ReservaSalida:
     """Reserva la llave del aula y devuelve el código para ingresar en el equipo."""
-    reserva = reservas.crear_reserva(sesion, usuario, pedido.aula_id)
+    reserva = reservas.crear_reserva(sesion, usuario, pedido.aula_id, hora_fin=pedido.hora_fin)
     sesion.commit()
     return _salida(reserva)
 

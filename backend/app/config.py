@@ -66,6 +66,13 @@ class Config(BaseSettings):
     brevo_api_key: str | None = None
     brevo_remitente: str | None = None
 
+    # US-16: aviso automatico al docente que no devolvio la llave, segun la hora hasta la que dijo
+    # que usaba el aula al pedirla. Un hilo del servidor revisa cada RECORDATORIOS_CADA_SEGUNDOS
+    recordatorios_habilitados: bool = True
+    recordatorio_minutos: int = 15  # el mail sale esta cantidad de minutos despues de la hora fin
+    demorada_minutos: int = 60  # despues de esto el preceptor la ve "Demorada"
+    recordatorios_cada_segundos: int = 60
+
     # Carpeta con la web compilada (npm run build). Si se indica, este mismo servidor entrega la
     # web en "/": asi web y API quedan en la misma direccion (en la nube). En desarrollo la
     # entrega Vite.

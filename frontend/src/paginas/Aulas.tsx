@@ -11,6 +11,14 @@ import { useRefresco } from '../refresco';
 import { useSesion } from '../sesion';
 import { esPreceptor, hora, peine } from '../utiles';
 
+/** US-16: lo que propone la web para "Uso el aula hasta": dentro de 80 minutos (dos modulos),
+ * redondeado a los 5 minutos. El docente la cambia si hace falta. */
+function horaFinSugerida(): string {
+  const fin = new Date(Date.now() + 80 * 60_000);
+  fin.setMinutes(Math.ceil(fin.getMinutes() / 5) * 5, 0, 0);
+  return `${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')}`;
+}
+
 export default function Aulas() {
   const { usuario, manejarError } = useSesion();
   const aulas = useRefresco((automatico) => api.aulas(automatico));
@@ -21,6 +29,8 @@ export default function Aulas() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroPeine, setFiltroPeine] = useState('todas');
   const [soloDisponibles, setSoloDisponibles] = useState(false);
+  // US-16: hasta que hora usa el aula. Si no la devuelve 15 min despues, le llega un mail
+  const [horaFin, setHoraFin] = useState(horaFinSugerida);
 
   // La reserva pendiente, si hay (tambien si se recargo la pagina)
   useEffect(() => {
@@ -51,7 +61,7 @@ export default function Aulas() {
     setPidiendo(aula.id);
     setError(null);
     try {
-      setReserva(await api.pedirLlave(aula.id));
+      setReserva(await api.pedirLlave(aula.id, horaFin));
       window.scrollTo({ top: 0, behavior: 'smooth' }); // el codigo aparece arriba de todo
     } catch (err) {
       setError(manejarError(err));
@@ -99,6 +109,19 @@ export default function Aulas() {
           ]}
         />
       )}
+      <label className="tarjeta fila">
+        <span>Uso el aula hasta las</span>
+        <input
+          type="time"
+          className="campo-hora"
+          value={horaFin}
+          onChange={(e) => setHoraFin(e.target.value)}
+          aria-describedby="ayuda-hora-fin"
+        />
+      </label>
+      <p id="ayuda-hora-fin" className="suave chico">
+        Si 15 minutos después no devolviste la llave, te llega un mail para recordártelo.
+      </p>
       <div className="tarjeta fila">
         <span>
           Solo disponibles <span className="mono texto-ok">({disponibles})</span>

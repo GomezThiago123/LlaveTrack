@@ -107,6 +107,7 @@ def retiro_confirmado(sesion: Session, codigo: str, uid: str, slot: int) -> dict
             usuario_id=reserva.usuario_id,
             reserva_id=reserva.id,
             retirado_en=ahora_utc(),
+            hora_fin=reserva.hora_fin,  # US-16
         )
     )
     return {}

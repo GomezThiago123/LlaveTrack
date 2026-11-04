@@ -1073,3 +1073,9 @@ select:focus {
 .campo-slot {
   width: 5.5em;
 }
+
+/* US-16: hasta que hora usa el aula */
+.campo-hora {
+  width: auto;
+  margin-left: auto;
+}
