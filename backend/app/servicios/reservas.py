@@ -18,6 +18,7 @@ from app.config import config
 from app.errores import ErrorNegocio
 from app.modelos import Aula, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
 from app.servicios.conexion import equipo_online
+from app.servicios.incidentes import aulas_en_revision
 from app.tipos import ahora_utc
 
 
@@ -50,6 +51,14 @@ def crear_reserva(
     aula = sesion.get(Aula, aula_id)
     if aula is None:
         raise ErrorNegocio(404, "AULA_NO_ENCONTRADA", "El aula no existe.")
+
+    # US-21: el equipo no pudo entregar esta llave y nadie lo reviso todavia
+    if aula.id in aulas_en_revision(sesion):
+        raise ErrorNegocio(
+            409,
+            "AULA_EN_REVISION",
+            f"El aula {aula.nombre} está en revisión: el equipo no pudo entregar su llave. Pedila en portería.",
+        )
 
     # US-22: sin equipo no hay como retirar la llave; no tiene sentido reservarla
     if not equipo_online(sesion, ahora):

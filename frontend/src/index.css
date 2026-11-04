@@ -408,7 +408,8 @@ p {
 }
 
 .insignia-prestada,
-.insignia-baja {
+.insignia-baja,
+.insignia-en_revision {
   background: var(--error-fondo);
   color: var(--error);
 }

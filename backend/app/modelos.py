@@ -183,7 +183,8 @@ class EventoDispositivo(Base):
 class Incidente(Base):
     """Falla del equipo al entregar una llave (US-05). El preceptor la ve en la web.
 
-    Para US-21 (V2) alcanza con agregar resuelto_en y marcar el aula "En revision".
+    US-21: mientras esta abierto (resuelto_en null) y tiene aula, esa aula figura "En revision"
+    y no se puede reservar. El preceptor lo marca resuelto.
     """
 
     __tablename__ = "incidente"
@@ -196,6 +197,9 @@ class Incidente(Base):
     aula_id: Mapped[int | None] = mapped_column(ForeignKey("aula.id"))
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
     ocurrido_en: Mapped[datetime] = mapped_column(FechaUTC, default=ahora_utc)
+    resuelto_en: Mapped[datetime | None] = mapped_column(FechaUTC)  # null = abierto (US-21)
+    resuelto_por_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
 
     aula: Mapped[Aula | None] = relationship()
-    usuario: Mapped[Usuario | None] = relationship()
+    usuario: Mapped[Usuario | None] = relationship(foreign_keys=[usuario_id])
+    resuelto_por: Mapped[Usuario | None] = relationship(foreign_keys=[resuelto_por_id])

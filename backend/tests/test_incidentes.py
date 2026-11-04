@@ -1,4 +1,5 @@
-"""Tests de incidentes del equipo (US-05): el preceptor ve las fallas al entregar una llave."""
+"""Tests de incidentes del equipo (US-05 y US-21): el preceptor ve las fallas al entregar una llave
+y las marca resueltas."""
 
 import itertools
 import json
@@ -81,30 +82,38 @@ def test_preceptor_ve_los_incidentes_de_hoy(cliente, ingresar, fabrica_sesiones)
     assert lista[1]["aula"] is None and lista[1]["docente"] is None
 
 
-def test_los_incidentes_de_ayer_no_aparecen(cliente, ingresar, fabrica_sesiones):
+def test_los_de_ayer_solo_aparecen_si_siguen_abiertos(cliente, ingresar, fabrica_sesiones):
     enviar_error(fabrica_sesiones, error="MOTOR_NO_GIRA")
+    enviar_error(fabrica_sesiones, error="LLAVE_NO_ENCONTRADA")
+    ayer = ahora_utc() - timedelta(days=1)
     with fabrica_sesiones() as s:
-        s.execute(update(Incidente).values(ocurrido_en=ahora_utc() - timedelta(days=1)))
+        s.execute(update(Incidente).values(ocurrido_en=ayer))
+        s.execute(update(Incidente).where(Incidente.tipo == "LLAVE_NO_ENCONTRADA").values(resuelto_en=ayer))
         s.commit()
     ingresar(CARLA_PRECEPTORA)
-    assert cliente.get("/api/incidentes").json() == []
+    assert [i["tipo"] for i in cliente.get("/api/incidentes").json()] == ["MOTOR_NO_GIRA"]
 
 
 def test_hoy_es_el_dia_de_argentina(sesion):
     medianoche_utc = ahora_utc().replace(hour=0, minute=0, second=0, microsecond=0)
-    ayer_23_utc = Incidente(device_id=EQUIPO, tipo="A", ocurrido_en=medianoche_utc - timedelta(hours=1))
-    hoy_02_utc = Incidente(device_id=EQUIPO, tipo="B", ocurrido_en=medianoche_utc + timedelta(hours=2))
+    # Resueltos: solo aparecen si son de hoy
+    ayer_23_utc = Incidente(
+        device_id=EQUIPO, tipo="A", ocurrido_en=medianoche_utc - timedelta(hours=1), resuelto_en=medianoche_utc
+    )
+    hoy_02_utc = Incidente(
+        device_id=EQUIPO, tipo="B", ocurrido_en=medianoche_utc + timedelta(hours=2), resuelto_en=medianoche_utc
+    )
     sesion.add_all([ayer_23_utc, hoy_02_utc])
     sesion.flush()
 
     # A las 02:30 UTC son las 23:30 en Argentina: las 23:00 UTC de "ayer" (20:00 en Argentina)
     # todavia son de hoy
     a_las_0230 = medianoche_utc + timedelta(hours=2, minutes=30)
-    assert {i.tipo for i in incidentes.de_hoy(sesion, a_las_0230)} == {"A", "B"}
+    assert {i.tipo for i in incidentes.abiertos_y_de_hoy(sesion, a_las_0230)} == {"A", "B"}
 
     # A las 04:00 UTC ya es la 01:00 del dia siguiente en Argentina: los dos quedaron en "ayer"
     a_las_0400 = medianoche_utc + timedelta(hours=4)
-    assert incidentes.de_hoy(sesion, a_las_0400) == []
+    assert incidentes.abiertos_y_de_hoy(sesion, a_las_0400) == []
 
 
 def test_docente_no_ve_los_incidentes(cliente, ingresar):
@@ -115,3 +124,58 @@ def test_docente_no_ve_los_incidentes(cliente, ingresar):
 
 def test_tipo_desconocido_se_muestra_legible():
     assert incidentes.descripcion("LECTOR_RFID_NO_RESPONDE") == "Lector rfid no responde"
+
+
+# --- US-21: incidentes abiertos y resueltos ---
+
+
+def aula_214(cliente):
+    return next(a for a in cliente.get("/api/publico/estado").json()["aulas"] if a["nombre"] == "214")
+
+
+def test_con_un_incidente_abierto_el_aula_queda_en_revision(cliente, ingresar, fabrica_sesiones):
+    codigo = reservar_214_para_ana(fabrica_sesiones)
+    enviar_error(fabrica_sesiones, error="LLAVE_NO_ENCONTRADA", codigo=codigo)
+    with fabrica_sesiones() as s:  # la reserva vence sola: la llave vuelve a estar DISPONIBLE
+        reservas.cancelar_reserva(s, s.scalar(select(Usuario).where(Usuario.email == ANA)), 1)
+        s.commit()
+
+    assert aula_214(cliente)["estado"] == "EN_REVISION"
+    ingresar(ANA)
+    res = cliente.post("/api/reservas", json={"aulaId": aula_214(cliente)["id"]})
+    assert res.status_code == 409 and res.json()["error"]["codigo"] == "AULA_EN_REVISION"
+
+
+def test_el_preceptor_lo_resuelve_y_el_aula_vuelve(cliente, ingresar, fabrica_sesiones):
+    codigo = reservar_214_para_ana(fabrica_sesiones)
+    enviar_error(fabrica_sesiones, error="LLAVE_NO_ENCONTRADA", codigo=codigo)
+    with fabrica_sesiones() as s:
+        reservas.cancelar_reserva(s, s.scalar(select(Usuario).where(Usuario.email == ANA)), 1)
+        s.commit()
+    ingresar(CARLA_PRECEPTORA)
+    incidente = cliente.get("/api/incidentes").json()[0]
+
+    res = cliente.post(f"/api/incidentes/{incidente['id']}/resolver")
+    assert res.status_code == 200
+    assert res.json()["resueltoEn"] is not None and res.json()["resueltoPor"] == "Carla Diaz"
+    assert aula_214(cliente)["estado"] == "DISPONIBLE"
+    # Resolverlo de nuevo no cambia nada (dos preceptores a la vez)
+    assert cliente.post(f"/api/incidentes/{incidente['id']}/resolver").json() == res.json()
+
+
+def test_un_incidente_sin_aula_no_bloquea_ninguna(cliente, fabrica_sesiones):
+    enviar_error(fabrica_sesiones, error="MOTOR_NO_GIRA")
+    estados = {a["estado"] for a in cliente.get("/api/publico/estado").json()["aulas"]}
+    assert "EN_REVISION" not in estados
+
+
+def test_docente_no_resuelve_incidentes(cliente, ingresar, fabrica_sesiones):
+    enviar_error(fabrica_sesiones, error="MOTOR_NO_GIRA")
+    ingresar(ANA)
+    assert cliente.post("/api/incidentes/1/resolver").status_code == 403
+
+
+def test_resolver_uno_que_no_existe(cliente, ingresar):
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post("/api/incidentes/999/resolver")
+    assert res.status_code == 404 and res.json()["error"]["codigo"] == "INCIDENTE_NO_ENCONTRADO"

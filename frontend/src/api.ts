@@ -2,7 +2,8 @@
 // Las rutas empiezan con /api: en desarrollo Vite las reenvia al backend (ver vite.config.ts).
 
 export type Rol = 'DOCENTE' | 'PRECEPTOR' | 'ADMIN';
-export type EstadoLlave = 'DISPONIBLE' | 'RESERVADA' | 'PRESTADA' | 'BAJA';
+// EN_REVISION no es de la llave: la API lo muestra si su aula tiene un incidente abierto (US-21)
+export type EstadoLlave = 'DISPONIBLE' | 'RESERVADA' | 'PRESTADA' | 'BAJA' | 'EN_REVISION';
 export type EstadoReserva = 'PENDIENTE' | 'USADA' | 'VENCIDA' | 'CANCELADA';
 
 export interface Usuario {
@@ -52,6 +53,8 @@ export interface Incidente {
   aula: string | null;
   docente: string | null;
   detalle: string | null;
+  resueltoEn: string | null; // US-21: null = abierto
+  resueltoPor: string | null;
 }
 
 export interface Prestamo {
@@ -175,7 +178,8 @@ export const api = {
   // Solo preceptor y admin
   cuentasBloqueadas: (automatico = false) => pedir<CuentaBloqueada[]>('/usuarios/bloqueados', { automatico }),
   desbloquear: (usuarioId: number) => pedir<null>(`/usuarios/${usuarioId}/desbloquear`, { metodo: 'POST' }),
-  incidentes: (automatico = false) => pedir<Incidente[]>('/incidentes', { automatico }), // US-05
+  incidentes: (automatico = false) => pedir<Incidente[]>('/incidentes', { automatico }), // US-05 y US-21
+  resolverIncidente: (id: number) => pedir<Incidente>(`/incidentes/${id}/resolver`, { metodo: 'POST' }), // US-21
   historial: (filtros: FiltrosHistorial, automatico = false) => // US-12 y US-13
     pedir<{ prestamos: Prestamo[]; enPoder: number | null }>(`/prestamos${parametros(filtros)}`, { automatico }),
   recordatorio: (prestamoId: number) => // US-16

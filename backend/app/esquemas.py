@@ -30,10 +30,14 @@ class ReservaSalida(Esquema):
     estado: EstadoReserva
 
 
+# El estado que ve la web: el de la llave, o EN_REVISION si su aula tiene un incidente abierto (US-21)
+EstadoAula = EstadoLlave | Literal["EN_REVISION"]
+
+
 class AulaPublica(Esquema):
     id: int
     nombre: str
-    estado: EstadoLlave
+    estado: EstadoAula
 
 
 class EstadoPublico(Esquema):
@@ -54,7 +58,7 @@ class Tenedor(Esquema):
 class AulaDetalle(Esquema):
     id: int
     nombre: str
-    estado: EstadoLlave
+    estado: EstadoAula
     tenedor: Tenedor | None = None
 
 
@@ -176,6 +180,8 @@ class IncidenteSalida(Esquema):
     aula: str | None
     docente: str | None  # "Ana Perez"
     detalle: str | None
+    resuelto_en: datetime | None = None  # US-21: null = abierto
+    resuelto_por: str | None = None  # "Carla Diaz"
 
 
 class PedidoRecuperacion(Esquema):

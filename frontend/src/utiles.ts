@@ -61,6 +61,7 @@ export const TEXTO_ESTADO: Record<EstadoLlave, string> = {
   RESERVADA: 'Reservada',
   PRESTADA: 'Ocupada', // US-02: en la base sigue siendo PRESTADA
   BAJA: 'De baja',
+  EN_REVISION: 'En revisión', // US-21: el equipo no pudo entregar su llave
 };
 
 export const TEXTO_ROL: Record<Rol, string> = {

@@ -131,7 +131,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-18 | Retiro con credencial | V2 | ⬜ Falta |
 | US-19 | Exportar reportes | V2 | ⬜ Falta |
 | US-20 | Devolver una llave retirada por otro | V2 | ⬜ Falta (hoy cualquiera la devuelve y queda a nombre de quien la retiró) |
-| US-21 | Registrar incidentes del equipo | V2 | 🟡 Se registran y se ven; falta marcarlos resueltos |
+| US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto |
 | US-22 | Ver si el equipo está conectado | MVP | ✅ Hecha |
 | US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 El LCD muestra "Faltan: 214" con el equipo real; el LED naranja no se vio (revisar el LED) |
 | US-24 | Ver en el equipo si está conectado | MVP | 🟡 Probada con el equipo real (LCD y LED verde); falta ver el LED rojo titilando |
