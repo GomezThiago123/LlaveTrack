@@ -1079,3 +1079,9 @@ select:focus {
   width: auto;
   margin-left: auto;
 }
+
+/* Entrega directa: el aviso de que la llave esta saliendo */
+.reserva-aviso {
+  margin: 12px 0;
+  font-size: 1.05rem;
+}

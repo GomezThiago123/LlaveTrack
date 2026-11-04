@@ -25,6 +25,9 @@ bool protocoloRespuesta(JsonDocument &respuesta);
 
 // Aulas cuya llave esta prestada (US-23). Vacia hasta que llega el mensaje retenido.
 const std::vector<String> &protocoloFaltantes();
+// El codigo de una reserva hecha en la web, para entregarla ya (comando entregar). "" si no hay;
+// lo devuelve una sola vez
+String protocoloEntregaPedida();
 // true una vez si el servidor mando el comando modo_alta (US-10)
 bool protocoloPidioModoAlta();
 // true una vez si el servidor mando el comando recalibrar

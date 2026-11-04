@@ -40,7 +40,8 @@ enum class Estado {
   HOMING,                // buscando el HOME (al prender o con el comando recalibrar)
   IR_A_REPOSO,           // llevando un lugar vacio a la ventana
   REPOSO,
-  INGRESO_CODIGO,        // tecla A: el docente escribe el codigo
+  INGRESO_CODIGO,        // tecla A: el docente escribe su DNI (olvido el celular)
+  INGRESO_AULA,          // despues del DNI: el aula que pide
   ESPERANDO_SERVIDOR,    // se mando un evento (codigo, retiro o devolucion) y falta la respuesta
   MOVIENDO,              // el disco busca la llave pedida
   REPOSICIONANDO,        // US-05, intento 2: homing de nuevo antes de volver a buscarla
@@ -82,13 +83,16 @@ bool mandandoGuardada = false;
 
 // El retiro en curso. dni: si el docente se identifico con su DNI en lugar del codigo (US-18)
 struct Retiro {
-  String codigo, dni, uid, aula, apellido, nombre;
+  String codigo, dni, aulaPedida, uid, aula, apellido, nombre;
+  bool desdeWeb = false;  // lo pidio la web (comando entregar), no el teclado
   int slot = -1;     // donde dice el servidor que esta la llave
   int intento = 1;   // US-05: el 2do es despues de repetir el homing
   unsigned long ausenteDesde = 0;  // desde cuando el lector no ve la llave (0: la ve)
 };
 Retiro retiro;
-String codigoEscrito;          // lo que va escribiendo el docente
+String codigoEscrito;          // lo que va escribiendo el docente (DNI, y despues el aula)
+String dniEscrito;
+String entregaPendiente;       // codigo de una reserva de la web que espera a que el equipo este libre
 unsigned long ultimaTecla = 0;
 int codigosMal = 0;            // rechazados seguidos (se bloquea el teclado al llegar al maximo)
 
@@ -113,6 +117,7 @@ const char *nombre(Estado e) {
     case Estado::IR_A_REPOSO: return "IR_A_REPOSO";
     case Estado::REPOSO: return "REPOSO";
     case Estado::INGRESO_CODIGO: return "INGRESO_CODIGO";
+    case Estado::INGRESO_AULA: return "INGRESO_AULA";
     case Estado::ESPERANDO_SERVIDOR: return "ESPERANDO_SERVIDOR";
     case Estado::MOVIENDO: return "MOVIENDO";
     case Estado::REPOSICIONANDO: return "REPOSICIONANDO";
@@ -257,11 +262,12 @@ void mandarPendientes() {
 
 void mandarSolicitudRetiro() {
   JsonDocument evento;
-  // Con DNI (US-18) la primera vez; despues el servidor ya dijo el codigo
+  // Con DNI y aula (teclado) la primera vez; despues el servidor ya dijo el codigo
   if (retiro.codigo.length()) {
     evento["codigo"] = retiro.codigo;
   } else {
     evento["dni"] = retiro.dni;
+    if (retiro.aulaPedida.length()) evento["aula"] = retiro.aulaPedida;
   }
   protocoloEnviar("solicitud_retiro", evento);
   cambiarEstado(Estado::ESPERANDO_SERVIDOR);
@@ -272,43 +278,67 @@ void mandarSolicitudRetiro() {
 void mostrarCodigo() {
   String linea2 = codigoEscrito + "_";
   while (linea2.length() < 12) linea2 += " ";
-  lcdMensaje("Codigo o DNI", linea2 + "#=OK");
+  if (estado == Estado::INGRESO_AULA) {
+    lcdMensaje("Aula:", linea2 + "#=OK");
+  } else {
+    lcdMensaje("Ingrese su DNI", linea2 + "#=OK");
+  }
 }
 
 void empezarIngreso() {
   codigoEscrito = "";
   ultimaTecla = millis();
   avisoHasta = 0;
-  mostrarCodigo();
   cambiarEstado(Estado::INGRESO_CODIGO);
+  mostrarCodigo();
 }
 
+// El teclado es para el docente que olvido el celular (05/11/2026): DNI, # y despues el aula, #.
+// Con la web no hace falta: "Pedir llave" ya la manda a entregar
 void confirmarCodigo() {
-  // 6 numeros: el codigo de la reserva. 7 u 8: el DNI (US-18)
   int largo = codigoEscrito.length();
-  bool esDni = largo >= DNI_MIN_DIGITOS && largo <= DNI_MAX_DIGITOS;
-  if (largo != CODIGO_DIGITOS && !esDni) {
-    lcdMensaje("Codigo: 6 nros", "DNI: 7 u 8 nros");
+  if (estado == Estado::INGRESO_CODIGO) {
+    if (largo < DNI_MIN_DIGITOS || largo > DNI_MAX_DIGITOS) {
+      lcdMensaje("DNI: 7 u 8 nros", codigoEscrito);
+      return;
+    }
+    dniEscrito = codigoEscrito;
+    codigoEscrito = "";
+    cambiarEstado(Estado::INGRESO_AULA);
+    mostrarCodigo();
     return;
   }
+  if (!largo) return;  // falta el aula
   if (!redConectado()) {
     aviso("Sin conexion", redCausaSinConexion());
     cambiarEstado(Estado::REPOSO);
     return;
   }
   retiro = Retiro();
-  if (esDni) {
-    retiro.dni = codigoEscrito;
-  } else {
-    retiro.codigo = codigoEscrito;
-  }
-  lcdMensaje("Verificando", esDni ? "el DNI..." : "el codigo...");
+  retiro.dni = dniEscrito;
+  retiro.aulaPedida = codigoEscrito;
+  lcdMensaje("Verificando", "Aula " + codigoEscrito);
   mandarSolicitudRetiro();
 }
 
 void codigoRechazado(const String &motivo) {
   if (motivo == "ERROR_INTERNO") {  // no es culpa del docente: no cuenta para el bloqueo
     aviso("Error del", "servidor");
+    volverAlReposo();
+    return;
+  }
+  if (retiro.desdeWeb) {  // la reserva de la web vencio o se cancelo: no es un intento mal
+    aviso("Pedido vencido", "Pedila de nuevo");
+    volverAlReposo();
+    return;
+  }
+  // Problemas del aula (no del DNI): no cuentan para el bloqueo
+  if (motivo == "AULA_NO_ENCONTRADA" || motivo == "LLAVE_NO_DISPONIBLE" || motivo == "AULA_EN_REVISION" ||
+      motivo == "YA_TIENE_RESERVA") {
+    if (motivo == "AULA_NO_ENCONTRADA") aviso("Aula " + retiro.aulaPedida, "no existe");
+    if (motivo == "LLAVE_NO_DISPONIBLE") aviso("Aula " + retiro.aulaPedida, "no disponible");
+    if (motivo == "AULA_EN_REVISION") aviso("Aula en revision", "Pedila en porteria");
+    if (motivo == "YA_TIENE_RESERVA") aviso("Ya tenes otra", "reserva en la web");
     volverAlReposo();
     return;
   }
@@ -372,10 +402,8 @@ void alRespuestaRetiro(bool ok, const String &motivo, JsonDocument &resp) {
   retiro.apellido = resp["apellido"].as<String>();
   Serial.printf("[estado] Retiro: aula %s, uid %s, slot %d (intento %d)\n", retiro.aula.c_str(),
                 retiro.uid.c_str(), retiro.slot, retiro.intento);
-  if (retiro.intento == 1 && retiro.dni.length()) {
-    lcdMensaje("Hola " + retiro.nombre, "Aula " + retiro.aula);  // US-18
-  } else if (retiro.intento == 1) {
-    lcdMensaje("Buscando llave", "Aula " + retiro.aula);
+  if (retiro.intento == 1) {
+    lcdMensaje("Hola " + retiro.nombre, "Aula " + retiro.aula);  // web o teclado: saluda igual
   }
   discoBuscar(retiro.uid, retiro.slot);
   cambiarEstado(Estado::MOVIENDO);
@@ -582,9 +610,10 @@ void alTecla(char t) {
       return;
 
     case Estado::INGRESO_CODIGO:
+    case Estado::INGRESO_AULA:
       ultimaTecla = ahora;
       if (t >= '0' && t <= '9') {
-        if ((int)codigoEscrito.length() < DNI_MAX_DIGITOS) codigoEscrito += t;
+        if ((int)codigoEscrito.length() < (estado == Estado::INGRESO_AULA ? 6 : DNI_MAX_DIGITOS)) codigoEscrito += t;
         mostrarCodigo();
       } else if (t == '*') {
         if (codigoEscrito.length()) codigoEscrito.remove(codigoEscrito.length() - 1);
@@ -692,10 +721,21 @@ void actualizarEstado() {
         empezarModoAlta();
         break;
       }
+      // Entrega directa: el docente apreto "Pedir llave" en la web (05/11/2026)
+      if (entregaPendiente.length() && redConectado() && !protocoloEsperando()) {
+        retiro = Retiro();
+        retiro.codigo = entregaPendiente;
+        retiro.desdeWeb = true;
+        entregaPendiente = "";
+        lcdMensaje("Pedido de la web", "Espere...");
+        mandarSolicitudRetiro();
+        break;
+      }
       mostrarReposo();
       break;
 
     case Estado::INGRESO_CODIGO:
+    case Estado::INGRESO_AULA:
       if (ahora - ultimaTecla >= CODIGO_INACTIVIDAD_MS) cambiarEstado(Estado::REPOSO);
       break;
 
@@ -978,6 +1018,10 @@ void loop() {
   actualizarEstado();
   actualizarLed();
   ledActualizar();
+
+  // Un pedido de la web llega en cualquier momento: espera hasta que el equipo este en reposo
+  String pedida = protocoloEntregaPedida();
+  if (pedida.length()) entregaPendiente = pedida;
 
   char t = teclaLeer();
   if (t) alTecla(t);

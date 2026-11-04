@@ -24,6 +24,7 @@ JsonDocument ultimaRespuesta;
 std::vector<String> faltantes;
 bool recalibrar = false;
 bool modoAlta = false;  // US-10
+String entrega;  // codigo de una reserva pedida en la web: hay que entregarla (05/11/2026)
 
 void mandar() {
   pendiente.enviado = millis();
@@ -72,6 +73,8 @@ void protocoloAlMensaje(const String &sufijo, const byte *datos, unsigned int la
       recalibrar = true;
     } else if (comando == "modo_alta") {
       modoAlta = true;
+    } else if (comando == "entregar") {
+      entrega = doc["codigo"] | "";
     } else {
       Serial.printf("[mqtt] Comando desconocido: %s\n", comando.c_str());
     }
@@ -122,4 +125,10 @@ bool protocoloPidioModoAlta() {
   bool m = modoAlta;
   modoAlta = false;
   return m;
+}
+
+String protocoloEntregaPedida() {
+  String codigo = entrega;
+  entrega = "";
+  return codigo;
 }

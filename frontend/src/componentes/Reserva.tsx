@@ -1,4 +1,5 @@
-// La reserva del docente (US-03): el codigo en grande, la cuenta regresiva y como usarlo.
+// La reserva del docente: desde el 05/11/2026 no hay codigo que escribir. Al pedir la llave, el
+// equipo la saca solo; aca se ve que esta saliendo, cuanto tiempo queda y como cancelarla.
 // Va arriba de la lista de aulas. Si se recarga la pagina, la lista la vuelve a pedir.
 import { useState, type ReactNode } from 'react';
 import { Clock, KeyRound, X } from 'lucide-react';
@@ -62,7 +63,7 @@ export function TarjetaReserva({
     return (
       <Cerrable alCerrar={() => alCambiar(null)} tipo="aviso">
         {vencida
-          ? `El código para la llave ${delAula(reserva.aula)} venció. La llave volvió a estar disponible.`
+          ? `Nadie retiró la llave ${delAula(reserva.aula)} a tiempo. Volvió a estar disponible.`
           : `Cancelaste la reserva de la llave ${delAula(reserva.aula)}.`}
       </Cerrable>
     );
@@ -78,34 +79,22 @@ export function TarjetaReserva({
   return (
     <section className="reserva" aria-live="polite">
       <div className="fila">
-        <p className="reserva-titulo">Tu código · {nombreAula(reserva.aula)}</p>
+        <p className="reserva-titulo">Tu llave · {nombreAula(reserva.aula)}</p>
         <span className={`cuenta ${poco ? 'cuenta-poco' : ''}`}>
           <Clock size={14} aria-hidden />
           {minutos}:{resto}
         </span>
       </div>
-      <div className="digitos" aria-label={`Código ${reserva.codigo.split('').join(' ')}`}>
-        {reserva.codigo.split('').map((digito, i) => (
-          <span key={i} aria-hidden>
-            {digito}
-          </span>
-        ))}
-      </div>
+      <p className="reserva-aviso">
+        <strong>El equipo está sacando tu llave.</strong> Retirala de la ventana cuando aparezca.
+      </p>
       <div className={`progreso ${poco ? 'progreso-poco' : ''}`} aria-hidden>
         <div style={{ width: `${fraccion * 100}%` }} />
       </div>
       {equipoOnline === false && (
-        <Alerta tipo="aviso">El equipo está desconectado. El código sigue valiendo hasta que venza.</Alerta>
+        <Alerta tipo="aviso">El equipo se desconectó. Si vuelve antes de que venza el tiempo, entrega la llave.</Alerta>
       )}
-      <ol className="pasos">
-        <li>
-          En el equipo, tocá <kbd>A</kbd>.
-        </li>
-        <li>
-          Ingresá el código y confirmá con <kbd>#</kbd> (<kbd>*</kbd> borra).
-        </li>
-        <li>Retirá la llave cuando aparezca en la ventana.</li>
-      </ol>
+      <p className="suave chico">Si no la sacás en un minuto, el equipo la vuelve a guardar.</p>
       <Alerta>{error}</Alerta>
       <button type="button" className="boton boton-claro boton-ancho boton-chico" onClick={cancelar} disabled={cancelando}>
         <X size={16} aria-hidden />

@@ -133,6 +133,8 @@ export default function Aulas() {
       {tieneReserva && equipoOnline && (
         <Alerta tipo="aviso">Ya tenés una reserva: usala o cancelala para pedir otra llave.</Alerta>
       )}
+      {/* Entrega directa (05/11/2026): la llave sale apenas se pide, y queda un minuto en la ventana */}
+      <p className="suave chico">Pedí la llave cuando estés frente al equipo: sale enseguida.</p>
       <EtiquetaSeccion derecha={`${filtradas.length} resultados`}>Aulas</EtiquetaSeccion>
       {!aulas.datos && !aulas.error && <p className="cargando">Cargando…</p>}
       {aulas.datos && filtradas.length === 0 && <p className="vacio">No hay aulas que coincidan.</p>}
