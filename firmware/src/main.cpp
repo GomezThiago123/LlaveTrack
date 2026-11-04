@@ -28,6 +28,7 @@
 #include "disco.h"
 #include "lcd.h"
 #include "led.h"
+#include "memoria.h"
 #include "motor.h"
 #include "protocolo.h"
 #include "red.h"
@@ -47,6 +48,9 @@ enum class Estado {
   ESPERANDO_DEVOLUCION,  // tecla B: el docente tiene que colgar la llave en la ventana
   SACAR_LLAVE,           // devolucion rechazada: esperando que saquen esa llave de la ventana
   BLOQUEADO,             // muchos codigos mal seguidos: el teclado no responde un rato
+  CONFIRMAR_TERCERO,     // US-20: la llave la retiro otro docente; se confirma con #
+  BUSCANDO_VACIO,        // US-14: devolucion sin conexion; busca un lugar vacio sin el servidor
+  MODO_ALTA,             // US-10: el preceptor acerca un tag nuevo al lector
   ERROR,                 // el disco no anda: no se entrega nada (el LCD dice por que)
 };
 Estado estado = Estado::HOMING;
@@ -69,9 +73,16 @@ String errorParaMandar, detalleError, codigoError;
 // Un aviso ("Gracias", "Codigo invalido") queda en el LCD hasta este momento
 unsigned long avisoHasta = 0;
 
-// El retiro en curso
+// US-15: un retiro que quedo a medias por un corte de luz. Se avisa al servidor al conectarse
+String retiroInterrumpido;
+bool retiroInterrumpidoEnviado = false;
+bool primerReposo = true;  // US-15: la primera vez que llega al reposo, "Equipo listo"
+// US-14: se esta mandando una devolucion guardada sin conexion (la respuesta la saca de la cola)
+bool mandandoGuardada = false;
+
+// El retiro en curso. dni: si el docente se identifico con su DNI en lugar del codigo (US-18)
 struct Retiro {
-  String codigo, uid, aula, apellido;
+  String codigo, dni, uid, aula, apellido, nombre;
   int slot = -1;     // donde dice el servidor que esta la llave
   int intento = 1;   // US-05: el 2do es despues de repetir el homing
   unsigned long ausenteDesde = 0;  // desde cuando el lector no ve la llave (0: la ve)
@@ -85,6 +96,16 @@ int codigosMal = 0;            // rechazados seguidos (se bloquea el teclado al 
 // Tambien vale si la llave ya estaba colgada al apretar B (algunos cuelgan primero).
 String candidato;
 unsigned long candidatoDesde = 0;
+int slotDevolucion = -1;
+// US-20: quien devuelve puede escribir su DNI (opcional) y confirmarlo con #
+String dniDevolucion;
+bool dniConfirmado = false;
+bool devolucionSinConexion = false;  // US-14: B sin conexion
+// US-14: busqueda de un lugar vacio sin el servidor: slot base y cuantos se probaron
+int vacioBase = 0, vacioIntentos = 0;
+// US-10: el ultimo tag que se mando en el modo alta (para no repetirlo)
+String tagAlta;
+unsigned long actividadAlta = 0;
 
 const char *nombre(Estado e) {
   switch (e) {
@@ -99,6 +120,9 @@ const char *nombre(Estado e) {
     case Estado::ESPERANDO_DEVOLUCION: return "ESPERANDO_DEVOLUCION";
     case Estado::SACAR_LLAVE: return "SACAR_LLAVE";
     case Estado::BLOQUEADO: return "BLOQUEADO";
+    case Estado::CONFIRMAR_TERCERO: return "CONFIRMAR_TERCERO";
+    case Estado::BUSCANDO_VACIO: return "BUSCANDO_VACIO";
+    case Estado::MODO_ALTA: return "MODO_ALTA";
     case Estado::ERROR: return "ERROR";
   }
   return "?";
@@ -198,6 +222,23 @@ void actualizarLed() {
 
 void mandarPendientes() {
   if (!redConectado() || protocoloEsperando()) return;
+  if (retiroInterrumpido.length() && !retiroInterrumpidoEnviado) {  // US-15
+    JsonDocument evento;
+    evento["codigo"] = retiroInterrumpido;
+    protocoloEnviar("retiro_interrumpido", evento);
+    retiroInterrumpidoEnviado = true;
+    return;
+  }
+  DevolucionGuardada guardada;
+  if (estado == Estado::REPOSO && memoriaPrimeraDevolucion(guardada)) {  // US-14
+    JsonDocument evento;
+    evento["uid"] = guardada.uid;
+    evento["slot"] = guardada.slot;
+    if (guardada.hora) evento["devueltoEn"] = guardada.hora;
+    protocoloEnviar("devolucion", evento);
+    mandandoGuardada = true;
+    return;
+  }
   if (errorParaMandar.length()) {
     JsonDocument evento;
     evento["error"] = errorParaMandar;
@@ -216,7 +257,12 @@ void mandarPendientes() {
 
 void mandarSolicitudRetiro() {
   JsonDocument evento;
-  evento["codigo"] = retiro.codigo;
+  // Con DNI (US-18) la primera vez; despues el servidor ya dijo el codigo
+  if (retiro.codigo.length()) {
+    evento["codigo"] = retiro.codigo;
+  } else {
+    evento["dni"] = retiro.dni;
+  }
   protocoloEnviar("solicitud_retiro", evento);
   cambiarEstado(Estado::ESPERANDO_SERVIDOR);
 }
@@ -224,9 +270,9 @@ void mandarSolicitudRetiro() {
 // --- Retiro (US-04 y US-05) ---
 
 void mostrarCodigo() {
-  String linea2 = codigoEscrito;
-  while ((int)linea2.length() < CODIGO_DIGITOS) linea2 += "_";
-  lcdMensaje("Ingrese codigo", linea2 + "  #=OK");
+  String linea2 = codigoEscrito + "_";
+  while (linea2.length() < 12) linea2 += " ";
+  lcdMensaje("Codigo o DNI", linea2 + "#=OK");
 }
 
 void empezarIngreso() {
@@ -238,8 +284,11 @@ void empezarIngreso() {
 }
 
 void confirmarCodigo() {
-  if ((int)codigoEscrito.length() != CODIGO_DIGITOS) {
-    lcdMensaje("Son 6 numeros", codigoEscrito);
+  // 6 numeros: el codigo de la reserva. 7 u 8: el DNI (US-18)
+  int largo = codigoEscrito.length();
+  bool esDni = largo >= DNI_MIN_DIGITOS && largo <= DNI_MAX_DIGITOS;
+  if (largo != CODIGO_DIGITOS && !esDni) {
+    lcdMensaje("Codigo: 6 nros", "DNI: 7 u 8 nros");
     return;
   }
   if (!redConectado()) {
@@ -248,8 +297,12 @@ void confirmarCodigo() {
     return;
   }
   retiro = Retiro();
-  retiro.codigo = codigoEscrito;
-  lcdMensaje("Verificando", "el codigo...");
+  if (esDni) {
+    retiro.dni = codigoEscrito;
+  } else {
+    retiro.codigo = codigoEscrito;
+  }
+  lcdMensaje("Verificando", esDni ? "el DNI..." : "el codigo...");
   mandarSolicitudRetiro();
 }
 
@@ -268,12 +321,21 @@ void codigoRechazado(const String &motivo) {
     return;
   }
   String linea1 = motivo == "CODIGO_VENCIDO" ? "Codigo vencido" : "Codigo invalido";
-  aviso(linea1, "Le quedan " + String(CODIGOS_MAL_MAX - codigosMal));
+  String linea2 = "Le quedan " + String(CODIGOS_MAL_MAX - codigosMal);
+  if (motivo == "CREDENCIAL_NO_RECONOCIDA") {  // US-18: DNI que no es de nadie (o desactivado)
+    linea1 = "Credencial no";
+    linea2 = "reconocida";
+  } else if (motivo == "SIN_RESERVA") {
+    linea1 = "No tenes reserva";
+    linea2 = "Pedila en la web";
+  }
+  aviso(linea1, linea2);
   volverAlReposo();
 }
 
 // La llave no aparecio en los dos intentos: no se entrega nada (US-05)
 void llaveNoEncontrada() {
+  memoriaBorrarRetiro();  // US-15: el retiro termino (sin llave)
   aviso("Pedi la llave", "en porteria", 3 * MENSAJE_MS);
   errorParaMandar = "LLAVE_NO_ENCONTRADA";
   detalleError = "uid " + retiro.uid + ", slot " + String(retiro.slot);
@@ -282,6 +344,7 @@ void llaveNoEncontrada() {
 }
 
 void terminarPorTiempo() {
+  memoriaBorrarRetiro();  // US-15
   JsonDocument evento;
   evento["codigo"] = retiro.codigo;
   protocoloEnviar("retiro_timeout", evento);
@@ -300,18 +363,26 @@ void alRespuestaRetiro(bool ok, const String &motivo, JsonDocument &resp) {
     return;
   }
   codigosMal = 0;
+  if (!retiro.codigo.length()) retiro.codigo = resp["codigo"] | "";  // US-18: vino con DNI
+  retiro.nombre = resp["nombre"] | "";
+  memoriaGuardarRetiro(retiro.codigo);  // US-15: si se corta la luz, al volver se cancela
   retiro.uid = resp["uid"].as<String>();
   retiro.slot = resp["slot"] | -1;
   retiro.aula = resp["aula"].as<String>();
   retiro.apellido = resp["apellido"].as<String>();
   Serial.printf("[estado] Retiro: aula %s, uid %s, slot %d (intento %d)\n", retiro.aula.c_str(),
                 retiro.uid.c_str(), retiro.slot, retiro.intento);
-  if (retiro.intento == 1) lcdMensaje("Buscando llave", "Aula " + retiro.aula);
+  if (retiro.intento == 1 && retiro.dni.length()) {
+    lcdMensaje("Hola " + retiro.nombre, "Aula " + retiro.aula);  // US-18
+  } else if (retiro.intento == 1) {
+    lcdMensaje("Buscando llave", "Aula " + retiro.aula);
+  }
   discoBuscar(retiro.uid, retiro.slot);
   cambiarEstado(Estado::MOVIENDO);
 }
 
 void alRespuestaRetiroConfirmado(bool ok, const String &motivo) {
+  memoriaBorrarRetiro();  // US-15
   slotReposo = discoSlot();  // el lugar de la llave quedo vacio frente a la ventana
   if (ok) {
     aviso("Gracias", retiro.apellido);
@@ -328,17 +399,101 @@ void alRespuestaRetiroConfirmado(bool ok, const String &motivo) {
 
 // --- Devolucion (US-06) ---
 
-void empezarDevolucion() {
+void mostrarDevolucion() {
+  if (devolucionSinConexion) {
+    lcdMensaje("Sin conexion", "Cuelgue la llave");  // US-14
+  } else if (!dniDevolucion.length()) {
+    lcdMensaje("Cuelgue la llave", "DNI+# opcional");  // US-20: para devolver una de otro
+  } else {
+    lcdMensaje("Cuelgue la llave", "DNI " + dniDevolucion + (dniConfirmado ? " OK" : " #"));
+  }
+}
+
+void empezarDevolucion(bool sinConexion) {
   candidato = "";
+  dniDevolucion = "";
+  dniConfirmado = false;
+  devolucionSinConexion = sinConexion;
   avisoHasta = 0;
-  lcdMensaje("Cuelgue la", "llave");
+  mostrarDevolucion();
   cambiarEstado(Estado::ESPERANDO_DEVOLUCION);
+}
+
+void mandarDevolucion(bool confirmada) {
+  JsonDocument evento;
+  evento["uid"] = candidato;
+  evento["slot"] = slotDevolucion;
+  if (dniConfirmado) evento["dni"] = dniDevolucion;  // US-20
+  if (confirmada) evento["confirmada"] = true;
+  protocoloEnviar("devolucion", evento);
+  lcdMensaje("Verificando", "la llave...");
+  cambiarEstado(Estado::ESPERANDO_SERVIDOR);
+}
+
+// US-14: sin servidor no se sabe que lugar esta vacio: se prueban los de al lado (+1, -1, +2...)
+// y el lector confirma que no haya nada
+void probarSiguienteVacio() {
+  vacioIntentos++;
+  if (vacioIntentos > 8) {  // no encontro: queda donde esta (la llave sigue en la ventana)
+    cambiarEstado(Estado::REPOSO);
+    return;
+  }
+  int distancia = (vacioIntentos + 1) / 2;
+  int slot = vacioBase + (vacioIntentos % 2 ? distancia : -distancia);
+  slot = ((slot % SLOTS) + SLOTS) % SLOTS;
+  if (slot == SLOT_HOME) {
+    probarSiguienteVacio();
+    return;
+  }
+  discoIrAVacio(slot);
+  cambiarEstado(Estado::BUSCANDO_VACIO);
+}
+
+void guardarDevolucionSinConexion() {
+  time_t ahora = time(nullptr);  // la hora la tomo de internet al conectarse (si ya la tenia)
+  DevolucionGuardada devolucion{candidato, slotDevolucion, ahora > 1700000000 ? (uint32_t)ahora : 0};
+  if (!memoriaAgregarDevolucion(devolucion)) {
+    lcdMensaje("Memoria llena", "Retire la llave");
+    cambiarEstado(Estado::SACAR_LLAVE);
+    return;
+  }
+  Serial.printf("[estado] Devolucion guardada sin conexion: %s en el slot %d (%d guardadas)\n",
+                candidato.c_str(), slotDevolucion, memoriaDevolucionesGuardadas());
+  aviso("Sin conexion", "Devol. guardada", 2 * MENSAJE_MS);
+  vacioBase = slotDevolucion;
+  vacioIntentos = 0;
+  probarSiguienteVacio();
+}
+
+// US-10
+void empezarModoAlta() {
+  candidato = "";
+  tagAlta = "";
+  actividadAlta = millis();
+  avisoHasta = 0;
+  lcdMensaje("Modo alta", "Acerque el tag");
+  cambiarEstado(Estado::MODO_ALTA);
+}
+
+void salirModoAlta() {
+  // El tag nuevo pudo quedar colgado en la ventana: el servidor dice otro lugar vacio
+  inicioPendiente = true;
+  irAlReposoTrasInicio = true;
+  cambiarEstado(Estado::REPOSO);
 }
 
 void alRespuestaDevolucion(bool ok, const String &motivo, JsonDocument &resp) {
   if (!ok) {
     Serial.printf("[estado] Devolucion rechazada: %s\n", motivo.c_str());
-    if (motivo == "ERROR_INTERNO") {
+    if (motivo == "CONFIRMAR_TERCERO") {  // US-20: la tenia otro docente
+      String retiradaPor = resp["retiradaPor"] | "otro";
+      lcdMensaje("Retirada por", retiradaPor.substring(0, 9) + " #=OK");
+      cambiarEstado(Estado::CONFIRMAR_TERCERO);
+      return;
+    }
+    if (motivo == "CREDENCIAL_NO_RECONOCIDA") {
+      lcdMensaje("DNI desconocido", "Retire la llave");
+    } else if (motivo == "ERROR_INTERNO") {
       lcdMensaje("Error servidor", "Retire la llave");
     } else {
       lcdMensaje("Llave no", "reconocida");
@@ -364,8 +519,27 @@ void alResponder(const String &tipo, JsonDocument &resp) {
     if (estado == Estado::ESPERANDO_SERVIDOR) alRespuestaRetiroConfirmado(ok, motivo);
     return;
   }
+  if (tipo == "devolucion" && mandandoGuardada) {
+    // US-14: una devolucion hecha sin conexion. Aceptada o no, sale de la cola (si no, se
+    // reintentaria para siempre); el disco no se mueve
+    mandandoGuardada = false;
+    memoriaQuitarPrimeraDevolucion();
+    Serial.printf("[estado] Devolucion guardada enviada: %s\n", ok ? "registrada" : motivo.c_str());
+    return;
+  }
   if (tipo == "devolucion") {
     if (estado == Estado::ESPERANDO_SERVIDOR) alRespuestaDevolucion(ok, motivo, resp);
+    return;
+  }
+  if (tipo == "retiro_interrumpido") {  // US-15: el servidor ya cancelo la reserva
+    memoriaBorrarRetiro();
+    retiroInterrumpido = "";
+    return;
+  }
+  if (tipo == "tag_leido") {  // US-10
+    if (estado != Estado::MODO_ALTA) return;
+    String aula = resp["aula"] | "";
+    lcdMensaje("Tag " + tagAlta, aula.length() ? "Ya es aula " + aula : "Cargue en la web");
     return;
   }
   if (!ok) {
@@ -394,21 +568,23 @@ void alTecla(char t) {
   switch (estado) {
     case Estado::REPOSO:
       if (t != 'A' && t != 'B') return;
-      if (!redConectado()) {
-        aviso("Sin conexion", redCausaSinConexion());
+      if (t == 'B' && !redConectado()) {
+        empezarDevolucion(true);  // US-14: se guarda y se manda al volver la conexion
+      } else if (!redConectado()) {
+        aviso("Sin conexion", redCausaSinConexion());  // sin conexion no se entregan llaves
       } else if (protocoloEsperando()) {  // todavia no contesto el evento anterior
         aviso("Espere...", "");
       } else if (t == 'A') {
         empezarIngreso();
       } else {
-        empezarDevolucion();
+        empezarDevolucion(false);
       }
       return;
 
     case Estado::INGRESO_CODIGO:
       ultimaTecla = ahora;
       if (t >= '0' && t <= '9') {
-        if ((int)codigoEscrito.length() < CODIGO_DIGITOS) codigoEscrito += t;
+        if ((int)codigoEscrito.length() < DNI_MAX_DIGITOS) codigoEscrito += t;
         mostrarCodigo();
       } else if (t == '*') {
         if (codigoEscrito.length()) codigoEscrito.remove(codigoEscrito.length() - 1);
@@ -434,7 +610,40 @@ void alTecla(char t) {
       return;
 
     case Estado::ESPERANDO_DEVOLUCION:
-      if (t == 'C') cambiarEstado(Estado::REPOSO);
+      if (t == 'C') {
+        cambiarEstado(Estado::REPOSO);
+      } else if (devolucionSinConexion) {
+        return;  // sin conexion no se puede verificar un DNI
+      } else if (t >= '0' && t <= '9' && (int)dniDevolucion.length() < DNI_MAX_DIGITOS) {
+        dniDevolucion += t;  // US-20
+        dniConfirmado = false;
+        mostrarDevolucion();
+      } else if (t == '*' && dniDevolucion.length()) {
+        dniDevolucion.remove(dniDevolucion.length() - 1);
+        dniConfirmado = false;
+        mostrarDevolucion();
+      } else if (t == '#') {
+        int largo = dniDevolucion.length();
+        if (largo >= DNI_MIN_DIGITOS && largo <= DNI_MAX_DIGITOS) {
+          dniConfirmado = true;
+          mostrarDevolucion();
+        } else {
+          lcdMensaje("Cuelgue la llave", "DNI: 7 u 8 nros");
+        }
+      }
+      return;
+
+    case Estado::CONFIRMAR_TERCERO:  // US-20
+      if (t == '#') {
+        mandarDevolucion(true);
+      } else if (t == 'C') {
+        lcdMensaje("No se registro", "Retire la llave");
+        cambiarEstado(Estado::SACAR_LLAVE);
+      }
+      return;
+
+    case Estado::MODO_ALTA:  // US-10
+      if (t == 'C') salirModoAlta();
       return;
 
     default:
@@ -467,12 +676,20 @@ void actualizarEstado() {
         // El lugar no estaba vacio: queda donde esta. En la devolucion se va a notar.
         Serial.printf("[estado] Slot de reposo %d: %s\n", slotReposo, discoTextoResultado(r));
       }
+      if (primerReposo) {  // US-15: despues de prender (o de un corte de luz)
+        primerReposo = false;
+        aviso("Equipo listo", "");
+      }
       cambiarEstado(Estado::REPOSO);
       break;
 
     case Estado::REPOSO:
       if (protocoloPidioRecalibrar()) {
         empezarHoming();
+        break;
+      }
+      if (protocoloPidioModoAlta()) {
+        empezarModoAlta();
         break;
       }
       mostrarReposo();
@@ -512,6 +729,7 @@ void actualizarEstado() {
         // extiende la reserva y dice donde esta ahora
         mandarSolicitudRetiro();
       } else {
+        memoriaBorrarRetiro();  // US-15: el retiro termino (sin llave)
         fallar("Error del disco", "Avisar porteria", "MOTOR_NO_GIRA",
                "el homing no encontro el tag HOME (retiro)", retiro.codigo);
       }
@@ -546,12 +764,15 @@ void actualizarEstado() {
         candidato = tag;
         candidatoDesde = ahora;
       } else if (ahora - candidatoDesde >= DEVOLUCION_ESTABLE_MS) {
-        JsonDocument evento;
-        evento["uid"] = candidato;
-        evento["slot"] = discoSlot();
-        protocoloEnviar("devolucion", evento);
-        lcdMensaje("Verificando", "la llave...");
-        cambiarEstado(Estado::ESPERANDO_SERVIDOR);
+        slotDevolucion = discoSlot();
+        if (devolucionSinConexion || !redConectado()) {
+          guardarDevolucionSinConexion();  // US-14
+          break;
+        }
+        // US-20: escribio un DNI y falta el #. Si en un minuto no lo confirma, se registra como una
+        // devolucion comun (si no, el equipo quedaria esperando y nadie podria retirar)
+        if (dniDevolucion.length() && !dniConfirmado && ahora - desdeEstado < DEVOLUCION_ESPERA_MS) break;
+        mandarDevolucion(false);
         break;
       }
       if (!candidato.length() && ahora - desdeEstado >= DEVOLUCION_ESPERA_MS) {
@@ -567,6 +788,44 @@ void actualizarEstado() {
         cambiarEstado(Estado::REPOSO);
       }
       break;
+
+    case Estado::CONFIRMAR_TERCERO:  // US-20: sin confirmar, no se registra
+      if (ahora - desdeEstado >= CONFIRMAR_TERCERO_MS) {
+        lcdMensaje("No se registro", "Retire la llave");
+        cambiarEstado(Estado::SACAR_LLAVE);
+      }
+      break;
+
+    case Estado::BUSCANDO_VACIO:  // US-14
+      if (r == ResultadoDisco::EN_CURSO) break;
+      if (r == ResultadoDisco::OK) {
+        slotReposo = discoSlot();
+        cambiarEstado(Estado::REPOSO);
+      } else {
+        probarSiguienteVacio();
+      }
+      break;
+
+    case Estado::MODO_ALTA: {  // US-10
+      String tag = discoTagEnVentana();
+      if (!tag.length() || tag == UID_HOME) {
+        candidato = "";
+        if (!tag.length()) tagAlta = "";  // lo sacaron: se puede volver a leer
+      } else if (tag != candidato) {
+        candidato = tag;
+        candidatoDesde = ahora;
+      } else if (tag != tagAlta && ahora - candidatoDesde >= DEVOLUCION_ESTABLE_MS && !protocoloEsperando()) {
+        tagAlta = tag;
+        actividadAlta = ahora;
+        JsonDocument evento;
+        evento["uid"] = tag;
+        evento["slot"] = discoSlot();
+        protocoloEnviar("tag_leido", evento);
+        lcdMensaje("Leyendo tag", tag);
+      }
+      if (ahora - actividadAlta >= MODO_ALTA_MS) salirModoAlta();
+      break;
+    }
 
     case Estado::BLOQUEADO: {
       unsigned long pasaron = ahora - desdeEstado;
@@ -682,6 +941,14 @@ void setup() {
   discoTrazas(trazas);
   redIniciar(protocoloAlMensaje);
   protocoloIniciar();
+  memoriaIniciar();
+  retiroInterrumpido = memoriaRetiroInterrumpido();  // US-15
+  if (retiroInterrumpido.length()) {
+    Serial.printf("[estado] Se corto la luz durante el retiro %s: se avisa al servidor\n",
+                  retiroInterrumpido.c_str());
+  }
+  int guardadas = memoriaDevolucionesGuardadas();  // US-14
+  if (guardadas) Serial.printf("[estado] %d devoluciones guardadas sin conexion\n", guardadas);
   if (lectorOk) {
     empezarHoming();
   } else {

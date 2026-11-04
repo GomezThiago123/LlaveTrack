@@ -25,5 +25,7 @@ bool protocoloRespuesta(JsonDocument &respuesta);
 
 // Aulas cuya llave esta prestada (US-23). Vacia hasta que llega el mensaje retenido.
 const std::vector<String> &protocoloFaltantes();
+// true una vez si el servidor mando el comando modo_alta (US-10)
+bool protocoloPidioModoAlta();
 // true una vez si el servidor mando el comando recalibrar
 bool protocoloPidioRecalibrar();

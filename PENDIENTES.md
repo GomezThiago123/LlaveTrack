@@ -88,9 +88,17 @@ Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/desplie
 - [ ] **Documentos de "Servicios", "Vinculación del ESP32" y "Base de datos":** describen Supabase como API. Lo construido es FastAPI + Mosquitto, con Supabase solo como base.
 - [ ] **Diagrama de bloques:** "Regulador" (dice "Relugador"); el celular va al servidor, no a la base; agregar el broker MQTT; "Motorreductor DC 24 V" (no paso a paso); "Fuente 220/16" (no 12); lector RFID a 3,3 V del ESP32 (no 5 V); un LED bicolor; la posición del disco la da el lector RFID (no hay sensor extra).
 
-## 8. V2 que no se hicieron
+## 8. V2: todas hechas (04/11/2026)
 
-US-14 (devolver sin conexión) · US-15 (corte de luz durante un retiro) · US-18 (retiro con credencial) · US-20 (devolver una llave de otro).
+Servidor y web probados con tests (190). Las que tocan el equipo están escritas en el firmware y compilan, pero **falta probarlas con el equipo real**:
+
+- [ ] **US-18, retiro con DNI:** cargar el DNI del docente en Docentes; en el equipo, A + DNI (7 u 8 números) + #. Tiene que decir "Hola Ana / Aula 214". Un DNI que no es de nadie: "Credencial no reconocida"; sin reserva: "No tenes reserva".
+- [ ] **US-20, devolver una llave de otro:** B, el DNI de otro docente y #, colgar la llave. "Retirada por Perez #=OK", # y "recibida". Al que la tenía le llega un mail, y en Mis llaves dice "La devolvió...".
+- [ ] **US-15, corte de luz:** pedir una llave, A + código + #, y cortar la luz mientras gira. Al volver: "Equipo listo" y la reserva cancelada en la web.
+- [ ] **US-14, devolver sin conexión:** frenar el servidor (o Mosquitto), B y colgar la llave: "Sin conexion / Devol. guardada" y el disco busca otro lugar vacío. Al volver el servidor, la devolución aparece en la web con la hora real.
+- [ ] **US-10, modo alta:** en Equipo, "Dar de alta una llave", acercar un tag al lector, elegir el aula en la web y guardar.
+- [ ] **El simulador** (`backend/simulador/`) todavía no tiene los eventos nuevos (DNI, `retiro_interrumpido`, `tag_leido`). No hace falta para la demo.
+- [ ] **Supabase:** las migraciones nuevas (incidentes resueltos, bajas, hora fin, DNI) se aplican solas al desplegar (`alembic upgrade head` en el Dockerfile). Si se usa Supabase antes, correr `alembic upgrade head` con su `DATABASE_URL`.
 
 ---
 

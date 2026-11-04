@@ -121,16 +121,16 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-07 | Bloqueo por intentos fallidos | MVP | ✅ Hecha |
 | US-08 | Recuperar contraseña | MVP | ✅ Hecha (falta configurar el mail de verdad) |
 | US-09 | Registrar docentes | V2 | ✅ Hecha |
-| US-10 | Dar de alta una llave | V2 | 🟡 El UID se carga a mano (falta el "modo alta" del equipo) |
+| US-10 | Dar de alta una llave | V2 | 🟡 Hecha (04/11): "modo alta" desde la pantalla Equipo; el equipo lee el tag y se asocia a un aula. Falta probarla con el equipo real |
 | US-11 | Dar de baja una llave perdida | V2 | ✅ Hecha (04/11): con motivo; deja de aparecer para retiro, el historial muestra la baja y el último docente, y se repone con un tag nuevo |
 | US-12/13 | Historial por aula y por docente | V2 | ✅ Hecha |
-| US-14 | Devolver sin conexión | V2 | ⬜ Falta |
-| US-15 | Corte de luz durante un retiro | V2 | ⬜ Falta |
+| US-14 | Devolver sin conexión | V2 | 🟡 Hecha (04/11): el equipo guarda la devolución con su hora y la manda al volver la conexión. Falta probarla con el equipo real |
+| US-15 | Corte de luz durante un retiro | V2 | 🟡 Hecha (04/11): al volver la luz el equipo avisa, se cancela la reserva y el LCD dice "Equipo listo". Falta probarla con el equipo real |
 | US-16 | Recordatorio de devolución | V2 | ✅ Hecha (04/11): al pedir la llave el docente dice hasta qué hora usa el aula; 15 min después le llega un mail y a la hora el preceptor la ve "Demorada". El preceptor también puede mandarlo a mano |
 | US-17 | Ver mis llaves | V2 | ✅ Hecha |
-| US-18 | Retiro con credencial | V2 | ⬜ Falta |
+| US-18 | Retiro con credencial | V2 | 🟡 Hecha (04/11): la credencial es el DNI, escrito en el teclado en lugar del código ("Hola Ana / Aula 214"). Falta probarla con el equipo real |
 | US-19 | Exportar reportes | V2 | ✅ Hecha (04/11): botón "Exportar a Excel" en el historial, con los mismos filtros; deshabilitado si no hay movimientos |
-| US-20 | Devolver una llave retirada por otro | V2 | ⬜ Falta (hoy cualquiera la devuelve y queda a nombre de quien la retiró) |
+| US-20 | Devolver una llave retirada por otro | V2 | 🟡 Hecha (04/11): quien devuelve puede escribir su DNI; si la llave era de otro, confirma con # y al titular le llega un mail. Falta probarla con el equipo real |
 | US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto |
 | US-22 | Ver si el equipo está conectado | MVP | ✅ Hecha |
 | US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 El LCD muestra "Faltan: 214" con el equipo real; el LED naranja no se vio (revisar el LED) |

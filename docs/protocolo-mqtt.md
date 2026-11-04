@@ -130,6 +130,9 @@ El servidor responde **cada** evento en `resp`:
 | `CODIGO_VENCIDO` | La reserva existe pero ya venció |
 | `LLAVE_DESCONOCIDA` | El UID no está cargado en el sistema |
 | `SIN_PRESTAMO_ACTIVO` | El UID existe pero esa llave no estaba prestada |
+| `CREDENCIAL_NO_RECONOCIDA` | US-18/US-20: el DNI no es de ningún usuario activo |
+| `SIN_RESERVA` | US-18: el DNI es de un docente sin reserva pendiente |
+| `CONFIRMAR_TERCERO` | US-20: quien devuelve no es quien la retiró; trae `aula` y `retiradaPor`. El equipo reenvía la devolución con `confirmada: true` |
 | `DATOS_INVALIDOS` | El JSON no respeta el formato del evento (ej. código con letras, UID que no es hex, tipo de evento desconocido) |
 | `ERROR_INTERNO` | Falla del servidor. El ESP32 muestra un error y no entrega nada |
 
@@ -145,11 +148,12 @@ Se publica al arrancar y en cada reconexión. Informa la configuración del disc
 `slotsReservados`: slots que nunca llevan llave (ej. el del tag HOME). `slotReposo`: el slot vacío más cercano al 0 (donde queda el disco después del homing), contando que el disco es circular.
 
 ### `solicitud_retiro`
-El docente ingresó un código en el teclado.
+El docente ingresó un código en el teclado, o su **DNI** en lugar del código (US-18: 7 u 8 números; el equipo los distingue por el largo). Va uno de los dos: `codigo` o `dni`. La respuesta trae el `codigo` (con DNI, el equipo lo necesita para confirmar el retiro) y el `nombre`, para el LCD: "Hola Ana / Aula 214".
 
 ```json
 → evt/solicitud_retiro  {"eventId":"equipo-01-7f3a-0042","codigo":"482913"}
-← resp  {"eventId":"equipo-01-7f3a-0042","ok":true,"slot":7,"uid":"04A1B2C3","aula":"214","apellido":"Perez"}
+→ evt/solicitud_retiro  {"eventId":"equipo-01-7f3a-0042","dni":"30111222"}
+← resp  {"eventId":"equipo-01-7f3a-0042","ok":true,"slot":7,"uid":"04A1B2C3","aula":"214","apellido":"Perez","nombre":"Ana","codigo":"482913"}
 ← resp  {"eventId":"equipo-01-7f3a-0042","ok":false,"motivo":"CODIGO_VENCIDO"}
 ```
 Si acepta el código, el servidor extiende la reserva al menos `RETIRO_MARGEN_SEGUNDOS` (120 s), para que no venza mientras el disco gira y el docente retira la llave.
@@ -179,6 +183,10 @@ Se leyó un UID estable en el slot de la ventana después de apretar `B`.
 ← resp  {"eventId":"equipo-01-7f3a-0050","ok":true,"aula":"214","apellido":"Perez","slotReposo":12}
 ← resp  {"eventId":"equipo-01-7f3a-0050","ok":false,"motivo":"SIN_PRESTAMO_ACTIVO"}
 ```
+Campos opcionales:
+- `dni` (US-20): quien devuelve se identificó. Si no es quien la retiró, el servidor responde `CONFIRMAR_TERCERO` (con `aula` y `retiradaPor`) sin registrar nada; el LCD muestra "Retirada por Perez #=OK" y con `#` el equipo reenvía la devolución (evento nuevo) con `confirmada: true`. Queda "devuelta por" y al que la tenía le llega un mail. La respuesta trae `devueltaPor`.
+- `devueltoEn` (US-14): la devolución se hizo sin conexión; es la hora real (segundos desde 1970, UTC). El servidor la usa si cae entre el retiro y ahora.
+
 Si se acepta, el servidor cierra el préstamo activo de esa llave, la pasa a `DISPONIBLE` y actualiza su `slot`. El disco gira a `slotReposo`: el slot vacío más cercano al de la devolución. Es `null` si el disco está lleno.
 
 ### `error`
@@ -197,10 +205,27 @@ Falla del equipo que el servidor registra como **incidente**: el preceptor la ve
 
 Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el **intento 1** el disco va al slot y prueba los vecinos (±1); en el **intento 2** repite el homing y la vuelve a buscar. Si tampoco aparece, el LCD muestra "Pedi la llave" / "en porteria", el disco vuelve a un slot vacío y se manda el `error`. La reserva no se cancela: vence sola.
 
+### `retiro_interrumpido` (US-15)
+Se cortó la luz durante un retiro (el equipo guarda el código en su memoria permanente mientras entrega). Al volver la conexión lo avisa; si la reserva sigue pendiente, el servidor la cancela y la llave vuelve a `DISPONIBLE`. Si el retiro sí se había confirmado, no cambia nada.
+
+```json
+→ evt/retiro_interrumpido  {"eventId":"equipo-01-a1b2-0003","codigo":"482913"}
+← resp  {"eventId":"equipo-01-a1b2-0003","ok":true}
+```
+
+### `tag_leido` (US-10)
+En modo alta, el equipo leyó un tag estable en la ventana. El servidor lo guarda en el dispositivo y la web del preceptor lo muestra para asociarlo a un aula. `aula` no es null si el tag ya es de un aula.
+
+```json
+→ evt/tag_leido  {"eventId":"equipo-01-a1b2-0004","uid":"0A0B0C0D","slot":12}
+← resp  {"eventId":"equipo-01-a1b2-0004","ok":true,"aula":null}
+```
+
 ## Comandos (servidor → ESP32)
 
 | Comando | Payload |
 | --- | --- |
+| `modo_alta` | `{"comando":"modo_alta"}` (US-10): el equipo (en reposo) espera un tag en la ventana y lo manda en `tag_leido`. Sale con `C` o a los 3 minutos sin actividad, y vuelve a pedir un lugar vacío con `inicio` |
 | `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. Lo manda el servidor cuando el preceptor aprieta "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Sirve para sacar al equipo de un error del disco sin desenchufarlo |
 
 ## Reintentos y duplicados
@@ -209,7 +234,7 @@ Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el 
 - El servidor guarda cada evento en `EventoDispositivo` (`eventId` único). Si llega un `eventId` repetido, **no lo vuelve a procesar**, pero reenvía la respuesta que ya había dado (también si fue un rechazo). Si no la reenviara, el ESP32 quedaría reintentando para siempre en los casos en que se perdió la respuesta y no el evento.
 - Excepción: un `ERROR_INTERNO` no se guarda, así el reintento se procesa de nuevo.
 - El evento y sus cambios se guardan en la misma transacción: o queda todo registrado o nada.
-- Sin conexión, el equipo no entrega ni recibe llaves (LCD "Sin conexion").
+- Sin conexión, el equipo no entrega llaves (LCD "Sin conexion"). Sí recibe (US-14): la devolución se guarda con su hora y se manda al volver la conexión.
 
 ## Seguridad del broker
 

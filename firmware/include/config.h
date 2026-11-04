@@ -87,6 +87,15 @@ constexpr unsigned long RETIRO_ESTABLE_MS = 1500;  // la llave dejo de leerse = 
 constexpr unsigned long DEVOLUCION_ESTABLE_MS = 1000;  // una llave colgada que se lee este tiempo
 constexpr unsigned long RETIRO_TIMEOUT_MS = 60000;  // la llave en la ventana y nadie la saca (US-04)
 constexpr int CODIGO_DIGITOS = 6;
+// US-18: el DNI se escribe en lugar del codigo (7 u 8 numeros: el largo dice cual es)
+constexpr int DNI_MIN_DIGITOS = 7;
+constexpr int DNI_MAX_DIGITOS = 8;
+// US-20: devolver una llave de otro docente: cuanto se espera que confirme con #
+constexpr unsigned long CONFIRMAR_TERCERO_MS = 30000;
+// US-14: devoluciones sin conexion que se guardan hasta que vuelva la red
+constexpr int DEVOLUCIONES_OFFLINE_MAX = 10;
+// US-10: el modo alta se cierra solo si no pasa nada en este tiempo
+constexpr unsigned long MODO_ALTA_MS = 180000;
 // Escribiendo el codigo sin tocar ninguna tecla este tiempo: vuelve al reposo
 constexpr unsigned long CODIGO_INACTIVIDAD_MS = 20000;
 // Codigos rechazados seguidos que bloquean el teclado, y por cuanto tiempo

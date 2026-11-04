@@ -23,6 +23,7 @@ bool hayRespuesta = false;
 JsonDocument ultimaRespuesta;
 std::vector<String> faltantes;
 bool recalibrar = false;
+bool modoAlta = false;  // US-10
 
 void mandar() {
   pendiente.enviado = millis();
@@ -69,6 +70,8 @@ void protocoloAlMensaje(const String &sufijo, const byte *datos, unsigned int la
     String comando = doc["comando"] | "";
     if (comando == "recalibrar") {
       recalibrar = true;
+    } else if (comando == "modo_alta") {
+      modoAlta = true;
     } else {
       Serial.printf("[mqtt] Comando desconocido: %s\n", comando.c_str());
     }
@@ -113,4 +116,10 @@ bool protocoloPidioRecalibrar() {
   bool r = recalibrar;
   recalibrar = false;
   return r;
+}
+
+bool protocoloPidioModoAlta() {
+  bool m = modoAlta;
+  modoAlta = false;
+  return m;
 }
