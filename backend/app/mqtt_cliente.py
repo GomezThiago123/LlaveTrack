@@ -61,11 +61,13 @@ class ClienteMqtt:
         self.cliente.connect_async(host, puerto, keepalive=self.keepalive)
         self.cliente.loop_start()  # arranca el hilo de paho
 
-    def mandar_comando(self, device_id: str, comando: str) -> bool:
-        """Publica un comando para el equipo en `cmd` (ej. recalibrar). False si no hay broker."""
+    def mandar_comando(self, device_id: str, comando: str, **datos) -> bool:
+        """Publica un comando para el equipo en `cmd` (ej. recalibrar, o entregar con su codigo).
+        False si no hay broker."""
         if not self.cliente.is_connected():
             return False
-        self.cliente.publish(f"{self.prefijo}/{device_id}/cmd", json.dumps({"comando": comando}), qos=1)
+        mensaje = json.dumps({"comando": comando, **datos})
+        self.cliente.publish(f"{self.prefijo}/{device_id}/cmd", mensaje, qos=1)
         log.info("Comando %s para %s", comando, device_id)
         return True
 

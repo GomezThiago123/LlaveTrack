@@ -60,11 +60,15 @@ class SolicitudRetiro(Evento):
     # El codigo de la reserva o, en su lugar, el DNI del docente (US-18): uno de los dos
     codigo: str | None = Field(default=None, pattern=r"^\d{6}$")
     dni: str | None = Field(default=None, pattern=r"^\d{7,8}$")
+    # Con el DNI, el aula que pide en el teclado (05/11/2026: el docente que olvido el celular)
+    aula: str | None = Field(default=None, min_length=1, max_length=40)
 
     @model_validator(mode="after")
     def codigo_o_dni(self):
         if (self.codigo is None) == (self.dni is None):
             raise ValueError("hace falta el codigo o el dni (uno solo)")
+        if self.aula is not None and self.dni is None:
+            raise ValueError("el aula va con el dni")
         return self
 
 
@@ -123,7 +127,7 @@ def _ejecutar(sesion: Session, device_id: str, tipo: str, evento) -> dict:
         case "inicio":
             return equipo.inicio(sesion, device_id, evento.slots_totales, evento.slots_reservados)
         case "solicitud_retiro":
-            return equipo.solicitud_retiro(sesion, evento.codigo, dni=evento.dni)
+            return equipo.solicitud_retiro(sesion, evento.codigo, dni=evento.dni, aula=evento.aula)
         case "retiro_confirmado":
             return equipo.retiro_confirmado(sesion, evento.codigo, evento.uid, evento.slot)
         case "retiro_timeout":

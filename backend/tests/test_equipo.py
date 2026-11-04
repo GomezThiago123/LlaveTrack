@@ -461,3 +461,32 @@ def test_tag_leido_queda_guardado_para_la_web(fabrica_sesiones):
         assert (dispositivo.ultimo_tag_uid, dispositivo.ultimo_tag_slot) == ("0A0B0C0D", 12)
     # Un tag que ya es de un aula: el equipo lo avisa en el LCD
     assert enviar(fabrica_sesiones, "tag_leido", uid=UID_214, slot=12)["aula"] == "214"
+
+
+# --- Teclado (05/11/2026): DNI + aula, para el docente que olvido el celular ---
+
+
+def test_dni_y_aula_reserva_y_entrega_en_el_momento(fabrica_sesiones):
+    res = enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA, aula="214")
+    assert res["ok"] is True and res["aula"] == "214" and res["nombre"] == "Ana" and len(res["codigo"]) == 6
+    assert llave_214(fabrica_sesiones).estado == EstadoLlave.RESERVADA
+    # Y el retiro sigue como siempre, con el codigo que vino en la respuesta
+    enviar(fabrica_sesiones, "retiro_confirmado", codigo=res["codigo"], uid=UID_214, slot=1)
+    assert llave_214(fabrica_sesiones).estado == EstadoLlave.PRESTADA
+
+
+def test_dni_y_aula_con_problemas(fabrica_sesiones):
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA, aula="999")["motivo"] == "AULA_NO_ENCONTRADA"
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni="99999999", aula="214")["motivo"] == "CREDENCIAL_NO_RECONOCIDA"
+    reservar(fabrica_sesiones, email="bruno.gomez@example.com")  # Bruno tiene la 214
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA, aula="214")["motivo"] == "LLAVE_NO_DISPONIBLE"
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_BRUNO, aula="215")["motivo"] == "YA_TIENE_RESERVA"
+
+
+def test_dni_y_aula_usa_la_reserva_que_ya_tenia(fabrica_sesiones):
+    codigo = reservar(fabrica_sesiones)
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA, aula="214")["codigo"] == codigo
+
+
+def test_el_aula_sin_dni_es_dato_invalido(fabrica_sesiones):
+    assert enviar(fabrica_sesiones, "solicitud_retiro", codigo="123456", aula="214")["motivo"] == "DATOS_INVALIDOS"

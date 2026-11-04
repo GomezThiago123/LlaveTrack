@@ -239,3 +239,28 @@ def test_la_reserva_pendiente_sigue_valiendo_si_el_equipo_se_cae(sesion):
     reservas.vencer_reservas(sesion)
     sesion.refresh(reserva)
     assert reserva.estado == EstadoReserva.PENDIENTE
+
+
+# --- Entrega directa (05/11/2026): pedir la llave en la web ya la manda a entregar ---
+
+
+def test_pedir_la_llave_le_manda_entregar_al_equipo(cliente, ingresar):
+    from app.main import app
+
+    ingresar("ana.perez@example.com")
+    aula_id = cliente.get("/api/aulas").json()[0]["id"]
+    res = cliente.post("/api/reservas", json={"aulaId": aula_id})
+    assert res.status_code == 201
+    assert app.state.cliente_mqtt.comandos == [("equipo-01", "entregar", {"codigo": res.json()["codigo"]})]
+
+
+def test_si_no_se_puede_avisar_al_equipo_la_reserva_se_cancela(cliente, ingresar, monkeypatch):
+    from app.main import app
+
+    monkeypatch.setattr(app.state.cliente_mqtt, "mandar_comando", lambda *a, **k: False)
+    ingresar("ana.perez@example.com")
+    aula = cliente.get("/api/aulas").json()[0]
+    res = cliente.post("/api/reservas", json={"aulaId": aula["id"]})
+    assert res.status_code == 503 and res.json()["error"]["codigo"] == "SIN_BROKER"
+    assert cliente.get("/api/reservas/activa").json() is None
+    assert next(a for a in cliente.get("/api/aulas").json() if a["id"] == aula["id"])["estado"] == "DISPONIBLE"

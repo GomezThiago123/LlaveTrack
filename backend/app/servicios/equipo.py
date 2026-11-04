@@ -22,7 +22,8 @@ from app.modelos import (
     Usuario,
 )
 from app import correo
-from app.servicios.reservas import _cerrar_reserva, vencer_reservas
+from app.errores import ErrorNegocio
+from app.servicios.reservas import _cerrar_reserva, crear_reserva, vencer_reservas
 from app.tipos import ahora_utc
 
 
@@ -68,7 +69,11 @@ def inicio(sesion: Session, device_id: str, slots_totales: int, slots_reservados
 
 
 def solicitud_retiro(
-    sesion: Session, codigo: str | None, ahora: datetime | None = None, dni: str | None = None
+    sesion: Session,
+    codigo: str | None,
+    ahora: datetime | None = None,
+    dni: str | None = None,
+    aula: str | None = None,
 ) -> dict:
     """El docente ingreso un codigo (o su DNI, US-18). Si es valido, dice que llave entregar y donde
     esta. La respuesta trae el codigo (con DNI, el equipo lo necesita para confirmar el retiro) y el
@@ -81,6 +86,8 @@ def solicitud_retiro(
         reserva = sesion.scalar(
             select(Reserva).where(Reserva.usuario_id == usuario.id, Reserva.estado == EstadoReserva.PENDIENTE)
         )
+        if aula is not None:
+            reserva = _reservar_desde_el_teclado(sesion, usuario, aula, reserva, ahora)
         if reserva is None:
             raise RechazoEquipo("SIN_RESERVA")
         codigo = reserva.codigo
@@ -110,6 +117,24 @@ def solicitud_retiro(
         "nombre": reserva.usuario.nombre,
         "codigo": codigo,
     }
+
+
+def _reservar_desde_el_teclado(
+    sesion: Session, usuario: Usuario, nombre_aula: str, pendiente: Reserva | None, ahora: datetime
+) -> Reserva:
+    """El docente olvido el celular: con su DNI pide el aula en el teclado y se reserva ahi mismo.
+    Si ya tenia esa misma aula reservada (ej. desde la web), se usa esa reserva."""
+    aula = sesion.scalar(select(Aula).where(Aula.nombre == nombre_aula))
+    if aula is None:
+        raise RechazoEquipo("AULA_NO_ENCONTRADA")
+    if pendiente is not None:
+        if pendiente.llave.aula_id == aula.id:
+            return pendiente
+        raise RechazoEquipo("YA_TIENE_RESERVA")
+    try:
+        return crear_reserva(sesion, usuario, aula.id, ahora)
+    except ErrorNegocio as error:  # LLAVE_NO_DISPONIBLE, AULA_EN_REVISION...
+        raise RechazoEquipo(error.codigo) from error
 
 
 def retiro_confirmado(sesion: Session, codigo: str, uid: str, slot: int) -> dict:

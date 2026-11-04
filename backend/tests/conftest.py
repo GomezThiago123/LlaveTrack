@@ -60,8 +60,22 @@ def cliente(fabrica_sesiones):
             yield s
 
     app.dependency_overrides[obtener_sesion] = sesion_de_test
+    # Sin broker de verdad: los comandos al equipo (ej. entregar al pedir una llave) quedan anotados
+    app.state.cliente_mqtt = BrokerDePrueba()
     yield TestClient(app)
     app.dependency_overrides.clear()
+    app.state.cliente_mqtt = None
+
+
+class BrokerDePrueba:
+    """Hace de cliente MQTT en los tests de la API: acepta los comandos y los guarda."""
+
+    def __init__(self):
+        self.comandos: list[tuple[str, str, dict]] = []
+
+    def mandar_comando(self, device_id, comando, **datos):
+        self.comandos.append((device_id, comando, datos))
+        return True
 
 
 
