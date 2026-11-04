@@ -2,11 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.auth import preceptor_actual
 from app.db import obtener_sesion
+from app.errores import ErrorNegocio
 from app.esquemas import EquipoSalida, LlaveEquipo, PedidoRfid
 from app.modelos import Llave, Usuario
 from app.servicios import llaves
@@ -36,6 +37,19 @@ def ver_equipo(sesion: SesionDep, _preceptor: PreceptorDep) -> EquipoSalida:
         slots_reservados=dispositivo.slots_reservados if dispositivo else [],
         llaves=[_llave(llave) for llave in lista],
     )
+
+
+@router.post("/equipo/recalibrar", status_code=202)
+def recalibrar(request: Request, sesion: SesionDep, _preceptor: PreceptorDep) -> None:
+    """Solo preceptor y admin. El equipo repite el homing: sirve para sacarlo de un error
+    del disco (ej. "Error del disco / Avisar porteria") sin tener que desenchufarlo."""
+    dispositivo, online, _ = llaves.estado_equipo(sesion)
+    sesion.commit()
+    if dispositivo is None or not online:
+        raise ErrorNegocio(409, "EQUIPO_DESCONECTADO", "El equipo no está conectado.")
+    cliente = getattr(request.app.state, "cliente_mqtt", None)
+    if cliente is None or not cliente.mandar_comando(dispositivo.device_id, "recalibrar"):
+        raise ErrorNegocio(503, "SIN_BROKER", "El servidor no está conectado al broker MQTT.")
 
 
 @router.put("/llaves/{llave_id}/rfid")

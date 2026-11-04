@@ -261,3 +261,60 @@ def test_docente_no_ve_el_equipo_ni_cambia_tags(cliente, ingresar, fabrica_sesio
         id_llave = s.scalar(select(Llave.id))
     assert cliente.get("/api/equipo").status_code == 403
     assert cliente.put(f"/api/llaves/{id_llave}/rfid", json={"rfidUid": "DEADBEEF"}).status_code == 403
+
+
+# --- Recalibrar el disco desde la web ---
+
+
+class BrokerFalso:
+    def __init__(self, conectado=True):
+        self.conectado = conectado
+        self.comandos = []
+
+    def mandar_comando(self, device_id, comando):
+        if self.conectado:
+            self.comandos.append((device_id, comando))
+        return self.conectado
+
+
+def test_el_preceptor_manda_recalibrar_al_equipo(cliente, ingresar, monkeypatch):
+    from app.main import app
+
+    broker = BrokerFalso()
+    monkeypatch.setattr(app.state, "cliente_mqtt", broker, raising=False)
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post("/api/equipo/recalibrar")
+    assert res.status_code == 202, res.text
+    assert broker.comandos == [("equipo-01", "recalibrar")]
+
+
+def test_recalibrar_es_solo_para_el_preceptor(cliente, ingresar, monkeypatch):
+    from app.main import app
+
+    monkeypatch.setattr(app.state, "cliente_mqtt", BrokerFalso(), raising=False)
+    ingresar(ANA)
+    assert cliente.post("/api/equipo/recalibrar").status_code == 403
+
+
+def test_recalibrar_con_el_equipo_desconectado(cliente, ingresar, monkeypatch, fabrica_sesiones):
+    from app.main import app
+    from app.modelos import Dispositivo
+
+    with fabrica_sesiones() as s:
+        s.execute(update(Dispositivo).values(online=False))
+        s.commit()
+    monkeypatch.setattr(app.state, "cliente_mqtt", BrokerFalso(), raising=False)
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post("/api/equipo/recalibrar")
+    assert res.status_code == 409
+    assert res.json()["error"]["codigo"] == "EQUIPO_DESCONECTADO"
+
+
+def test_recalibrar_sin_broker(cliente, ingresar, monkeypatch):
+    from app.main import app
+
+    monkeypatch.setattr(app.state, "cliente_mqtt", BrokerFalso(conectado=False), raising=False)
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post("/api/equipo/recalibrar")
+    assert res.status_code == 503
+    assert res.json()["error"]["codigo"] == "SIN_BROKER"

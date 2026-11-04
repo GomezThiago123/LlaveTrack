@@ -9,6 +9,42 @@ import { useRefresco } from '../refresco';
 import { useSesion } from '../sesion';
 import { hora } from '../utiles';
 
+// El equipo repite el homing (busca el tag HOME y mide la vuelta). Sirve para sacarlo de un error
+// del disco ("Error del disco / Avisar porteria") sin desenchufarlo.
+function Recalibrar({ online }: { online: boolean }) {
+  const { manejarError } = useSesion();
+  const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
+  const [mandando, setMandando] = useState(false);
+
+  async function recalibrar() {
+    if (!window.confirm('El disco va a dar una o dos vueltas para ubicarse. ¿Seguro?')) return;
+    setMandando(true);
+    setMensaje(null);
+    try {
+      await api.recalibrar();
+      setMensaje({ tipo: 'ok', texto: 'Listo: el equipo está buscando el HOME (tarda hasta un minuto y medio).' });
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: manejarError(err) });
+    } finally {
+      setMandando(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="boton boton-claro boton-chico boton-ancho separado"
+        onClick={recalibrar}
+        disabled={!online || mandando}
+      >
+        Recalibrar el disco
+      </button>
+      {mensaje && <Alerta tipo={mensaje.tipo}>{mensaje.texto}</Alerta>}
+    </>
+  );
+}
+
 export default function Equipo() {
   const { datos, error, recargar } = useRefresco((automatico) => api.equipo(automatico));
   const [verTodas, setVerTodas] = useState(false);
@@ -48,6 +84,7 @@ export default function Equipo() {
                 <dd>{datos.slotsReservados.join(', ') || '—'}</dd>
               </div>
             </dl>
+            <Recalibrar online={datos.online} />
           </section>
 
           {datos.slotsTotales > 0 && (

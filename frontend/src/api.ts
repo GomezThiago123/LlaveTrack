@@ -186,6 +186,7 @@ export const api = {
   cambiarActivo: (usuarioId: number, activo: boolean) =>
     pedir<UsuarioDetalle>(`/usuarios/${usuarioId}`, { metodo: 'PATCH', cuerpo: { activo } }),
   equipo: (automatico = false) => pedir<Equipo>('/equipo', { automatico }),
+  recalibrar: () => pedir<null>('/equipo/recalibrar', { metodo: 'POST' }), // repite el homing
   cambiarRfid: (llaveId: number, rfidUid: string) => // US-10
     pedir<LlaveEquipo>(`/llaves/${llaveId}/rfid`, { metodo: 'PUT', cuerpo: { rfidUid } }),
 };

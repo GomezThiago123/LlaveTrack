@@ -15,12 +15,14 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(m
 
 
 @asynccontextmanager
-async def ciclo_de_vida(_app: FastAPI):
+async def ciclo_de_vida(aplicacion: FastAPI):
     """Al arrancar el servidor se conecta a MQTT; al apagarlo se desconecta."""
     cliente_mqtt = None
     if config.mqtt_habilitado:
         cliente_mqtt = ClienteMqtt(SesionLocal)
         cliente_mqtt.iniciar()
+    # Las rutas que mandan comandos al equipo (ej. recalibrar) lo buscan aca
+    aplicacion.state.cliente_mqtt = cliente_mqtt
     yield
     if cliente_mqtt:
         cliente_mqtt.detener()

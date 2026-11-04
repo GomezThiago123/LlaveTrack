@@ -72,11 +72,11 @@ Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/desplie
 
 - [ ] Probar con el equipo real y medir el tiempo de un ciclo completo de retiro y devolución.
 
-### Problemas encontrados al revisar el código (03/11/2026, sin arreglar)
+### Problemas encontrados al revisar el código (03/11/2026, arreglados el 04/11/2026)
 
-- [ ] **Retiro que no se registra:** si sacan la llave en los últimos 1,5 s antes de los 60 s, se manda `retiro_timeout` y no `retiro_confirmado` ([main.cpp](firmware/src/main.cpp), estado `ESPERANDO_RETIRO`). La web muestra disponible una llave que no está.
-- [ ] **La sesión puede vencer con el celular bloqueado:** el refresco se saltea con la pestaña oculta ([utiles.ts](frontend/src/utiles.ts)), y a los 60 s pide login otra vez. El código reaparece si la reserva sigue vigente.
-- [ ] **`recalibrar` no existe en el servidor:** el firmware lo escucha, pero nadie lo manda. Un equipo en `ERROR` solo sale reiniciándolo o con `h` por el Monitor Serie.
+- [x] **Retiro que no se registra:** si sacaban la llave en los últimos 1,5 s antes de los 60 s, se mandaba `retiro_timeout` y no `retiro_confirmado`. Ahora, si la llave ya no se ve, primero se confirma el retiro. **Falta cargarlo en la placa** (junto con el arreglo de la tecla B).
+- [x] **La sesión podía vencer con el celular bloqueado:** ahora el servidor no da por vencida la sesión de alguien con una reserva pendiente (vigente). Cuando retira la llave o la reserva vence, vuelve la regla de los 60 s.
+- [x] **`recalibrar` no existía en el servidor:** ahora el preceptor tiene el botón "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Probado contra Mosquitto: el comando llega al tópico `cmd` del equipo. Falta verlo con la placa.
 
 ## 7. Defensa y documentos de clase
 

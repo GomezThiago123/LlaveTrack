@@ -61,6 +61,14 @@ class ClienteMqtt:
         self.cliente.connect_async(host, puerto, keepalive=self.keepalive)
         self.cliente.loop_start()  # arranca el hilo de paho
 
+    def mandar_comando(self, device_id: str, comando: str) -> bool:
+        """Publica un comando para el equipo en `cmd` (ej. recalibrar). False si no hay broker."""
+        if not self.cliente.is_connected():
+            return False
+        self.cliente.publish(f"{self.prefijo}/{device_id}/cmd", json.dumps({"comando": comando}), qos=1)
+        log.info("Comando %s para %s", comando, device_id)
+        return True
+
     def detener(self) -> None:
         # Apagado prolijo: el LWT solo se publica si se corta, asi que avisa a mano
         if self.cliente.is_connected():

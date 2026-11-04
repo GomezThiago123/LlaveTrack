@@ -201,7 +201,7 @@ Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el 
 
 | Comando | Payload |
 | --- | --- |
-| `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. El firmware lo atiende, pero el servidor todavía no lo manda: se puede publicar a mano con MQTTX |
+| `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. Lo manda el servidor cuando el preceptor aprieta "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Sirve para sacar al equipo de un error del disco sin desenchufarlo |
 
 ## Reintentos y duplicados
 
