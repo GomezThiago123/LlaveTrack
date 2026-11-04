@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import config
 from app.errores import ErrorNegocio
-from app.modelos import RecuperacionClave, Sesion, Usuario
+from app.modelos import EstadoReserva, RecuperacionClave, Reserva, Sesion, Usuario
 from app.tipos import ahora_utc
 
 # bcrypt solo usa los primeros 72 bytes de la contrasena (y la version 5 rechaza las mas largas)
@@ -109,10 +109,15 @@ def usuario_de_sesion(
 
     Cada uso renueva la sesion: vence tras SESION_SEGUNDOS *sin actividad* (US-01).
     renovar=False para los refrescos automaticos de la web: no son actividad del usuario.
+    Excepcion: no vence mientras el usuario tiene una reserva pendiente. Va camino al equipo con
+    el codigo y el celular bloqueado no refresca la web: al desbloquearlo tiene que seguir viendo
+    el codigo, no el login. Cuando retira la llave o la reserva vence, vuelve la regla de siempre.
     """
     ahora = ahora or ahora_utc()
     registro = sesion.scalar(select(Sesion).where(Sesion.token_hash == _hash_token(token)))
-    if registro is None or registro.ultima_actividad < _limite(ahora) or not registro.usuario.activo:
+    if registro is None or not registro.usuario.activo:
+        return None
+    if registro.ultima_actividad < _limite(ahora) and not _tiene_reserva_pendiente(sesion, registro.usuario_id, ahora):
         return None
     if renovar:
         registro.ultima_actividad = ahora
@@ -121,6 +126,17 @@ def usuario_de_sesion(
 
 def cerrar_sesion(sesion: Session, token: str) -> None:
     sesion.execute(delete(Sesion).where(Sesion.token_hash == _hash_token(token)))
+
+
+def _tiene_reserva_pendiente(sesion: Session, usuario_id: int, ahora: datetime) -> bool:
+    # expira_en > ahora: el vencimiento es perezoso, puede seguir PENDIENTE una que ya vencio
+    return sesion.scalar(
+        select(Reserva.id).where(
+            Reserva.usuario_id == usuario_id,
+            Reserva.estado == EstadoReserva.PENDIENTE,
+            Reserva.expira_en > ahora,
+        )
+    ) is not None
 
 
 def _limite(ahora: datetime) -> datetime:

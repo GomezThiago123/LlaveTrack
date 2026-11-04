@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app import correo
 from app.errores import ErrorNegocio
-from app.modelos import Sesion, Usuario
+from app.modelos import Llave, Sesion, Usuario
 from app.servicios import auth
 from app.tipos import ahora_utc
 
@@ -90,6 +90,21 @@ def test_sesion_vence_tras_60_segundos_sin_actividad(sesion):
     sesion.flush()
     assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=59), renovar=False) is not None
     assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=61)) is None
+
+
+def test_con_una_reserva_pendiente_la_sesion_no_vence(sesion):
+    """El docente va al equipo con el celular bloqueado: al desbloquearlo sigue viendo el codigo."""
+    from app.servicios import reservas
+
+    ahora = ahora_utc()
+    usuario, token = auth.login(sesion, ANA, CLAVE, ahora)
+    aula_id = sesion.scalars(select(Llave.aula_id)).first()
+    reservas.crear_reserva(sesion, usuario, aula_id, ahora)  # vence a los 2 minutos
+    sesion.flush()
+    # 90 s sin actividad: con la reserva pendiente, la sesion sigue
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=90), renovar=False) is not None
+    # Vencida la reserva (2 min), vuelve la regla de los 60 s
+    assert auth.usuario_de_sesion(sesion, token, ahora + timedelta(seconds=125), renovar=False) is None
 
 
 def test_cada_uso_renueva_la_sesion(sesion):
