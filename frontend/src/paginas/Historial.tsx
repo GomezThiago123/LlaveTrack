@@ -136,6 +136,7 @@ export default function Historial() {
                   <p className="mono chico">
                     {fechaCorta(p.retiradoEn)} · {hora(p.retiradoEn)} → {abierto ? '--:--' : hora(p.devueltoEn!)}
                   </p>
+                  {p.devueltoPor && <p className="chico">Devuelta por terceros: {p.devueltoPor}</p>}
                 </div>
                 <span className="mono chico">
                   {abierto ? 'Sin devolver' : p.perdida ? 'Perdida' : duracion(p.retiradoEn, p.devueltoEn)}

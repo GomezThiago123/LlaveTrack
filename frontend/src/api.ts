@@ -69,6 +69,7 @@ export interface Prestamo {
   horaFin: string | null; // US-16: hasta que hora dijo que usaba el aula
   avisoAutomaticoEn: string | null; // US-16: el mail de los 15 minutos
   demorada: boolean; // US-16: sigue sin devolver una hora despues de la hora fin
+  devueltoPor: string | null; // US-20: si la devolvio otro docente
 }
 
 // US-11: una llave perdida
@@ -93,6 +94,7 @@ export interface FiltrosHistorial {
 export interface UsuarioDetalle extends Usuario {
   activo: boolean;
   tieneClave: boolean; // false = todavia no uso el link del mail de alta
+  dni: string | null; // US-18 y US-20: para identificarse en el equipo
 }
 
 export interface LlaveEquipo {
@@ -110,6 +112,8 @@ export interface Equipo {
   slotsTotales: number;
   slotsReservados: number[];
   llaves: LlaveEquipo[];
+  // US-10: el ultimo tag que leyo el equipo en modo alta
+  ultimoTag: { uid: string; slot: number | null; leidoEn: string; aula: string | null } | null;
 }
 
 /** Error que devuelve el servidor: { error: { codigo, mensaje } } */
@@ -208,12 +212,17 @@ export const api = {
   recordatorio: (prestamoId: number) => // US-16
     pedir<Prestamo>(`/prestamos/${prestamoId}/recordatorio`, { metodo: 'POST' }),
   usuarios: (automatico = false) => pedir<UsuarioDetalle[]>('/usuarios', { automatico }), // US-09
-  altaDocente: (datos: { nombre: string; apellido: string; email: string; telefono: string }) =>
-    pedir<UsuarioDetalle>('/usuarios', { metodo: 'POST', cuerpo: datos }),
+  altaDocente: (datos: { nombre: string; apellido: string; email: string; telefono: string; dni: string }) =>
+    pedir<UsuarioDetalle>('/usuarios', { metodo: 'POST', cuerpo: { ...datos, dni: datos.dni || undefined } }),
+  cambiarDni: (usuarioId: number, dni: string) => // US-18: "" lo borra
+    pedir<UsuarioDetalle>(`/usuarios/${usuarioId}`, { metodo: 'PATCH', cuerpo: { dni } }),
   cambiarActivo: (usuarioId: number, activo: boolean) =>
     pedir<UsuarioDetalle>(`/usuarios/${usuarioId}`, { metodo: 'PATCH', cuerpo: { activo } }),
   equipo: (automatico = false) => pedir<Equipo>('/equipo', { automatico }),
   recalibrar: () => pedir<null>('/equipo/recalibrar', { metodo: 'POST' }), // repite el homing
+  modoAlta: () => pedir<null>('/equipo/modo-alta', { metodo: 'POST' }), // US-10: el equipo espera un tag
+  altaLlave: (datos: { aula: string; rfidUid: string; slot: number }) => // US-10
+    pedir<LlaveEquipo>('/llaves', { metodo: 'POST', cuerpo: datos }),
   // US-10. Con slot: donde quedo colgada (obligatorio para reponer una llave de baja, US-11)
   cambiarRfid: (llaveId: number, rfidUid: string, slot?: number) =>
     pedir<LlaveEquipo>(`/llaves/${llaveId}/rfid`, { metodo: 'PUT', cuerpo: { rfidUid, slot } }),

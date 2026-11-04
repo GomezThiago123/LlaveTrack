@@ -45,6 +45,89 @@ function Recalibrar({ online }: { online: boolean }) {
   );
 }
 
+// US-10: el equipo deja un lugar vacio en la ventana y espera un tag. Lo que lee aparece aca
+// (se actualiza cada 5 s): se elige el aula (una nueva o una con la llave de baja) y se guarda.
+function ModoAlta({ equipo, alGuardar }: { equipo: DatosEquipo; alGuardar: () => void }) {
+  const { manejarError } = useSesion();
+  const [pedido, setPedido] = useState<number | null>(null); // cuando se pidio el modo alta
+  const [aula, setAula] = useState('');
+  const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
+  const tag = equipo.ultimoTag;
+  // Solo cuenta un tag leido despues de apretar el boton
+  const tagNuevo = tag && pedido !== null && new Date(tag.leidoEn).getTime() >= pedido ? tag : null;
+  const sinLlave = equipo.llaves.filter((l) => l.estado === 'BAJA').map((l) => l.aula);
+
+  async function empezar() {
+    setMensaje(null);
+    try {
+      await api.modoAlta();
+      setPedido(Date.now() - 2000);
+      setMensaje({ tipo: 'ok', texto: 'El equipo espera el tag: acercalo al lector, en el lugar vacío de la ventana.' });
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: manejarError(err) });
+    }
+  }
+
+  async function guardar(e: FormEvent) {
+    e.preventDefault();
+    if (!tagNuevo || tagNuevo.slot === null) return;
+    try {
+      await api.altaLlave({ aula: aula.trim(), rfidUid: tagNuevo.uid, slot: tagNuevo.slot });
+      setMensaje({ tipo: 'ok', texto: `Listo: la llave del aula ${aula.trim()} quedó en el lugar ${tagNuevo.slot}.` });
+      setPedido(null);
+      setAula('');
+      alGuardar();
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: manejarError(err) }); // ej. "Este tag ya pertenece al aula 214."
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="boton boton-claro boton-chico boton-ancho separado"
+        onClick={empezar}
+        disabled={!equipo.online}
+      >
+        Dar de alta una llave (modo alta)
+      </button>
+      {mensaje && <Alerta tipo={mensaje.tipo}>{mensaje.texto}</Alerta>}
+      {tagNuevo && (
+        <form className="separado" onSubmit={guardar}>
+          <p>
+            Tag leído: <strong className="mono">{tagNuevo.uid}</strong>
+            {tagNuevo.slot !== null && <span className="suave"> · lugar {tagNuevo.slot}</span>}
+          </p>
+          {tagNuevo.aula ? (
+            <p className="alerta alerta-aviso">Este tag ya pertenece al aula {tagNuevo.aula}.</p>
+          ) : (
+            <div className="fila">
+              <input
+                className="crece"
+                required
+                list="aulas-sin-llave"
+                placeholder="Aula (ej. 105)"
+                aria-label="Aula de la llave"
+                value={aula}
+                onChange={(e) => setAula(e.target.value)}
+              />
+              <datalist id="aulas-sin-llave">
+                {sinLlave.map((a) => (
+                  <option key={a} value={a} />
+                ))}
+              </datalist>
+              <button type="submit" className="boton boton-chico">
+                Guardar
+              </button>
+            </div>
+          )}
+        </form>
+      )}
+    </>
+  );
+}
+
 export default function Equipo() {
   const { datos, error, recargar } = useRefresco((automatico) => api.equipo(automatico));
   const [verTodas, setVerTodas] = useState(false);
@@ -85,6 +168,7 @@ export default function Equipo() {
               </div>
             </dl>
             <Recalibrar online={datos.online} />
+            <ModoAlta equipo={datos} alGuardar={recargar} />
           </section>
 
           {datos.slotsTotales > 0 && (
@@ -134,7 +218,7 @@ export default function Equipo() {
             ))}
           </ul>
           <p className="suave chico">
-            Los UID reales los muestra el modo diagnóstico del equipo (mantener <kbd>D</kbd> al encenderlo).
+            Para dar de alta una llave nueva, usá el modo alta (arriba): el equipo lee el tag y lo muestra acá.
           </p>
         </>
       )}

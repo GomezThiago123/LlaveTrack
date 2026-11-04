@@ -40,6 +40,8 @@ export default function MisLlaves() {
                     <p className="mono suave chico">
                       {hora(p.retiradoEn)} → {hora(p.devueltoEn!)}
                     </p>
+                    {/* US-20: el aviso en la app de que la devolvio otro docente */}
+                    {p.devueltoPor && <p className="chico">La devolvió {p.devueltoPor}</p>}
                   </div>
                   <span className="mono suave chico">{duracion(p.retiradoEn, p.devueltoEn)}</span>
                 </li>

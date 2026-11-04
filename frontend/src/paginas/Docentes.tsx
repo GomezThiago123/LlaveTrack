@@ -9,7 +9,7 @@ import { useRefresco } from '../refresco';
 import { useSesion } from '../sesion';
 import { TEXTO_ROL } from '../utiles';
 
-const VACIO = { nombre: '', apellido: '', email: '', telefono: '' };
+const VACIO = { nombre: '', apellido: '', email: '', telefono: '', dni: '' };
 
 export default function Docentes() {
   const { usuario } = useSesion();
@@ -104,6 +104,11 @@ function FormularioAlta({ alCrear }: { alCrear: () => void }) {
         Teléfono (opcional)
         <input type="tel" autoComplete="off" {...campo('telefono')} />
       </label>
+      <label>
+        DNI (opcional, sin puntos)
+        <input inputMode="numeric" pattern="\d{7,8}" autoComplete="off" {...campo('dni')} />
+      </label>
+      <p className="suave chico">Con el DNI puede retirar la llave en el equipo sin escribir el código de la reserva.</p>
       <p className="suave chico">Le llega un mail con un link para crear su contraseña (vence en 48 horas).</p>
       <Alerta>{error}</Alerta>
       <div className="dos-columnas">
@@ -138,6 +143,22 @@ function FilaUsuario({ usuario, esYo, alCambiar }: { usuario: UsuarioDetalle; es
     }
   }
 
+  // US-18: el DNI con el que se identifica en el equipo
+  async function cambiarDni() {
+    const dni = window.prompt(
+      `DNI de ${usuario.nombre} ${usuario.apellido}, sin puntos (vacío para borrarlo):`,
+      usuario.dni ?? '',
+    );
+    if (dni === null) return;
+    setError(null);
+    try {
+      await api.cambiarDni(usuario.id, dni.replace(/\D/g, ''));
+      alCambiar();
+    } catch (err) {
+      setError(manejarError(err));
+    }
+  }
+
   return (
     <li>
       <div className="fila">
@@ -148,7 +169,12 @@ function FilaUsuario({ usuario, esYo, alCambiar }: { usuario: UsuarioDetalle; es
             </strong>{' '}
             {esYo && <span className="suave chico">(vos)</span>}
           </p>
-          <p className="suave chico">{usuario.email}</p>
+          <p className="suave chico">
+            {usuario.email} ·{' '}
+            <button type="button" className="boton-texto chico" onClick={cambiarDni}>
+              {usuario.dni ? `DNI ${usuario.dni}` : 'Cargar DNI'}
+            </button>
+          </p>
           <p className="fila fila-izquierda separado">
             <span className="insignia insignia-neutra">{TEXTO_ROL[usuario.rol]}</span>
             {!usuario.activo && <span className="insignia insignia-prestada">Desactivado</span>}
