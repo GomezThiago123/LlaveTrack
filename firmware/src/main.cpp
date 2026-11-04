@@ -524,7 +524,9 @@ void actualizarEstado() {
         cambiarEstado(Estado::ESPERANDO_SERVIDOR);
         break;
       }
-      if (ahora - desdeEstado >= RETIRO_TIMEOUT_MS) terminarPorTiempo();
+      // Si la llave ya no se ve, se la estan llevando: primero se confirma el retiro. Si no, una
+      // llave sacada en el ultimo segundo y medio quedaria como "nadie la retiro".
+      if (ahora - desdeEstado >= RETIRO_TIMEOUT_MS && !retiro.ausenteDesde) terminarPorTiempo();
       break;
 
     case Estado::ESPERANDO_DEVOLUCION: {
