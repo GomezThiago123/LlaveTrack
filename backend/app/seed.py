@@ -63,6 +63,7 @@ def cargar_datos(sesion: Session, datos: dict) -> None:
                 rol=Rol(u["rol"]),
                 # Sin "clave" el usuario no puede entrar hasta crearla con un link (US-08 o US-09)
                 password_hash=hashear_clave(u["clave"]) if u.get("clave") else None,
+                dni=u.get("dni"),  # US-18 y US-20: para identificarse en el equipo
             )
         )
 

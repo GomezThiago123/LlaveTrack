@@ -34,6 +34,7 @@ def _salida(p: Prestamo) -> PrestamoSalida:
         devuelto_en=p.devuelto_en,
         recordatorio_enviado_en=p.recordatorio_enviado_en,
         perdida=p.perdida,
+        devuelto_por=f"{p.devuelto_por.nombre} {p.devuelto_por.apellido}" if p.devuelto_por else None,
         hora_fin=p.hora_fin,
         aviso_automatico_en=p.aviso_automatico_en,
         demorada=recordatorios.demorada(p, ahora_utc()),

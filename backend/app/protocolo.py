@@ -12,7 +12,7 @@ import json
 import logging
 import re
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -23,6 +23,10 @@ from app.servicios.equipo import RechazoEquipo
 from app.servicios.reservas import vencer_reservas
 
 log = logging.getLogger(__name__)
+
+# Los servicios dejan aca (sesion.info) lo que hay que hacer recien despues del commit, como mandar
+# un mail: si el evento se rechaza o falla, no se hace
+DESPUES_DEL_COMMIT = equipo.DESPUES_DEL_COMMIT
 
 
 # --- Formato de cada evento ---
@@ -53,6 +57,20 @@ class Inicio(Evento):
 
 
 class SolicitudRetiro(Evento):
+    # El codigo de la reserva o, en su lugar, el DNI del docente (US-18): uno de los dos
+    codigo: str | None = Field(default=None, pattern=r"^\d{6}$")
+    dni: str | None = Field(default=None, pattern=r"^\d{7,8}$")
+
+    @model_validator(mode="after")
+    def codigo_o_dni(self):
+        if (self.codigo is None) == (self.dni is None):
+            raise ValueError("hace falta el codigo o el dni (uno solo)")
+        return self
+
+
+class RetiroInterrumpido(Evento):
+    """US-15: se corto la luz durante este retiro. La reserva se cancela."""
+
     codigo: str = Field(pattern=r"^\d{6}$")
 
 
@@ -66,6 +84,18 @@ class RetiroTimeout(Evento):
 
 
 class Devolucion(ConUid):
+    slot: int = Field(ge=0)
+    # US-20: quien devuelve se identifica con su DNI (opcional). Si no es quien la retiro, el
+    # servidor pide confirmacion (CONFIRMAR_TERCERO) y el equipo la reenvia con confirmada=true
+    dni: str | None = Field(default=None, pattern=r"^\d{7,8}$")
+    confirmada: bool = False
+    # US-14: la devolucion se hizo sin conexion; la hora real (segundos desde 1970, UTC)
+    devuelto_en: int | None = Field(default=None, ge=0)
+
+
+class TagLeido(ConUid):
+    """US-10, modo alta: el equipo leyo este tag en la ventana."""
+
     slot: int = Field(ge=0)
 
 
@@ -82,6 +112,8 @@ FORMATOS: dict[str, type[Evento]] = {
     "retiro_timeout": RetiroTimeout,
     "devolucion": Devolucion,
     "error": ErrorDelEquipo,
+    "retiro_interrumpido": RetiroInterrumpido,
+    "tag_leido": TagLeido,
 }
 
 
@@ -91,14 +123,26 @@ def _ejecutar(sesion: Session, device_id: str, tipo: str, evento) -> dict:
         case "inicio":
             return equipo.inicio(sesion, device_id, evento.slots_totales, evento.slots_reservados)
         case "solicitud_retiro":
-            return equipo.solicitud_retiro(sesion, evento.codigo)
+            return equipo.solicitud_retiro(sesion, evento.codigo, dni=evento.dni)
         case "retiro_confirmado":
             return equipo.retiro_confirmado(sesion, evento.codigo, evento.uid, evento.slot)
         case "retiro_timeout":
             # La reserva sigue vigente hasta que vence: solo queda registrado en el log
             return {}
         case "devolucion":
-            return equipo.devolucion(sesion, device_id, evento.uid, evento.slot)
+            return equipo.devolucion(
+                sesion,
+                device_id,
+                evento.uid,
+                evento.slot,
+                dni=evento.dni,
+                confirmada=evento.confirmada,
+                devuelto_en=evento.devuelto_en,
+            )
+        case "retiro_interrumpido":
+            return equipo.retiro_interrumpido(sesion, evento.codigo)
+        case "tag_leido":
+            return equipo.tag_leido(sesion, device_id, evento.uid, evento.slot)
         case "error":
             # US-05: queda como incidente para el preceptor
             log.warning("Error informado por %s: %s (%s)", device_id, evento.error, evento.detalle)
@@ -150,11 +194,13 @@ def procesar_evento(sesion: Session, device_id: str, tipo: str, crudo: bytes) ->
                 extra = _ejecutar(sesion, device_id, tipo, evento)
             respuesta = {"eventId": event_id, "ok": True, **extra}
         except RechazoEquipo as rechazo:
-            respuesta = _rechazo(event_id, rechazo.motivo)
+            respuesta = {**_rechazo(event_id, rechazo.motivo), **rechazo.datos}
+            sesion.info.pop(DESPUES_DEL_COMMIT, None)  # lo del evento se deshizo
         except Exception:
             # Error inesperado: no se guarda el evento, asi el reintento del equipo lo procesa de nuevo
             log.exception("Error procesando %s", event_id)
             sesion.rollback()
+            sesion.info.pop(DESPUES_DEL_COMMIT, None)
             return _rechazo(event_id, "ERROR_INTERNO")
 
     sesion.add(
@@ -163,6 +209,12 @@ def procesar_evento(sesion: Session, device_id: str, tipo: str, crudo: bytes) ->
         )
     )
     sesion.commit()
+    # Lo que tiene que pasar solo si el evento quedo guardado (ej. US-20: el mail al docente)
+    for accion in sesion.info.pop(DESPUES_DEL_COMMIT, []):
+        try:
+            accion()
+        except Exception:
+            log.exception("Fallo una accion posterior a %s", event_id)
     return respuesta
 
 

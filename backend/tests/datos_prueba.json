@@ -11,8 +11,8 @@
     { "nombre": "Taller", "llave": { "rfidUid": "04E5F6A7", "slot": 5 } }
   ],
   "usuarios": [
-    { "nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "telefono": "11 5555-0001", "rol": "DOCENTE", "clave": "llavetrack" },
-    { "nombre": "Bruno", "apellido": "Gomez", "email": "bruno.gomez@example.com", "telefono": "11 5555-0002", "rol": "DOCENTE", "clave": "llavetrack" },
+    { "nombre": "Ana", "apellido": "Perez", "email": "ana.perez@example.com", "dni": "30111222", "telefono": "11 5555-0001", "rol": "DOCENTE", "clave": "llavetrack" },
+    { "nombre": "Bruno", "apellido": "Gomez", "email": "bruno.gomez@example.com", "dni": "28333444", "telefono": "11 5555-0002", "rol": "DOCENTE", "clave": "llavetrack" },
     { "nombre": "Carla", "apellido": "Diaz", "email": "carla.diaz@example.com", "telefono": "11 5555-0003", "rol": "PRECEPTOR", "clave": "llavetrack" },
     { "nombre": "Admin", "apellido": "Sistema", "email": "admin@example.com", "telefono": null, "rol": "ADMIN", "clave": "llavetrack" }
   ]

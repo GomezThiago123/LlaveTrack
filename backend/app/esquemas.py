@@ -112,6 +112,7 @@ class PrestamoSalida(Esquema):
     devuelto_en: datetime | None
     recordatorio_enviado_en: datetime | None
     perdida: bool = False  # US-11: se cerro porque la llave se perdio
+    devuelto_por: str | None = None  # US-20: "Bruno Gomez" si la devolvio otro docente
     hora_fin: datetime | None = None  # US-16: hasta que hora dijo que usaba el aula
     aviso_automatico_en: datetime | None = None  # US-16: el mail de los 15 minutos
     demorada: bool = False  # US-16: sigue sin devolver una hora despues de la hora fin
@@ -142,6 +143,7 @@ class UsuarioDetalle(Esquema):
     rol: Rol
     activo: bool
     tiene_clave: bool  # false = todavia no uso el link del mail de alta
+    dni: str | None = None  # US-18 y US-20: para identificarse en el equipo
 
 
 class PedidoAlta(Esquema):
@@ -149,10 +151,14 @@ class PedidoAlta(Esquema):
     apellido: str = Field(min_length=1, max_length=80)
     email: str = Field(min_length=3, max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     telefono: str | None = Field(default=None, max_length=30)
+    dni: str | None = Field(default=None, pattern=r"^\d{7,8}$")  # US-18: sin puntos
 
 
 class PedidoActivo(Esquema):
-    activo: bool
+    """PATCH de un usuario: activarlo o desactivarlo (US-09) y/o cargarle el DNI (US-18)."""
+
+    activo: bool | None = None
+    dni: str | None = Field(default=None, pattern=r"^(\d{7,8})?$")  # "" lo borra
 
 
 # --- Equipo y llaves (US-10) ---
@@ -173,6 +179,27 @@ class EquipoSalida(Esquema):
     slots_totales: int
     slots_reservados: list[int]
     llaves: list[LlaveEquipo]
+    ultimo_tag: "TagLeido | None" = None  # US-10, modo alta
+
+
+class TagLeido(Esquema):
+    """US-10: el ultimo tag que leyo el equipo en modo alta."""
+
+    uid: str
+    slot: int | None
+    leido_en: datetime
+    aula: str | None  # si ya es de un aula
+
+
+EquipoSalida.model_rebuild()  # ultimo_tag usa TagLeido, definido despues
+
+
+class PedidoAltaLlave(Esquema):
+    """US-10: asociar un tag a un aula. Un aula nueva se crea; una con la llave de baja, se repone."""
+
+    aula: str = Field(min_length=1, max_length=40)
+    rfid_uid: str = Field(min_length=1, max_length=40)
+    slot: int = Field(ge=0)
 
 
 class PedidoRfid(Esquema):

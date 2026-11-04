@@ -46,6 +46,8 @@ class Usuario(Base):
     telefono: Mapped[str | None] = mapped_column(String(30))
     rol: Mapped[Rol] = mapped_column(_enum(Rol))
     activo: Mapped[bool] = mapped_column(default=True)
+    # US-18 y US-20: el DNI se escribe en el teclado del equipo para identificarse (7 u 8 numeros)
+    dni: Mapped[str | None] = mapped_column(String(10), unique=True, index=True)  # indice ix_usuario_dni
 
     # Autenticacion (ver app/servicios/auth.py)
     password_hash: Mapped[str | None] = mapped_column(String(100))  # null = todavia no creo su contrasena
@@ -158,9 +160,12 @@ class Prestamo(Base):
     aviso_automatico_en: Mapped[datetime | None] = mapped_column(FechaUTC)
     # US-11: se cerro porque la llave se perdio (devuelto_en es cuando se dio de baja)
     perdida: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    # US-20: si la devolvio otro docente (identificado con su DNI); null = quien la retiro o nadie
+    devuelto_por_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
 
-    usuario: Mapped[Usuario] = relationship()
+    usuario: Mapped[Usuario] = relationship(foreign_keys=[usuario_id])
     llave: Mapped[Llave] = relationship()
+    devuelto_por: Mapped[Usuario | None] = relationship(foreign_keys=[devuelto_por_id])
 
 
 class BajaLlave(Base):
@@ -192,6 +197,10 @@ class Dispositivo(Base):
     slots_reservados: Mapped[list[int]] = mapped_column(JSON, default=list)  # nunca llevan llave
     online: Mapped[bool] = mapped_column(default=False)
     ultimo_contacto: Mapped[datetime | None] = mapped_column(FechaUTC)
+    # US-10, modo alta: el ultimo tag que leyo el equipo, para que el preceptor lo asocie a un aula
+    ultimo_tag_uid: Mapped[str | None] = mapped_column(String(20))
+    ultimo_tag_slot: Mapped[int | None]
+    ultimo_tag_en: Mapped[datetime | None] = mapped_column(FechaUTC)
 
 
 class EventoDispositivo(Base):

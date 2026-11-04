@@ -48,9 +48,7 @@ def cambiar_rfid(sesion: Session, llave_id: int, uid: str, slot: int | None = No
     baja (US-11) el slot es obligatorio: vuelve a estar DISPONIBLE y el equipo tiene que saber
     donde buscarla.
     """
-    uid = re.sub(r"[\s:-]", "", uid).upper()  # "04:a1:b2:c3" -> "04A1B2C3", como en el protocolo
-    if not re.fullmatch(r"[0-9A-F]{8,20}", uid):
-        raise ErrorNegocio(422, "UID_INVALIDO", "El UID tiene que ser hexadecimal (ej. 04A1B2C3).")
+    uid = _normalizar_uid(uid)
     llave = sesion.get(Llave, llave_id)
     if llave is None:
         raise ErrorNegocio(404, "LLAVE_NO_ENCONTRADA", "La llave no existe.")
@@ -67,6 +65,45 @@ def cambiar_rfid(sesion: Session, llave_id: int, uid: str, slot: int | None = No
     if llave.estado == EstadoLlave.BAJA:
         llave.estado = EstadoLlave.DISPONIBLE  # US-11: repuesta
     llave.rfid_uid = uid
+    return llave
+
+
+def _normalizar_uid(uid: str) -> str:
+    uid = re.sub(r"[\s:-]", "", uid).upper()  # "04:a1:b2:c3" -> "04A1B2C3", como en el protocolo
+    if not re.fullmatch(r"[0-9A-F]{8,20}", uid):
+        raise ErrorNegocio(422, "UID_INVALIDO", "El UID tiene que ser hexadecimal (ej. 04A1B2C3).")
+    return uid
+
+
+def dar_de_alta(sesion: Session, aula_nombre: str, uid: str, slot: int) -> Llave:
+    """US-10: asociar un tag (leido en el modo alta del equipo) a un aula, colgado en `slot`.
+
+    Un aula que no existe se crea. Si el aula ya tiene su llave, no: para cambiarle el tag esta
+    cambiar_rfid. Si su llave estaba de baja (US-11), se repone.
+    """
+    uid = _normalizar_uid(uid)
+    nombre = aula_nombre.strip()
+    aula = sesion.scalar(select(Aula).where(Aula.nombre == nombre))
+    if aula is not None:
+        llave = sesion.scalar(select(Llave).where(Llave.aula_id == aula.id))
+        if llave is not None and llave.estado != EstadoLlave.BAJA:
+            raise ErrorNegocio(
+                409, "AULA_CON_LLAVE", f"El aula {nombre} ya tiene su llave. Para cambiarle el tag, usá el lápiz."
+            )
+        if llave is not None:
+            return cambiar_rfid(sesion, llave.id, uid, slot)
+    otra = sesion.scalar(select(Llave).where(Llave.rfid_uid == uid))
+    if otra is not None:
+        raise ErrorNegocio(409, "TAG_REPETIDO", f"Este tag ya pertenece al aula {otra.aula.nombre}.")
+    _validar_slot_libre(sesion, slot, llave_id=-1)
+    if aula is None:
+        aula = Aula(nombre=nombre)
+        sesion.add(aula)
+        sesion.flush()
+    llave = Llave(aula_id=aula.id, rfid_uid=uid, slot=slot, estado=EstadoLlave.DISPONIBLE)
+    sesion.add(llave)
+    sesion.flush()
+    sesion.refresh(llave)
     return llave
 
 

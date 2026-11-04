@@ -5,7 +5,7 @@ Si algo se rechaza, lanza RechazoEquipo con un motivo del protocolo (docs/protoc
 Como en app/servicios/reservas.py, no hace commit: lo hace quien la llama.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -19,17 +19,37 @@ from app.modelos import (
     Llave,
     Prestamo,
     Reserva,
+    Usuario,
 )
-from app.servicios.reservas import vencer_reservas
+from app import correo
+from app.servicios.reservas import _cerrar_reserva, vencer_reservas
 from app.tipos import ahora_utc
+
+
+# Clave de sesion.info: acciones para hacer recien despues del commit (ej. mandar un mail).
+# Las ejecuta app/protocolo.py; si el evento se rechaza o falla, no se hacen.
+DESPUES_DEL_COMMIT = "despues_del_commit"
+
+
+def _despues_del_commit(sesion: Session, accion) -> None:
+    sesion.info.setdefault(DESPUES_DEL_COMMIT, []).append(accion)
+
+
+def _usuario_por_dni(sesion: Session, dni: str) -> Usuario:
+    """US-18 y US-20: el docente que escribio su DNI en el teclado. Desactivado = no reconocido."""
+    usuario = sesion.scalar(select(Usuario).where(Usuario.dni == dni, Usuario.activo.is_(True)))
+    if usuario is None:
+        raise RechazoEquipo("CREDENCIAL_NO_RECONOCIDA")
+    return usuario
 
 
 class RechazoEquipo(Exception):
     """El servidor rechaza el evento. motivo: CODIGO_INVALIDO, CODIGO_VENCIDO, etc."""
 
-    def __init__(self, motivo: str):
+    def __init__(self, motivo: str, **datos):
         super().__init__(motivo)
         self.motivo = motivo
+        self.datos = datos  # van en la respuesta (ej. US-20: aula y quien la retiro)
 
 
 def inicio(sesion: Session, device_id: str, slots_totales: int, slots_reservados: list[int]) -> dict:
@@ -47,12 +67,25 @@ def inicio(sesion: Session, device_id: str, slots_totales: int, slots_reservados
     return {"slotReposo": _slot_vacio_mas_cercano(sesion, dispositivo, a=0)}
 
 
-def solicitud_retiro(sesion: Session, codigo: str, ahora: datetime | None = None) -> dict:
-    """El docente ingreso un codigo. Si es valido, dice que llave entregar y donde esta."""
+def solicitud_retiro(
+    sesion: Session, codigo: str | None, ahora: datetime | None = None, dni: str | None = None
+) -> dict:
+    """El docente ingreso un codigo (o su DNI, US-18). Si es valido, dice que llave entregar y donde
+    esta. La respuesta trae el codigo (con DNI, el equipo lo necesita para confirmar el retiro) y el
+    nombre, para el LCD: "Hola Ana / Aula 214"."""
     ahora = ahora or ahora_utc()
     vencer_reservas(sesion, ahora)
 
-    reserva = _reserva_pendiente(sesion, codigo)
+    if dni is not None:
+        usuario = _usuario_por_dni(sesion, dni)
+        reserva = sesion.scalar(
+            select(Reserva).where(Reserva.usuario_id == usuario.id, Reserva.estado == EstadoReserva.PENDIENTE)
+        )
+        if reserva is None:
+            raise RechazoEquipo("SIN_RESERVA")
+        codigo = reserva.codigo
+    else:
+        reserva = _reserva_pendiente(sesion, codigo)
     if reserva is None:
         ultima = sesion.scalar(
             select(Reserva).where(Reserva.codigo == codigo).order_by(Reserva.id.desc())
@@ -74,6 +107,8 @@ def solicitud_retiro(sesion: Session, codigo: str, ahora: datetime | None = None
         "uid": llave.rfid_uid,
         "aula": llave.aula.nombre,
         "apellido": reserva.usuario.apellido,
+        "nombre": reserva.usuario.nombre,
+        "codigo": codigo,
     }
 
 
@@ -113,22 +148,53 @@ def retiro_confirmado(sesion: Session, codigo: str, uid: str, slot: int) -> dict
     return {}
 
 
-def devolucion(sesion: Session, device_id: str, uid: str, slot: int) -> dict:
-    """Se colgo una llave en el slot de la ventana: se cierra su prestamo."""
+def devolucion(
+    sesion: Session,
+    device_id: str,
+    uid: str,
+    slot: int,
+    dni: str | None = None,
+    confirmada: bool = False,
+    devuelto_en: int | None = None,
+    ahora: datetime | None = None,
+) -> dict:
+    """Se colgo una llave en el slot de la ventana: se cierra su prestamo.
+
+    US-20: si quien devuelve escribio su DNI y no es quien la retiro, primero se rechaza con
+    CONFIRMAR_TERCERO (el LCD muestra quien la tenia); al confirmar, queda "devuelta por" y se le
+    avisa por mail al que la tenia.
+    US-14: `devuelto_en` es la hora real de una devolucion hecha sin conexion (la del equipo).
+    """
+    ahora = ahora or ahora_utc()
     llave = sesion.scalar(select(Llave).where(Llave.rfid_uid == uid))
     if llave is None:
         raise RechazoEquipo("LLAVE_DESCONOCIDA")
-
     prestamo = sesion.scalar(
         select(Prestamo).where(Prestamo.llave_id == llave.id, Prestamo.devuelto_en.is_(None))
     )
     if prestamo is None or llave.estado != EstadoLlave.PRESTADA:
         raise RechazoEquipo("SIN_PRESTAMO_ACTIVO")
 
+    tercero = None
+    if dni is not None:
+        quien = _usuario_por_dni(sesion, dni)
+        if quien.id != prestamo.usuario_id:
+            if not confirmada:
+                raise RechazoEquipo("CONFIRMAR_TERCERO", aula=llave.aula.nombre, retiradaPor=prestamo.usuario.apellido)
+            tercero = quien
+
+    momento = ahora
+    if devuelto_en is not None:
+        # US-14: la hora del equipo, si es razonable (entre el retiro y ahora, con margen por si su
+        # reloj adelanta un poco). Si no, la de ahora.
+        hora_equipo = datetime.fromtimestamp(devuelto_en, UTC)
+        if prestamo.retirado_en <= hora_equipo <= ahora + timedelta(minutes=5):
+            momento = min(hora_equipo, ahora)
+
     prestamo_cerrado = sesion.execute(
         update(Prestamo)
         .where(Prestamo.id == prestamo.id, Prestamo.devuelto_en.is_(None))
-        .values(devuelto_en=ahora_utc())
+        .values(devuelto_en=momento, devuelto_por_id=tercero.id if tercero else None)
     ).rowcount
     llave_disponible = sesion.execute(
         update(Llave)
@@ -137,14 +203,41 @@ def devolucion(sesion: Session, device_id: str, uid: str, slot: int) -> dict:
     ).rowcount
     if prestamo_cerrado != 1 or llave_disponible != 1:
         raise RechazoEquipo("ERROR_INTERNO")
-
     dispositivo = sesion.scalar(select(Dispositivo).where(Dispositivo.device_id == device_id))
     slot_reposo = _slot_vacio_mas_cercano(sesion, dispositivo, a=slot) if dispositivo else None
-    return {
+
+    respuesta = {
         "aula": llave.aula.nombre,
         "apellido": prestamo.usuario.apellido,  # quien la retiro
         "slotReposo": slot_reposo,
     }
+    if tercero is not None:
+        respuesta["devueltaPor"] = tercero.apellido
+        titular, aula = prestamo.usuario, llave.aula.nombre
+        _despues_del_commit(sesion, lambda: correo.enviar_devuelta_por_otro(titular, aula, tercero, momento))
+    return respuesta
+
+
+def retiro_interrumpido(sesion: Session, codigo: str) -> dict:
+    """US-15: se corto la luz durante este retiro y el docente no llego a confirmarlo. La reserva
+    se cancela y la llave vuelve a estar disponible. Si ya no estaba pendiente (ej. el retiro si
+    se confirmo, o vencio), no cambia nada."""
+    reserva = _reserva_pendiente(sesion, codigo)
+    if reserva is not None:
+        _cerrar_reserva(sesion, reserva, EstadoReserva.CANCELADA)
+    return {}
+
+
+def tag_leido(sesion: Session, device_id: str, uid: str, slot: int) -> dict:
+    """US-10, modo alta: el equipo leyo un tag en la ventana. Queda guardado para que el preceptor
+    lo vea en la web y lo asocie a un aula. Si el tag ya es de un aula, se lo dice al equipo."""
+    dispositivo = sesion.scalar(select(Dispositivo).where(Dispositivo.device_id == device_id))
+    if dispositivo is not None:
+        dispositivo.ultimo_tag_uid = uid
+        dispositivo.ultimo_tag_slot = slot
+        dispositivo.ultimo_tag_en = ahora_utc()
+    llave = sesion.scalar(select(Llave).where(Llave.rfid_uid == uid))
+    return {"aula": llave.aula.nombre if llave else None}
 
 
 def aulas_faltantes(sesion: Session) -> list[str]:

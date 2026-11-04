@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.auth import preceptor_actual
 from app.db import obtener_sesion
 from app.errores import ErrorNegocio
-from app.esquemas import BajaSalida, EquipoSalida, LlaveEquipo, PedidoBaja, PedidoRfid
+from app.esquemas import BajaSalida, EquipoSalida, LlaveEquipo, PedidoAltaLlave, PedidoBaja, PedidoRfid, TagLeido
 from app.modelos import BajaLlave, Llave, Usuario
 from app.servicios import llaves
 
@@ -36,20 +36,52 @@ def ver_equipo(sesion: SesionDep, _preceptor: PreceptorDep) -> EquipoSalida:
         slots_totales=dispositivo.slots_totales if dispositivo else 0,
         slots_reservados=dispositivo.slots_reservados if dispositivo else [],
         llaves=[_llave(llave) for llave in lista],
+        ultimo_tag=_ultimo_tag(dispositivo, lista),
     )
+
+
+def _ultimo_tag(dispositivo, lista: list[Llave]) -> TagLeido | None:
+    if dispositivo is None or dispositivo.ultimo_tag_uid is None:
+        return None
+    aula = next((llave.aula.nombre for llave in lista if llave.rfid_uid == dispositivo.ultimo_tag_uid), None)
+    return TagLeido(
+        uid=dispositivo.ultimo_tag_uid,
+        slot=dispositivo.ultimo_tag_slot,
+        leido_en=dispositivo.ultimo_tag_en,
+        aula=aula,
+    )
+
+
+def _mandar_comando(request: Request, sesion: Session, comando: str) -> None:
+    dispositivo, online, _ = llaves.estado_equipo(sesion)
+    sesion.commit()
+    if dispositivo is None or not online:
+        raise ErrorNegocio(409, "EQUIPO_DESCONECTADO", "El equipo no está conectado.")
+    cliente = getattr(request.app.state, "cliente_mqtt", None)
+    if cliente is None or not cliente.mandar_comando(dispositivo.device_id, comando):
+        raise ErrorNegocio(503, "SIN_BROKER", "El servidor no está conectado al broker MQTT.")
 
 
 @router.post("/equipo/recalibrar", status_code=202)
 def recalibrar(request: Request, sesion: SesionDep, _preceptor: PreceptorDep) -> None:
     """Solo preceptor y admin. El equipo repite el homing: sirve para sacarlo de un error
     del disco (ej. "Error del disco / Avisar porteria") sin tener que desenchufarlo."""
-    dispositivo, online, _ = llaves.estado_equipo(sesion)
+    _mandar_comando(request, sesion, "recalibrar")
+
+
+@router.post("/equipo/modo-alta", status_code=202)
+def modo_alta(request: Request, sesion: SesionDep, _preceptor: PreceptorDep) -> None:
+    """Solo preceptor y admin (US-10). El equipo deja un lugar vacio en la ventana y espera un tag:
+    lo que lee aparece en GET /api/equipo (ultimoTag) y se guarda con POST /api/llaves."""
+    _mandar_comando(request, sesion, "modo_alta")
+
+
+@router.post("/llaves", status_code=201)
+def alta_llave(pedido: PedidoAltaLlave, sesion: SesionDep, _preceptor: PreceptorDep) -> LlaveEquipo:
+    """Solo preceptor y admin (US-10). Asocia un tag a un aula, en ese lugar del disco."""
+    llave = llaves.dar_de_alta(sesion, pedido.aula, pedido.rfid_uid, pedido.slot)
     sesion.commit()
-    if dispositivo is None or not online:
-        raise ErrorNegocio(409, "EQUIPO_DESCONECTADO", "El equipo no está conectado.")
-    cliente = getattr(request.app.state, "cliente_mqtt", None)
-    if cliente is None or not cliente.mandar_comando(dispositivo.device_id, "recalibrar"):
-        raise ErrorNegocio(503, "SIN_BROKER", "El servidor no está conectado al broker MQTT.")
+    return _llave(llave)
 
 
 @router.put("/llaves/{llave_id}/rfid")

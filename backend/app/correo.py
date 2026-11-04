@@ -84,6 +84,20 @@ def enviar_link_alta(usuario: Usuario, token: str) -> None:
     )
 
 
+def enviar_devuelta_por_otro(titular: Usuario, aula: str, quien: Usuario, cuando) -> None:
+    """US-20: otro docente devolvio la llave que tenia `titular`."""
+    from app.tipos import ZONA_ARGENTINA
+
+    hora = cuando.astimezone(ZONA_ARGENTINA).strftime("%H:%M")
+    enviar_correo(
+        titular.email,
+        f"LlaveTrack: tu llave del aula {aula} fue devuelta",
+        f"Hola {titular.nombre}:\n\n"
+        f"Tu llave del aula {aula} fue devuelta por {quien.nombre} {quien.apellido} a las {hora}.\n"
+        "Ya no figura a tu nombre.\n",
+    )
+
+
 def enviar_recordatorio(usuario: Usuario, aula: str) -> None:
     """US-16: el preceptor le recuerda al docente que devuelva la llave."""
     enviar_correo(

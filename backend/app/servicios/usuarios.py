@@ -22,12 +22,13 @@ def listar(sesion: Session) -> list[Usuario]:
 
 
 def dar_de_alta(
-    sesion: Session, nombre: str, apellido: str, email: str, telefono: str | None
+    sesion: Session, nombre: str, apellido: str, email: str, telefono: str | None, dni: str | None = None
 ) -> tuple[Usuario, str]:
     """Crea un docente y devuelve (usuario, token del link para que cree su contrasena)."""
     email = email.strip().lower()
     if sesion.scalar(select(Usuario).where(Usuario.email == email)) is not None:
         raise ErrorNegocio(409, "EMAIL_REPETIDO", "Ya hay un usuario cargado con ese email.")
+    _validar_dni_libre(sesion, dni, None)
     usuario = Usuario(
         nombre=nombre.strip(),
         apellido=apellido.strip(),
@@ -35,11 +36,30 @@ def dar_de_alta(
         telefono=(telefono or "").strip() or None,
         rol=Rol.DOCENTE,
         password_hash=None,
+        dni=dni or None,
     )
     sesion.add(usuario)
     sesion.flush()  # para tener el id antes de crear el link
     token = crear_link_clave(sesion, usuario, timedelta(hours=config.alta_link_horas))
     return usuario, token
+
+
+def _validar_dni_libre(sesion: Session, dni: str | None, usuario_id: int | None) -> None:
+    if not dni:
+        return
+    otro = sesion.scalar(select(Usuario).where(Usuario.dni == dni, Usuario.id != usuario_id))
+    if otro is not None:
+        raise ErrorNegocio(409, "DNI_REPETIDO", f"Ese DNI ya es de {otro.nombre} {otro.apellido}.")
+
+
+def cambiar_dni(sesion: Session, usuario_id: int, dni: str | None) -> Usuario:
+    """US-18: el DNI con el que se identifica en el equipo. Vacio = sin DNI."""
+    usuario = sesion.get(Usuario, usuario_id)
+    if usuario is None:
+        raise ErrorNegocio(404, "USUARIO_NO_ENCONTRADO", "El usuario no existe.")
+    _validar_dni_libre(sesion, dni, usuario.id)
+    usuario.dni = dni or None
+    return usuario
 
 
 def cambiar_activo(sesion: Session, usuario_id: int, activo: bool, quien: Usuario) -> Usuario:

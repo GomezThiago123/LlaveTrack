@@ -85,6 +85,8 @@ def test_codigo_valido_dice_que_llave_entregar(fabrica_sesiones):
         "uid": UID_214,
         "aula": "214",
         "apellido": "Perez",
+        "nombre": "Ana",  # para el LCD: "Hola Ana"
+        "codigo": codigo,
     }
 
 
@@ -251,7 +253,7 @@ def test_estado_online_y_offline(fabrica_sesiones):
 def test_rechazo_deshace_los_cambios_a_medias_pero_no_el_vencimiento(fabrica_sesiones, monkeypatch):
     vieja = reservar(fabrica_sesiones, aula="215", ahora=ahora_utc() - timedelta(minutes=11))
 
-    def cambia_y_rechaza(sesion, *_args):
+    def cambia_y_rechaza(sesion, *_args, **_kwargs):
         sesion.scalar(select(Llave).where(Llave.rfid_uid == UID_214)).slot = 99
         sesion.flush()
         raise equipo.RechazoEquipo("CODIGO_INVALIDO")
@@ -323,3 +325,139 @@ def test_faltantes_ordenadas_por_nombre(fabrica_sesiones):
     retirar(fabrica_sesiones, "216", "04C3D4E5", 3, email="ana.perez@example.com")
     retirar(fabrica_sesiones, "214", UID_214, 1, email="bruno.gomez@example.com")
     assert faltantes(fabrica_sesiones) == ["214", "216"]
+
+
+# --- US-18: retirar con el DNI en lugar del codigo ---
+
+DNI_ANA = "30111222"
+DNI_BRUNO = "28333444"
+
+
+def test_retiro_con_dni(fabrica_sesiones):
+    codigo = reservar(fabrica_sesiones)
+    res = enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA)
+    assert res["ok"] is True
+    assert res["codigo"] == codigo and res["nombre"] == "Ana" and res["aula"] == "214"
+
+
+def test_dni_desconocido_o_de_alguien_desactivado(fabrica_sesiones):
+    reservar(fabrica_sesiones)
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni="99999999")["motivo"] == "CREDENCIAL_NO_RECONOCIDA"
+    with fabrica_sesiones() as s:  # US-09: desactivar la cuenta apaga la credencial
+        s.execute(update(Usuario).where(Usuario.dni == DNI_ANA).values(activo=False))
+        s.commit()
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA)["motivo"] == "CREDENCIAL_NO_RECONOCIDA"
+
+
+def test_dni_sin_reserva(fabrica_sesiones):
+    assert enviar(fabrica_sesiones, "solicitud_retiro", dni=DNI_ANA)["motivo"] == "SIN_RESERVA"
+
+
+@pytest.mark.parametrize("datos", [{}, {"codigo": "123456", "dni": DNI_ANA}, {"dni": "123"}])
+def test_hace_falta_el_codigo_o_el_dni(fabrica_sesiones, datos):
+    assert enviar(fabrica_sesiones, "solicitud_retiro", **datos)["motivo"] == "DATOS_INVALIDOS"
+
+
+# --- US-15: corte de luz durante un retiro ---
+
+
+def test_retiro_interrumpido_cancela_la_reserva(fabrica_sesiones):
+    codigo = reservar(fabrica_sesiones)
+    enviar(fabrica_sesiones, "solicitud_retiro", codigo=codigo)
+    assert enviar(fabrica_sesiones, "retiro_interrumpido", codigo=codigo)["ok"] is True
+    assert llave_214(fabrica_sesiones).estado == EstadoLlave.DISPONIBLE
+    with fabrica_sesiones() as s:
+        assert s.scalar(select(Reserva.estado).where(Reserva.codigo == codigo)) == EstadoReserva.CANCELADA
+    assert contar(fabrica_sesiones, Prestamo) == 0  # no quedo registrado ningun retiro
+
+
+def test_retiro_interrumpido_despues_de_confirmado_no_cambia_nada(fabrica_sesiones):
+    codigo = reservar(fabrica_sesiones)
+    enviar(fabrica_sesiones, "retiro_confirmado", codigo=codigo, uid=UID_214, slot=1)
+    assert enviar(fabrica_sesiones, "retiro_interrumpido", codigo=codigo)["ok"] is True
+    assert llave_214(fabrica_sesiones).estado == EstadoLlave.PRESTADA
+
+
+# --- US-14: devolucion sin conexion, con la hora del equipo ---
+
+
+def retirar_214(fabrica_sesiones, email="ana.perez@example.com"):
+    codigo = reservar(fabrica_sesiones, email=email)
+    enviar(fabrica_sesiones, "retiro_confirmado", codigo=codigo, uid=UID_214, slot=1)
+
+
+def test_devolucion_sin_conexion_guarda_la_hora_del_equipo(fabrica_sesiones):
+    retirar_214(fabrica_sesiones)
+    with fabrica_sesiones() as s:  # la retiro hace una hora
+        s.execute(update(Prestamo).values(retirado_en=ahora_utc() - timedelta(hours=1)))
+        s.commit()
+    hace_10_s = int((ahora_utc() - timedelta(seconds=10)).timestamp())
+    assert enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1, devueltoEn=hace_10_s)["ok"] is True
+    with fabrica_sesiones() as s:
+        assert int(s.scalar(select(Prestamo.devuelto_en)).timestamp()) == hace_10_s
+
+
+def test_una_hora_del_equipo_imposible_se_ignora(fabrica_sesiones):
+    retirar_214(fabrica_sesiones)
+    en_una_hora = int((ahora_utc() + timedelta(hours=1)).timestamp())
+    enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1, devueltoEn=en_una_hora)
+    with fabrica_sesiones() as s:
+        assert s.scalar(select(Prestamo.devuelto_en)) <= ahora_utc()
+
+
+# --- US-20: devolver una llave que retiro otro ---
+
+
+@pytest.fixture
+def mails_terceros(monkeypatch):
+    from app import correo
+
+    enviados = []
+    monkeypatch.setattr(
+        correo, "enviar_devuelta_por_otro", lambda titular, aula, quien, cuando: enviados.append((titular.email, aula, quien.apellido))
+    )
+    return enviados
+
+
+def test_otro_docente_tiene_que_confirmar(fabrica_sesiones, mails_terceros):
+    retirar_214(fabrica_sesiones)
+    res = enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1, dni=DNI_BRUNO)
+    assert res["ok"] is False and res["motivo"] == "CONFIRMAR_TERCERO"
+    assert res["aula"] == "214" and res["retiradaPor"] == "Perez"
+    assert llave_214(fabrica_sesiones).estado == EstadoLlave.PRESTADA and mails_terceros == []
+
+
+def test_al_confirmar_queda_devuelta_por_terceros_y_se_avisa(fabrica_sesiones, mails_terceros):
+    retirar_214(fabrica_sesiones)
+    res = enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1, dni=DNI_BRUNO, confirmada=True)
+    assert res["ok"] is True and res["devueltaPor"] == "Gomez"
+    with fabrica_sesiones() as s:
+        prestamo = s.scalar(select(Prestamo))
+        assert prestamo.devuelto_en is not None and prestamo.devuelto_por.apellido == "Gomez"
+    assert mails_terceros == [("ana.perez@example.com", "214", "Gomez")]
+
+
+def test_quien_la_retiro_se_identifica_y_es_una_devolucion_comun(fabrica_sesiones, mails_terceros):
+    retirar_214(fabrica_sesiones)
+    res = enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1, dni=DNI_ANA)
+    assert res["ok"] is True and "devueltaPor" not in res and mails_terceros == []
+
+
+def test_devolver_con_un_dni_desconocido(fabrica_sesiones):
+    retirar_214(fabrica_sesiones)
+    res = enviar(fabrica_sesiones, "devolucion", uid=UID_214, slot=1, dni="99999999")
+    assert res["motivo"] == "CREDENCIAL_NO_RECONOCIDA"
+
+
+# --- US-10: modo alta ---
+
+
+def test_tag_leido_queda_guardado_para_la_web(fabrica_sesiones):
+    enviar(fabrica_sesiones, "inicio", slotsTotales=24, slotsReservados=[0])
+    res = enviar(fabrica_sesiones, "tag_leido", uid="0A0B0C0D", slot=12)
+    assert res["ok"] is True and res["aula"] is None
+    with fabrica_sesiones() as s:
+        dispositivo = s.scalar(select(Dispositivo))
+        assert (dispositivo.ultimo_tag_uid, dispositivo.ultimo_tag_slot) == ("0A0B0C0D", 12)
+    # Un tag que ya es de un aula: el equipo lo avisa en el LCD
+    assert enviar(fabrica_sesiones, "tag_leido", uid=UID_214, slot=12)["aula"] == "214"

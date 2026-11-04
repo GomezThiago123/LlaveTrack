@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import select, update
 
 from app import correo
-from app.modelos import Aula, EstadoLlave, Llave, Prestamo, Reserva, Usuario
+from app.modelos import Aula, Dispositivo, EstadoLlave, Llave, Prestamo, Reserva, Usuario
 from app.tipos import ZONA_ARGENTINA, ahora_utc
 
 ANA = "ana.perez@example.com"
@@ -450,3 +450,81 @@ def test_exportar_respeta_los_filtros(cliente, ingresar, fabrica_sesiones):
 def test_exportar_es_solo_para_el_preceptor(cliente, ingresar):
     ingresar(ANA)
     assert cliente.get("/api/prestamos/exportar").status_code == 403
+
+
+# --- US-18: el DNI del docente ---
+
+
+def test_alta_de_docente_con_dni(cliente, ingresar, monkeypatch):
+    monkeypatch.setattr(correo, "enviar_link_alta", lambda *a: None)
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post(
+        "/api/usuarios", json={"nombre": "Dora", "apellido": "Lopez", "email": "dora@example.com", "dni": "31222333"}
+    )
+    assert res.status_code == 201 and res.json()["dni"] == "31222333"
+    # Otro con el mismo DNI, no
+    res = cliente.post(
+        "/api/usuarios", json={"nombre": "Eva", "apellido": "Ruiz", "email": "eva@example.com", "dni": "31222333"}
+    )
+    assert res.status_code == 409 and res.json()["error"]["codigo"] == "DNI_REPETIDO"
+
+
+def test_cargar_y_borrar_el_dni(cliente, ingresar, fabrica_sesiones):
+    bruno = id_de(fabrica_sesiones, "bruno.gomez@example.com")
+    ingresar(CARLA_PRECEPTORA)
+    assert cliente.patch(f"/api/usuarios/{bruno}", json={"dni": "27000111"}).json()["dni"] == "27000111"
+    assert cliente.patch(f"/api/usuarios/{bruno}", json={"dni": ""}).json()["dni"] is None
+    # El de Ana ya esta tomado
+    res = cliente.patch(f"/api/usuarios/{bruno}", json={"dni": "30111222"})
+    assert res.status_code == 409
+    assert cliente.patch(f"/api/usuarios/{bruno}", json={"dni": "12.345.678"}).status_code == 422
+
+
+# --- US-10: modo alta y alta de llaves ---
+
+
+def test_el_preceptor_manda_modo_alta(cliente, ingresar, monkeypatch):
+    from app.main import app
+
+    broker = BrokerFalso()
+    monkeypatch.setattr(app.state, "cliente_mqtt", broker, raising=False)
+    ingresar(CARLA_PRECEPTORA)
+    assert cliente.post("/api/equipo/modo-alta").status_code == 202
+    assert broker.comandos == [("equipo-01", "modo_alta")]
+
+
+def test_el_tag_leido_aparece_en_el_equipo(cliente, ingresar, fabrica_sesiones):
+    with fabrica_sesiones() as s:
+        s.execute(update(Dispositivo).values(ultimo_tag_uid="0A0B0C0D", ultimo_tag_slot=12, ultimo_tag_en=ahora_utc()))
+        s.commit()
+    ingresar(CARLA_PRECEPTORA)
+    tag = cliente.get("/api/equipo").json()["ultimoTag"]
+    assert tag["uid"] == "0A0B0C0D" and tag["slot"] == 12 and tag["aula"] is None
+
+
+def test_alta_de_una_llave_para_un_aula_nueva(cliente, ingresar):
+    ingresar(CARLA_PRECEPTORA)
+    res = cliente.post("/api/llaves", json={"aula": "Biblioteca", "rfidUid": "0a:0b:0c:0d", "slot": 12})
+    assert res.status_code == 201, res.text
+    assert res.json() == {"id": res.json()["id"], "aula": "Biblioteca", "rfidUid": "0A0B0C0D", "slot": 12, "estado": "DISPONIBLE"}
+    assert "Biblioteca" in [a["nombre"] for a in cliente.get("/api/publico/estado").json()["aulas"]]
+
+
+def test_alta_de_llave_con_errores(cliente, ingresar):
+    ingresar(CARLA_PRECEPTORA)
+    # El aula ya tiene su llave
+    res = cliente.post("/api/llaves", json={"aula": "214", "rfidUid": "0A0B0C0D", "slot": 12})
+    assert res.json()["error"]["codigo"] == "AULA_CON_LLAVE"
+    # El tag ya es de otra aula (el de la 214)
+    res = cliente.post("/api/llaves", json={"aula": "Nueva", "rfidUid": "04A1B2C3", "slot": 12})
+    assert res.json()["error"]["codigo"] == "TAG_REPETIDO"
+    # El lugar esta ocupado
+    res = cliente.post("/api/llaves", json={"aula": "Nueva", "rfidUid": "0A0B0C0D", "slot": 1})
+    assert res.json()["error"]["codigo"] == "SLOT_OCUPADO"
+
+
+def test_alta_de_llave_repone_la_de_un_aula_dada_de_baja(cliente, ingresar, fabrica_sesiones):
+    ingresar(CARLA_PRECEPTORA)
+    cliente.post(f"/api/llaves/{id_llave(fabrica_sesiones, '215')}/baja", json={"motivo": "Perdida"})
+    res = cliente.post("/api/llaves", json={"aula": "215", "rfidUid": "0A0B0C0D", "slot": 12})
+    assert res.status_code == 201 and res.json()["estado"] == "DISPONIBLE"

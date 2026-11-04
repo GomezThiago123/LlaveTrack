@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import correo
 from app.auth import preceptor_actual
 from app.db import obtener_sesion
+from app.errores import ErrorNegocio
 from app.esquemas import CuentaBloqueada, PedidoActivo, PedidoAlta, UsuarioDetalle
 from app.modelos import Usuario
 from app.servicios import auth, usuarios
@@ -32,6 +33,7 @@ def _detalle(u: Usuario) -> UsuarioDetalle:
         rol=u.rol,
         activo=u.activo,
         tiene_clave=u.password_hash is not None,
+        dni=u.dni,
     )
 
 
@@ -46,7 +48,9 @@ def listar(sesion: SesionDep, _preceptor: PreceptorDep) -> list[UsuarioDetalle]:
 @router.post("", status_code=201)
 def dar_de_alta(pedido: PedidoAlta, sesion: SesionDep, _preceptor: PreceptorDep) -> UsuarioDetalle:
     """Solo preceptor y admin (US-09). Crea un docente y le manda un mail para crear su contraseña."""
-    usuario, token = usuarios.dar_de_alta(sesion, pedido.nombre, pedido.apellido, pedido.email, pedido.telefono)
+    usuario, token = usuarios.dar_de_alta(
+        sesion, pedido.nombre, pedido.apellido, pedido.email, pedido.telefono, pedido.dni
+    )
     sesion.commit()
     try:
         correo.enviar_link_alta(usuario, token)
@@ -60,8 +64,15 @@ def dar_de_alta(pedido: PedidoAlta, sesion: SesionDep, _preceptor: PreceptorDep)
 def cambiar_activo(
     usuario_id: int, pedido: PedidoActivo, sesion: SesionDep, preceptor: PreceptorDep
 ) -> UsuarioDetalle:
-    """Solo preceptor y admin (US-09). Un usuario desactivado no puede iniciar sesión."""
-    usuario = usuarios.cambiar_activo(sesion, usuario_id, pedido.activo, quien=preceptor)
+    """Solo preceptor y admin. Activar o desactivar (US-09: desactivado no puede iniciar sesión
+    ni usar su DNI en el equipo) y/o cargar el DNI (US-18)."""
+    usuario = None
+    if "dni" in pedido.model_fields_set:
+        usuario = usuarios.cambiar_dni(sesion, usuario_id, pedido.dni)
+    if pedido.activo is not None:
+        usuario = usuarios.cambiar_activo(sesion, usuario_id, pedido.activo, quien=preceptor)
+    if usuario is None:
+        raise ErrorNegocio(422, "DATOS_INVALIDOS", "No hay nada para cambiar.")
     sesion.commit()
     return _detalle(usuario)
 
