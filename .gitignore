@@ -9,6 +9,7 @@ coverage/
 .env.*
 !.env.example
 firmware/include/secrets.h
+firmware/arduino/llavesuba/secrets.h
 
 # Base de datos local (SQLite)
 *.db

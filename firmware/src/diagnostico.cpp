@@ -26,7 +26,7 @@
 #include "teclado.h"
 
 namespace {
-bool lectorOk = false;
+bool lectorDiagOk = false;
 bool trabajando = false;   // hay una tarea del disco en curso
 String descripcion;        // que se le pidio, para mostrar el resultado
 String numeroTeclado;      // lo que se va escribiendo en el teclado
@@ -57,7 +57,7 @@ void alTerminar() {
   }
 }
 
-void comandoSerie(String linea) {
+void comandoDiagnostico(String linea) {
   linea.trim();
   if (!linea.length()) return;
   char c = linea[0];
@@ -117,18 +117,18 @@ void tecla(char t) {
     numeroTeclado = "";
     lcdMensaje("Ir al slot:", "");
   } else if (t == '#' && numeroTeclado.length()) {
-    comandoSerie("i " + numeroTeclado);
+    comandoDiagnostico("i " + numeroTeclado);
     numeroTeclado = "";
   } else if (t == 'D') {
-    comandoSerie("d");
+    comandoDiagnostico("d");
   } else if (t == 'C') {
-    comandoSerie("s");
+    comandoDiagnostico("s");
   }
 }
 }  // namespace
 
 void diagnosticoIniciar(bool lector) {
-  lectorOk = lector;
+  lectorDiagOk = lector;
   Serial.println("\nLlavesUBA: MODO DIAGNOSTICO (sin red)");
   lcdMensaje("Diagnostico", "Sin red");
 
@@ -144,19 +144,19 @@ void diagnosticoIniciar(bool lector) {
   }
   Serial.println(encontrados ? "" : " ninguno (revisar SDA 21, SCL 22 y la alimentacion)");
 
-  if (!lectorOk) {
+  if (!lectorDiagOk) {
     lcdMensaje("Error: lector", "Revisar cables");
     ledColor(ColorLed::ROJO_TITILANDO);
     return;
   }
   discoTrazas(true);
   Serial.println("  Comandos: h, i N, b UID N, v N, d, s, p");
-  comandoSerie("h");
+  comandoDiagnostico("h");
 }
 
 void diagnosticoLoop() {
   ledActualizar();
-  if (!lectorOk) return;
+  if (!lectorDiagOk) return;
   discoActualizar();
   if (trabajando && discoResultado() != ResultadoDisco::EN_CURSO) {
     trabajando = false;
@@ -170,7 +170,7 @@ void diagnosticoLoop() {
   while (Serial.available()) {
     char c = Serial.read();
     if (c == '\n' || c == '\r') {
-      comandoSerie(linea);
+      comandoDiagnostico(linea);
       linea = "";
     } else {
       linea += c;

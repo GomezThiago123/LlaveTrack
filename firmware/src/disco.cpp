@@ -21,7 +21,9 @@ struct TagVisto {
 constexpr int MAX_TAGS = 6;
 TagVisto vistos[MAX_TAGS];
 String ultimoTag;
-bool trazas = false;  // imprimir cada tag que entra y sale del lector (modo diagnostico)
+// Imprimir cada tag que entra y sale del lector. Los nombres internos no se repiten entre
+// modulos: generar_ino.py junta todo el firmware en un solo archivo
+bool trazasActivas = false;
 
 // --- Posicion ---
 float pos = 0;        // slot frente a la ventana (0 a SLOTS), estimado
@@ -197,7 +199,7 @@ void evaluarLlegada() {
 // --- Eventos del lector ---
 
 void alEntrar(TagVisto &t) {
-  if (trazas) Serial.printf("[disco]   entra %s en %.2f\n", t.uid.c_str(), pos);
+  if (trazasActivas) Serial.printf("[disco]   entra %s en %.2f\n", t.uid.c_str(), pos);
   if (tarea != Tarea::MOVER || dirSlots == 0) return;
 
   if (t.uid == UID_HOME) {
@@ -219,7 +221,7 @@ void alEntrar(TagVisto &t) {
 
 void alSalir(TagVisto &t) {
   unsigned long ahora = millis();
-  if (trazas) {
+  if (trazasActivas) {
     Serial.printf("[disco]   sale  %s en %.2f (%lu ms frente al lector)\n", t.uid.c_str(), pos,
                   t.ultima - t.primera);
   }
@@ -424,7 +426,7 @@ void discoDiagnostico() {
   girar(1);
 }
 
-void discoTrazas(bool activar) { trazas = activar; }
+void discoTrazas(bool activar) { trazasActivas = activar; }
 
 void discoParar() {
   if (tarea != Tarea::NADA) terminar(ResultadoDisco::OK);

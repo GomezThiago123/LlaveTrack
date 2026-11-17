@@ -177,3 +177,5 @@ allow_anonymous true
 reiniciar Mosquitto y abrir el puerto 1883 en el firewall **solo para el ESP32** (el broker no tiene contraseña). En Linux, con la IP que muestra el Monitor Serie al conectarse a la WiFi: `sudo ufw allow from <IP-del-ESP32> to any port 1883 proto tcp`. En la demo el broker es HiveMQ Cloud, con TLS y contraseña (puerto 8883): ver [docs/despliegue.md](docs/despliegue.md).
 
 Para probar cada pieza por separado está `firmware/prueba_arduino/prueba_arduino.ino` (Arduino IDE).
+
+**Con el Arduino IDE en lugar de PlatformIO:** `firmware/arduino/llavesuba/llavesuba.ino` es todo el firmware en un solo archivo. No se edita: se genera desde `firmware/` con `python generar_ino.py`, que también copia `include/secrets.h` a esa carpeta. Al principio del `.ino` están la placa, el core (esp32 2.0.17) y las versiones de las librerías. Después de cambiar algo en `src/`, hay que volver a generarlo.
