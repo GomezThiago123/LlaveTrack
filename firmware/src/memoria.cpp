@@ -12,6 +12,9 @@ Preferences memoria;  // espacio "llavetrack" en la flash
 // La cola se guarda como un solo texto: "uid,slot,hora;uid,slot,hora"
 std::vector<DevolucionGuardada> leerCola() {
   std::vector<DevolucionGuardada> cola;
+  // isKey antes de leer: si la clave no existe, getString escribe un error en el Monitor
+  // Serie, y esto se consulta en cada vuelta del loop() en reposo
+  if (!memoria.isKey("devol")) return cola;
   String texto = memoria.getString("devol", "");
   int inicio = 0;
   while (inicio < (int)texto.length()) {
@@ -34,7 +37,11 @@ void escribirCola(const std::vector<DevolucionGuardada> &cola) {
     if (texto.length()) texto += ";";
     texto += d.uid + "," + String(d.slot) + "," + String(d.hora);
   }
-  memoria.putString("devol", texto);
+  if (cola.empty()) {
+    memoria.remove("devol");  // cola vacia = sin clave (asi leerCola no la busca)
+  } else {
+    memoria.putString("devol", texto);
+  }
 }
 }  // namespace
 
@@ -42,7 +49,7 @@ void memoriaIniciar() { memoria.begin("llavetrack", false); }
 
 void memoriaGuardarRetiro(const String &codigo) { memoria.putString("retiro", codigo); }
 void memoriaBorrarRetiro() { memoria.remove("retiro"); }
-String memoriaRetiroInterrumpido() { return memoria.getString("retiro", ""); }
+String memoriaRetiroInterrumpido() { return memoria.isKey("retiro") ? memoria.getString("retiro", "") : ""; }
 
 bool memoriaAgregarDevolucion(const DevolucionGuardada &devolucion) {
   auto cola = leerCola();

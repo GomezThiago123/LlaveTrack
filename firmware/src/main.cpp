@@ -1021,7 +1021,15 @@ void loop() {
 
   // Un pedido de la web llega en cualquier momento: espera hasta que el equipo este en reposo
   String pedida = protocoloEntregaPedida();
-  if (pedida.length()) entregaPendiente = pedida;
+  if (pedida.length()) {
+    entregaPendiente = pedida;
+    // El modo alta (US-10) puede durar minutos: un docente esperando frente al equipo tiene
+    // prioridad, asi que se termina y el pedido se atiende apenas el disco queda en reposo
+    if (estado == Estado::MODO_ALTA) {
+      Serial.println("[estado] Pedido de la web: termina el modo alta");
+      salirModoAlta();
+    }
+  }
 
   char t = teclaLeer();
   if (t) alTecla(t);
