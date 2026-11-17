@@ -14,7 +14,7 @@ from app.modelos import (
     Usuario,
 )
 from app.servicios.conexion import equipo_online
-from app.servicios.incidentes import aulas_en_revision
+from app.servicios.incidentes import aulas_en_revision, equipo_con_falla
 from app.servicios.reservas import vencer_reservas
 
 def _llaves_en_uso(sesion: Session) -> list[Llave]:
@@ -47,6 +47,7 @@ def estado_publico(sesion: Session) -> EstadoPublico:
     en_revision = aulas_en_revision(sesion)
     return EstadoPublico(
         equipo_online=equipo_online(sesion),
+        equipo_con_falla=equipo_con_falla(sesion),
         aulas=[
             AulaPublica(id=llave.aula.id, nombre=llave.aula.nombre, estado=_estado(llave, en_revision))
             for llave in _llaves_en_uso(sesion)

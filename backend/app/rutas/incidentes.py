@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.auth import preceptor_actual
@@ -10,6 +10,7 @@ from app.db import obtener_sesion
 from app.esquemas import IncidenteSalida
 from app.modelos import Incidente, Usuario
 from app.servicios import incidentes
+from app.servicios.conexion import equipo_online
 
 router = APIRouter(prefix="/api/incidentes", tags=["incidentes"])
 
@@ -41,9 +42,24 @@ def listar(sesion: SesionDep, _preceptor: PreceptorDep) -> list[IncidenteSalida]
 
 
 @router.post("/{incidente_id}/resolver")
-def resolver(incidente_id: int, sesion: SesionDep, preceptor: PreceptorDep) -> IncidenteSalida:
-    """Solo preceptor y admin (US-21). El aula vuelve a estar disponible para reservar."""
+def resolver(incidente_id: int, request: Request, sesion: SesionDep, preceptor: PreceptorDep) -> IncidenteSalida:
+    """Solo preceptor y admin (US-21). El aula vuelve a estar disponible para reservar.
+
+    Si era una falla del motor o del lector y el equipo sigue trabado, ademas le pide que
+    recalibre: "resuelto" quiere decir que ya lo revisaron. Si el homing anda, el equipo manda
+    `inicio` y vuelve a entregar llaves; si no, manda otro error y queda un incidente nuevo.
+    """
     incidente = incidentes.resolver(sesion, incidente_id, preceptor)
+    recalibrar = (
+        incidente.tipo in incidentes.FALLAS_DEL_EQUIPO
+        and incidentes.equipo_con_falla(sesion)
+        and equipo_online(sesion)
+    )
     sesion.commit()
     sesion.refresh(incidente)
-    return _salida(incidente)
+    salida = _salida(incidente)
+    if recalibrar:
+        # Sin broker no sale: el incidente igual queda resuelto y se puede recalibrar desde Equipo
+        cliente = getattr(request.app.state, "cliente_mqtt", None)
+        salida.recalibrando = cliente is not None and cliente.mandar_comando(incidente.device_id, "recalibrar")
+    return salida

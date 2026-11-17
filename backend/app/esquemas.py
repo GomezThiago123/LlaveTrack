@@ -45,6 +45,7 @@ class AulaPublica(Esquema):
 
 class EstadoPublico(Esquema):
     equipo_online: bool
+    equipo_con_falla: bool  # trabado por una falla del motor o del lector: no entrega llaves
     aulas: list[AulaPublica]
 
 
@@ -175,6 +176,7 @@ class LlaveEquipo(Esquema):
 class EquipoSalida(Esquema):
     device_id: str | None  # null si el equipo nunca se conecto
     online: bool
+    con_falla: bool  # trabado por una falla del motor o del lector: se destraba recalibrando
     ultimo_contacto: datetime | None
     slots_totales: int
     slots_reservados: list[int]
@@ -234,6 +236,8 @@ class IncidenteSalida(Esquema):
     detalle: str | None
     resuelto_en: datetime | None = None  # US-21: null = abierto
     resuelto_por: str | None = None  # "Carla Diaz"
+    # Al resolver una falla del motor o del lector, el servidor le pidio al equipo que recalibre
+    recalibrando: bool = False
 
 
 class PedidoRecuperacion(Esquema):

@@ -36,7 +36,7 @@ export default function Inicio() {
         {usuario ? 'Pedir una llave' : 'Ingresar para pedir una llave'}
       </Link>
       <div className="fila">
-        <PildoraEquipo online={estado?.equipoOnline ?? null} />
+        <PildoraEquipo online={estado?.equipoOnline ?? null} conFalla={estado?.equipoConFalla} />
         {estado && <span className="suave chico">{disponibles} disponibles</span>}
       </div>
       <Alerta>{error}</Alerta>

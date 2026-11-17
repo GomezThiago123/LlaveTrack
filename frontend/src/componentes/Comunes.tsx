@@ -95,13 +95,18 @@ export function PaginaSimple({ subtitulo, children }: { subtitulo?: string; chil
   );
 }
 
-/** Si el equipo esta conectado (US-22). null = todavia no se sabe. */
-export function PildoraEquipo({ online }: { online: boolean | null }) {
+/** Si el equipo esta conectado (US-22) y si quedo trabado por una falla. null = todavia no se sabe. */
+export function PildoraEquipo({ online, conFalla = false }: { online: boolean | null; conFalla?: boolean }) {
   if (online === null) return null;
+  const [clase, texto] = !online
+    ? ['pildora-offline', 'Equipo desconectado']
+    : conFalla
+      ? ['pildora-falla', 'Equipo con falla']
+      : ['pildora-online', 'Equipo en línea'];
   return (
-    <span className={`pildora ${online ? 'pildora-online' : 'pildora-offline'}`}>
+    <span className={`pildora ${clase}`}>
       <span className="punto" aria-hidden />
-      {online ? 'Equipo en línea' : 'Equipo desconectado'}
+      {texto}
     </span>
   );
 }

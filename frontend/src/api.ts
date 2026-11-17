@@ -17,6 +17,7 @@ export interface Usuario {
 
 export interface EstadoPublico {
   equipoOnline: boolean;
+  equipoConFalla: boolean; // trabado por una falla del motor o del lector: no entrega llaves
   aulas: { id: number; nombre: string; estado: EstadoLlave }[];
 }
 
@@ -56,6 +57,7 @@ export interface Incidente {
   detalle: string | null;
   resueltoEn: string | null; // US-21: null = abierto
   resueltoPor: string | null;
+  recalibrando?: boolean; // al resolver una falla del motor o del lector, el equipo se recalibra
 }
 
 export interface Prestamo {
@@ -108,6 +110,7 @@ export interface LlaveEquipo {
 export interface Equipo {
   deviceId: string | null;
   online: boolean;
+  conFalla: boolean; // trabado por una falla del motor o del lector: se destraba recalibrando
   ultimoContacto: string | null;
   slotsTotales: number;
   slotsReservados: number[];

@@ -195,7 +195,7 @@ Falla del equipo que el servidor registra como **incidente**: el preceptor la ve
 
 | Campo | Obligatorio | Qué es |
 | --- | --- | --- |
-| `error` | sí | `LLAVE_NO_ENCONTRADA` o `MOTOR_NO_GIRA` (el homing no encontró el tag HOME). Otro valor se muestra tal cual |
+| `error` | sí | `LLAVE_NO_ENCONTRADA`, `MOTOR_NO_GIRA` (el homing no encontró el tag HOME) o `LECTOR_NO_RESPONDE` (el RC522 no contesta al arrancar). Otro valor se muestra tal cual |
 | `codigo` | no | El de la reserva que se estaba entregando: así el servidor sabe el aula y el docente |
 | `detalle` | no | Texto libre, hasta 200 caracteres |
 
@@ -205,6 +205,8 @@ Falla del equipo que el servidor registra como **incidente**: el preceptor la ve
 ```
 
 Cuándo se manda `LLAVE_NO_ENCONTRADA` (US-05, "falla 2 veces seguidas"): en el **intento 1** el disco va al slot y prueba los vecinos (±1); en el **intento 2** repite el homing y la vuelve a buscar. Si tampoco aparece, el LCD muestra "Pedi la llave" / "en porteria", el disco vuelve a un slot vacío y se manda el `error`. La reserva no se cancela: vence sola.
+
+**Equipo trabado** (13/11/2026): `MOTOR_NO_GIRA` y `LECTOR_NO_RESPONDE` dejan al equipo en su estado `ERROR` ("Error del disco" / "Avisar porteria"). Ahí no atiende pedidos (ignora `entregar`) hasta que un homing le sale bien, por `recalibrar` o al reiniciarlo, y entonces manda `inicio`. El servidor lo deduce sin preguntarle: el equipo está **con falla** si una de esas dos fallas es posterior a su último `inicio`. Mientras tanto, `POST /api/reservas` responde `409 EQUIPO_CON_FALLA`, la web muestra "Equipo con falla" y al marcar resuelto el incidente el servidor manda `recalibrar`. `LLAVE_NO_ENCONTRADA` no traba el equipo: vuelve solo al reposo.
 
 ### `retiro_interrumpido` (US-15)
 Se cortó la luz durante un retiro (el equipo guarda el código en su memoria permanente mientras entrega). Al volver la conexión lo avisa; si la reserva sigue pendiente, el servidor la cancela y la llave vuelve a `DISPONIBLE`. Si el retiro sí se había confirmado, no cambia nada.
@@ -228,7 +230,7 @@ En modo alta, el equipo leyó un tag estable en la ventana. El servidor lo guard
 | --- | --- |
 | `entregar` | `{"comando":"entregar","codigo":"482913"}`: el docente apretó "Pedir llave" en la web (entrega directa, 05/11/2026). El equipo lo atiende apenas está en reposo, mandando `solicitud_retiro` con ese código, y sigue el retiro de siempre |
 | `modo_alta` | `{"comando":"modo_alta"}` (US-10): el equipo (en reposo) espera un tag en la ventana y lo manda en `tag_leido`. Sale con `C` o a los 3 minutos sin actividad, y vuelve a pedir un lugar vacío con `inicio` |
-| `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. Lo manda el servidor cuando el preceptor aprieta "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`). Sirve para sacar al equipo de un error del disco sin desenchufarlo |
+| `recalibrar` | `{"comando":"recalibrar"}`: repite el homing y la medición de la vuelta. Lo manda el servidor cuando el preceptor aprieta "Recalibrar el disco" en la pantalla Equipo (`POST /api/equipo/recalibrar`), o cuando marca resuelto un `MOTOR_NO_GIRA` / `LECTOR_NO_RESPONDE` con el equipo todavía trabado. Sirve para sacar al equipo de un error del disco sin desenchufarlo |
 
 ## Reintentos y duplicados
 

@@ -41,6 +41,8 @@ export default function Aulas() {
   }, [manejarError]);
 
   const equipoOnline = estado.datos?.equipoOnline ?? null;
+  // Trabado por una falla del motor o del lector: ignoraria el pedido (se destraba recalibrando)
+  const equipoConFalla = estado.datos?.equipoConFalla ?? false;
   const lista = aulas.datos ?? [];
   const tieneReserva = reserva?.estado === 'PENDIENTE';
   const enMiPoder = lista.filter((a) => a.estado === 'PRESTADA' && a.tenedor?.usuarioId === usuario?.id);
@@ -55,7 +57,14 @@ export default function Aulas() {
   // US-22: sin equipo no se puede retirar la llave. Se reactiva solo con el refresco
   // Por que no se puede pedir. Sin equipo, el boton lo dice (US-22: "Equipo desconectado");
   // con una reserva activa, lo dice un solo aviso arriba de la grilla.
-  const motivo = equipoOnline === null ? 'Cargando…' : !equipoOnline ? 'Equipo desconectado' : null;
+  const motivo =
+    equipoOnline === null
+      ? 'Cargando…'
+      : !equipoOnline
+        ? 'Equipo desconectado'
+        : equipoConFalla
+          ? 'Equipo con falla'
+          : null;
 
   async function pedir(aula: Aula) {
     setPidiendo(aula.id);
@@ -72,11 +81,27 @@ export default function Aulas() {
   }
 
   return (
-    <PaginaApp titulo={`Hola, ${usuario?.nombre ?? ''}`} derecha={<PildoraEquipo online={equipoOnline} />}>
+    <PaginaApp
+      titulo={`Hola, ${usuario?.nombre ?? ''}`}
+      derecha={<PildoraEquipo online={equipoOnline} conFalla={equipoConFalla} />}
+    >
       {equipoOnline === false && (
         <Alerta>El equipo está desconectado: por ahora no entrega ni recibe llaves.</Alerta>
       )}
-      {reserva && <TarjetaReserva reserva={reserva} alCambiar={setReserva} equipoOnline={equipoOnline} />}
+      {equipoOnline && equipoConFalla && (
+        <Alerta>
+          El equipo tiene una falla y no puede entregar llaves: pedí la llave en portería.
+          {usuario && esPreceptor(usuario.rol) && ' Revisalo y recalibralo desde la pantalla Equipo.'}
+        </Alerta>
+      )}
+      {reserva && (
+        <TarjetaReserva
+          reserva={reserva}
+          alCambiar={setReserva}
+          equipoOnline={equipoOnline}
+          equipoConFalla={equipoConFalla}
+        />
+      )}
       {enMiPoder.map((a) => (
         <TarjetaEnPoder key={a.id} aula={a.nombre} desde={a.tenedor!.desde} />
       ))}

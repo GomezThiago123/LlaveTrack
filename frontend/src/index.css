@@ -179,7 +179,8 @@ p {
   color: var(--azul);
 }
 
-.pildora-offline {
+.pildora-offline,
+.pildora-falla {
   background: var(--error-fondo);
   color: var(--error);
 }

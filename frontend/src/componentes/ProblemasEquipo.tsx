@@ -9,10 +9,14 @@ import { useSesion } from '../sesion';
 import { hora, nombreAula, REFRESCO_MS, useIntervalo } from '../utiles';
 import { Alerta } from './Comunes';
 
+// Fallas que dejan al equipo trabado (backend: FALLAS_DEL_EQUIPO). Al resolverlas, se recalibra
+const FALLAS_DEL_EQUIPO = ['MOTOR_NO_GIRA', 'LECTOR_NO_RESPONDE'];
+
 export default function ProblemasEquipo() {
   const { manejarError } = useSesion();
   const [incidentes, setIncidentes] = useState<Incidente[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [resolviendo, setResolviendo] = useState<number | null>(null);
 
   const cargar = useCallback(
@@ -33,9 +37,17 @@ export default function ProblemasEquipo() {
   useIntervalo(() => cargar(true), REFRESCO_MS);
 
   async function resolver(incidente: Incidente) {
+    const esFalla = FALLAS_DEL_EQUIPO.includes(incidente.tipo);
+    if (esFalla && !window.confirm('Si el equipo sigue trabado, se recalibra: el disco va a dar una o dos vueltas. ¿Seguro?')) {
+      return;
+    }
     setResolviendo(incidente.id);
+    setAviso(null);
     try {
-      await api.resolverIncidente(incidente.id);
+      const resuelto = await api.resolverIncidente(incidente.id);
+      if (resuelto.recalibrando) {
+        setAviso('El equipo se está recalibrando: si encuentra el HOME, en un minuto y medio vuelve a entregar llaves.');
+      }
       await cargar();
     } catch (err) {
       setError(manejarError(err));
@@ -51,6 +63,7 @@ export default function ProblemasEquipo() {
     <section className="tarjeta problemas">
       <h2>{abiertos ? `Incidentes del equipo (${abiertos} sin resolver)` : 'Incidentes del equipo'}</h2>
       <Alerta>{error}</Alerta>
+      <Alerta tipo="ok">{aviso}</Alerta>
       <ul className="lista">
         {incidentes.map((incidente) => (
           <li key={incidente.id} className={incidente.resueltoEn ? 'suave' : undefined}>

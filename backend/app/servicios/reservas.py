@@ -18,7 +18,7 @@ from app.config import config
 from app.errores import ErrorNegocio
 from app.modelos import Aula, EstadoLlave, EstadoReserva, Llave, Reserva, Usuario
 from app.servicios.conexion import equipo_online
-from app.servicios.incidentes import aulas_en_revision
+from app.servicios.incidentes import aulas_en_revision, equipo_con_falla
 from app.tipos import ZONA_ARGENTINA, ahora_utc
 
 
@@ -87,6 +87,14 @@ def crear_reserva(
             409,
             "EQUIPO_DESCONECTADO",
             "El equipo de llaves está desconectado. Probá de nuevo en unos minutos.",
+        )
+
+    # El equipo quedo trabado por una falla del motor o del lector: ignoraria el pedido
+    if equipo_con_falla(sesion):
+        raise ErrorNegocio(
+            409,
+            "EQUIPO_CON_FALLA",
+            "El equipo de llaves tiene una falla y no puede entregar llaves. Pedí la llave en portería.",
         )
 
     llave = sesion.scalar(

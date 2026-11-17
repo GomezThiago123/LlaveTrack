@@ -158,6 +158,9 @@ void fallar(const char *linea1, const char *linea2, const char *error, const Str
   errorParaMandar = error;
   detalleError = detalle;
   codigoError = codigo;
+  // Un pedido de la web que esperaba (ej. llego durante el homing) ya no se puede atender: si
+  // quedara guardado, saldria recien despues de recalibrar, con la reserva vencida
+  entregaPendiente = "";
   cambiarEstado(Estado::ERROR);
 }
 
@@ -1021,7 +1024,11 @@ void loop() {
 
   // Un pedido de la web llega en cualquier momento: espera hasta que el equipo este en reposo
   String pedida = protocoloEntregaPedida();
-  if (pedida.length()) {
+  if (pedida.length() && estado == Estado::ERROR) {
+    // Trabado por una falla: no puede entregar (el servidor ya no deberia pedirlo, ver
+    // equipo_con_falla en el backend). Mismo motivo que en fallar(): no se guarda
+    Serial.println("[estado] Pedido de la web ignorado: el equipo esta en error");
+  } else if (pedida.length()) {
     entregaPendiente = pedida;
     // El modo alta (US-10) puede durar minutos: un docente esperando frente al equipo tiene
     // prioridad, asi que se termina y el pedido se atiende apenas el disco queda en reposo

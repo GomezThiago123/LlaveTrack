@@ -7,18 +7,24 @@ Como el resto de app/servicios, no hace commit: lo hace quien la llama.
 
 from datetime import datetime
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.errores import ErrorNegocio
-from app.modelos import Incidente, Reserva, Usuario
+from app.modelos import EventoDispositivo, Incidente, Reserva, Usuario
 from app.tipos import ZONA_ARGENTINA, ahora_utc
 
 # Lo que ve el preceptor para cada error conocido (docs/protocolo-mqtt.md)
 DESCRIPCIONES = {
     "LLAVE_NO_ENCONTRADA": "Llave no encontrada",
     "MOTOR_NO_GIRA": "Motor no gira",
+    "LECTOR_NO_RESPONDE": "Lector RFID no responde",
 }
+
+# Fallas que dejan al equipo trabado en su estado ERROR (firmware: fallar()). No atiende pedidos
+# hasta que un homing le sale bien (recalibrar o reiniciarlo), y ahi manda `inicio`.
+# LLAVE_NO_ENCONTRADA no esta: el equipo vuelve solo al reposo y sigue entregando otras llaves.
+FALLAS_DEL_EQUIPO = ("MOTOR_NO_GIRA", "LECTOR_NO_RESPONDE")
 
 
 def registrar(
@@ -79,6 +85,24 @@ def aulas_en_revision(sesion: Session) -> set[int]:
             select(Incidente.aula_id).where(Incidente.resuelto_en.is_(None), Incidente.aula_id.is_not(None))
         )
     )
+
+
+def equipo_con_falla(sesion: Session) -> bool:
+    """True si el equipo esta trabado: tuvo una falla del motor o del lector despues de su ultimo
+    `inicio` (lo manda cada vez que termina bien un homing, y solo estando en reposo).
+
+    No importa si el preceptor ya marco resuelto el incidente: eso es el registro de US-21. Lo que
+    destraba el equipo es un homing que anda. En el MVP hay un solo equipo (igual que equipo_online).
+    """
+    ultima_falla = sesion.scalar(
+        select(func.max(Incidente.ocurrido_en)).where(Incidente.tipo.in_(FALLAS_DEL_EQUIPO))
+    )
+    if ultima_falla is None:
+        return False
+    ultimo_inicio = sesion.scalar(
+        select(func.max(EventoDispositivo.recibido_en)).where(EventoDispositivo.tipo == "inicio")
+    )
+    return ultimo_inicio is None or ultima_falla > ultimo_inicio
 
 
 def descripcion(tipo: str) -> str:

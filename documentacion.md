@@ -131,7 +131,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 | US-18 | Retiro con credencial | V2 | ✅ Hecha y probada con el equipo real (05/11): para el que olvidó el celular, DNI y número de aula en el teclado ("Hola Bruno / Aula 214") |
 | US-19 | Exportar reportes | V2 | ✅ Hecha (04/11): botón "Exportar a Excel" en el historial, con los mismos filtros; deshabilitado si no hay movimientos |
 | US-20 | Devolver una llave retirada por otro | V2 | 🟡 Hecha (04/11): quien devuelve puede escribir su DNI; si la llave era de otro, confirma con # y al titular le llega un mail. Falta probarla con el equipo real |
-| US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto |
+| US-21 | Registrar incidentes del equipo | V2 | ✅ Hecha (04/11): mientras un incidente está abierto, el aula figura "En revisión" y no se puede reservar; el preceptor lo marca resuelto. Desde el 13/11, si la falla es del motor o del lector, todo el equipo figura "Con falla" hasta que un homing le sale bien |
 | US-22 | Ver si el equipo está conectado | MVP | ✅ Hecha |
 | US-23 | Ver en el equipo qué llaves faltan | MVP | 🟡 El LCD muestra "Faltan: 214" con el equipo real; el LED naranja no se vio (revisar el LED) |
 | US-24 | Ver en el equipo si está conectado | MVP | 🟡 Probada con el equipo real (LCD y LED verde); falta ver el LED rojo titilando |
@@ -140,6 +140,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 
 | Fecha | Decisión | Por qué |
 | --- | --- | --- |
+| 13/11 | Si el motor o el lector fallan, **no se pueden pedir llaves** ("Equipo con falla") hasta que el equipo vuelve a encontrar el HOME. Marcar resuelto el incidente lo manda a recalibrar | En la prueba del 13/11 el homing falló y el equipo quedó trabado: ignoraba los pedidos, pero la web seguía diciendo "El equipo está sacando tu llave". Y marcar resuelto el incidente no lo destrababa |
 | 05/11 | El sistema se llama **LlavesUBA** (antes LlaveTrack) | Pedido de los superiores |
 | 05/11 | **Entrega directa:** al apretar "Pedir llave" en la web, el equipo entrega la llave enseguida; ya no hay código que escribir | Pedido de los superiores: más simple. Hay que pedirla frente al equipo, porque queda un minuto en la ventana |
 | 05/11 | El teclado es solo para el que olvidó el celular: **DNI y número de aula** | Pedido de los superiores. El DNI no es secreto: queda registrado a nombre de ese docente y 3 intentos mal bloquean el teclado |
@@ -164,7 +165,7 @@ Las historias completas, con sus criterios, están en [docs/user-stories.md](doc
 
 ## 8. Cómo se prueba
 
-- **Tests automáticos del servidor**: `pytest` en `backend/` (139 tests). Incluyen dos pedidos simultáneos por la misma llave, el vencimiento de reservas, los eventos repetidos del equipo y que ninguna lista haga una consulta por cada fila.
+- **Tests automáticos del servidor**: `pytest` en `backend/` (206 tests, 13/11/2026). Incluyen dos pedidos simultáneos por la misma llave, el vencimiento de reservas, los eventos repetidos del equipo, que con el equipo trabado no se puedan pedir llaves y que ninguna lista haga una consulta por cada fila.
 - **Simulador**: reemplaza al equipo. Comandos `retirar`, `devolver`, `falla`, `timeout`, `desenchufar` y `enchufar` (ver README). También se conecta al broker de la nube, con cifrado y contraseña.
 - **Ensayo de la nube** (03/11): la imagen que corre Render, en una compu, contra un broker con cifrado, contraseña y permisos por equipo. Falta repetirlo con los servicios reales y con la placa.
 - **La web**: se revisó pantalla por pantalla con capturas automáticas en tamaño de celular, con datos de prueba y contra Supabase.

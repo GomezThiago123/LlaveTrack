@@ -10,7 +10,7 @@ from app.db import obtener_sesion
 from app.errores import ErrorNegocio
 from app.esquemas import BajaSalida, EquipoSalida, LlaveEquipo, PedidoAltaLlave, PedidoBaja, PedidoRfid, TagLeido
 from app.modelos import BajaLlave, Llave, Usuario
-from app.servicios import llaves
+from app.servicios import incidentes, llaves
 
 router = APIRouter(prefix="/api", tags=["equipo"])
 
@@ -32,6 +32,7 @@ def ver_equipo(sesion: SesionDep, _preceptor: PreceptorDep) -> EquipoSalida:
     return EquipoSalida(
         device_id=dispositivo.device_id if dispositivo else None,
         online=online,
+        con_falla=incidentes.equipo_con_falla(sesion),
         ultimo_contacto=dispositivo.ultimo_contacto if dispositivo else None,
         slots_totales=dispositivo.slots_totales if dispositivo else 0,
         slots_reservados=dispositivo.slots_reservados if dispositivo else [],

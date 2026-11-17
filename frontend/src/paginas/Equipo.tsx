@@ -135,7 +135,7 @@ export default function Equipo() {
   const enDisco = llaves.filter((l) => l.slot !== null).length;
 
   return (
-    <PaginaApp titulo="Equipo" derecha={<PildoraEquipo online={datos?.online ?? null} />}>
+    <PaginaApp titulo="Equipo" derecha={<PildoraEquipo online={datos?.online ?? null} conFalla={datos?.conFalla} />}>
       <Alerta>{error}</Alerta>
       {!datos && !error && <p className="cargando">Cargando…</p>}
       {datos && (
@@ -143,8 +143,10 @@ export default function Equipo() {
           <section className="tarjeta">
             <div className="fila">
               <h2 className="mono">{datos.deviceId ?? 'Sin equipo'}</h2>
-              <span className={`insignia ${datos.online ? 'insignia-disponible' : 'insignia-prestada'}`}>
-                {datos.online ? 'En línea' : 'Desconectado'}
+              <span
+                className={`insignia ${datos.online && !datos.conFalla ? 'insignia-disponible' : 'insignia-prestada'}`}
+              >
+                {!datos.online ? 'Desconectado' : datos.conFalla ? 'Con falla' : 'En línea'}
               </span>
             </div>
             <dl className="datos">
@@ -167,6 +169,12 @@ export default function Equipo() {
                 <dd>{datos.slotsReservados.join(', ') || '—'}</dd>
               </div>
             </dl>
+            {datos.online && datos.conFalla && (
+              <Alerta>
+                El equipo está trabado por una falla del disco o del lector y no entrega llaves. Revisalo y tocá
+                "Recalibrar el disco": si encuentra el HOME, vuelve a andar solo.
+              </Alerta>
+            )}
             <Recalibrar online={datos.online} />
             <ModoAlta equipo={datos} alGuardar={recargar} />
           </section>

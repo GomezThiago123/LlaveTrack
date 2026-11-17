@@ -12,10 +12,12 @@ export function TarjetaReserva({
   reserva,
   alCambiar,
   equipoOnline,
+  equipoConFalla,
 }: {
   reserva: Reserva;
   alCambiar: (reserva: Reserva | null) => void;
   equipoOnline: boolean | null;
+  equipoConFalla: boolean; // fallo mientras sacaba la llave: no la va a entregar
 }) {
   const { manejarError } = useSesion();
   const [ahora, setAhora] = useState(Date.now());
@@ -93,6 +95,9 @@ export function TarjetaReserva({
       </div>
       {equipoOnline === false && (
         <Alerta tipo="aviso">El equipo se desconectó. Si vuelve antes de que venza el tiempo, entrega la llave.</Alerta>
+      )}
+      {equipoOnline && equipoConFalla && (
+        <Alerta>El equipo tuvo una falla y no puede entregar la llave: pedila en portería.</Alerta>
       )}
       <p className="suave chico">Si no la sacás en un minuto, el equipo la vuelve a guardar.</p>
       <Alerta>{error}</Alerta>
