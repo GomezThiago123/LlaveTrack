@@ -4,7 +4,77 @@
 
 > Qué es y cómo funciona el sistema, y el estado de cada historia: [documentacion.md](documentacion.md). Tareas abiertas: [PENDIENTES.md](PENDIENTES.md).
 
-Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA. El docente reserva la llave desde la web, ingresa un código en el equipo y un disco giratorio le entrega su llave. Cada llave tiene un tag RFID, así el sistema registra quién la retiró, quién la devolvió y a qué hora.
+Sistema para retirar y devolver las llaves de las aulas de la ETEC-UBA sin depender de nadie en portería. Las llaves cuelgan de un disco giratorio y cada una tiene un tag RFID. El docente, parado frente al equipo, aprieta "Pedir llave" en la web desde su celular y el disco gira hasta dejarle su llave en la ventana (si olvidó el celular, escribe su DNI y el aula en el teclado). Para devolverla, aprieta **B** y la cuelga en el lugar vacío: el lector la reconoce sola. El sistema registra quién retiró cada llave, quién la devolvió y a qué hora, y el preceptor lo ve todo desde la web.
+
+Proyecto escolar de Desarrollo de Sistemas (metodologías ágiles + IoT).
+
+## Diagrama de bloques
+
+Línea llena: datos. Línea punteada: energía.
+
+```mermaid
+flowchart LR
+    usuario(("Docente /<br/>preceptor"))
+    celular["Celular<br/>(web LlavesUBA)"]
+    servidor["Servidor en la nube<br/>FastAPI (Python)"]
+    base[("Base de datos<br/>PostgreSQL")]
+    broker{{"Broker MQTT<br/>(HiveMQ / Mosquitto)"}}
+
+    subgraph equipo["Equipo (disco de llaves)"]
+        esp32{{"ESP32<br/>WiFi"}}
+        lector["Lector RFID<br/>RC522"]
+        tags["Tags RFID<br/>(uno por llave + HOME)"]
+        lcd["LCD 16x2<br/>con adaptador I2C"]
+        teclado["Teclado 4x4"]
+        led["LED bicolor"]
+        puente["Puente H<br/>L298N"]
+        motor["Motorreductor DC 24 V<br/>(gira el disco)"]
+    end
+
+    subgraph energia["Alimentación"]
+        fuente["Fuente 220 V / 16 V DC<br/>+ interruptor y fusible"]
+        reg5["Regulador step-down<br/>5 V"]
+        reg24["Regulador step-up<br/>24 V"]
+    end
+
+    usuario <--> celular
+    celular <-->|"HTTPS"| servidor
+    servidor <--> base
+    servidor <-->|"MQTT"| broker
+    broker <-->|"MQTT por WiFi"| esp32
+    tags -->|"13,56 MHz"| lector
+    lector <-->|"SPI"| esp32
+    esp32 -->|"I2C"| lcd
+    teclado --> esp32
+    esp32 --> led
+    esp32 --> puente
+    puente --> motor
+
+    fuente -.-> reg5
+    fuente -.-> reg24
+    reg5 -.->|"5 V"| esp32
+    reg5 -.->|"5 V"| lcd
+    esp32 -.->|"3,3 V"| lector
+    reg24 -.->|"24 V"| puente
+```
+
+- **El celular habla solo con el servidor**, nunca con la base ni con el equipo. El servidor es el único que decide y registra.
+- **El equipo no decide reglas:** pide permiso al servidor por MQTT, mueve el disco, lee los tags e informa.
+- **La posición del disco** sale del lector RFID y del tiempo de giro: un tag fijo (HOME) marca el cero. El motor es de continua, no paso a paso.
+- **Pines y alimentación en detalle:** [docs/cableado.md](docs/cableado.md).
+
+## Documentación
+
+| Documento | Qué tiene |
+| --- | --- |
+| [docs/manual-de-usuario.md](docs/manual-de-usuario.md) | **Manual de usuario:** cómo retirar y devolver una llave, y qué hace el preceptor en cada pantalla |
+| [docs/despliegue.md](docs/despliegue.md) | **Deploy en la nube**, gratis: Render, HiveMQ, Brevo y Supabase, paso a paso |
+| Este README (abajo) | **Cómo levantar todo en una compu:** servidor, web, simulador del equipo y firmware |
+| [documentacion.md](documentacion.md) | Cómo funciona el sistema, el estado de cada historia y las decisiones tomadas |
+| [docs/user-stories.md](docs/user-stories.md) | Las historias de usuario con sus criterios de aceptación |
+| [PENDIENTES.md](PENDIENTES.md) | Tareas pendientes |
+| [docs/protocolo-mqtt.md](docs/protocolo-mqtt.md) | Los mensajes entre el servidor y el equipo |
+| [docs/cableado.md](docs/cableado.md) | Pines del ESP32 y alimentación |
 
 ## Estructura
 
@@ -95,7 +165,7 @@ Los comandos se escriben en el prompt `equipo>`:
 
 | Comando | Qué simula |
 | --- | --- |
-| `retirar 482913` | Ingresa el código de una reserva y retira la llave. El código es el que da la web |
+| `retirar 482913` | Retira la llave de la reserva con ese código. La web no lo muestra: viaja en el comando `entregar` que el servidor le manda al equipo (verlo con `mosquitto_sub -v -t 'llavetrack/v1/equipo-01/cmd'` o MQTTX) |
 | `timeout 482913` | Ingresa el código pero nadie retira la llave |
 | `falla 482913` | Ingresa el código pero el equipo no encuentra la llave: el preceptor lo ve en "Problemas del equipo hoy" (US-05) |
 | `devolver CAA8EA81` | Cuelga la llave con ese UID en el lugar vacío de la ventana |
@@ -130,7 +200,7 @@ Para abrir la web **desde el celular**, conectalo a la misma red WiFi y entrá a
 | --- | --- |
 | `/` | Sin login: estado de cada aula y si el equipo está en línea |
 | `/login`, `/recuperar`, `/restablecer` | Ingresar, recuperar la contraseña y crearla (el docente nuevo llega por el link del mail) |
-| `/aulas` | Con login: buscador, peines y "solo disponibles"; quién tiene cada llave. Pedir una llave muestra el código arriba, con cuenta regresiva |
+| `/aulas` | Con login: buscador, peines y "solo disponibles"; quién tiene cada llave. Al pedir una llave el equipo la saca enseguida; arriba se ve la cuenta regresiva |
 | `/mis-llaves` | Las llaves que tengo y mis préstamos anteriores (US-17) |
 | `/cuenta` | Mis datos y cerrar sesión |
 | `/faltantes` | Preceptor: llaves fuera del carrusel, contacto del docente y "Enviar recordatorio" (US-16) |

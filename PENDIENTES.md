@@ -88,7 +88,7 @@ Todo gratis, sin tarjeta y sin comprar dominio. Guía paso a paso: [docs/desplie
 - [ ] **Mandarle a Joel las correcciones del prototipo:** código de 6 dígitos (no 4), reserva de 2 min (no 5), la devolución no se pide desde la app (tecla B), US-22 a US-24 (no "US-20/21") y disco de 32 slots (no 30).
 - [ ] **CU-01:** código de 6 dígitos que vence a los 2 min; la devolución es con la tecla B en el equipo; el código lo valida el servidor por MQTT (el ESP32 no consulta cada 2 s).
 - [ ] **Documentos de "Servicios", "Vinculación del ESP32" y "Base de datos":** describen Supabase como API. Lo construido es FastAPI + Mosquitto, con Supabase solo como base.
-- [ ] **Diagrama de bloques:** "Regulador" (dice "Relugador"); el celular va al servidor, no a la base; agregar el broker MQTT; "Motorreductor DC 24 V" (no paso a paso); "Fuente 220/16" (no 12); lector RFID a 3,3 V del ESP32 (no 5 V); un LED bicolor; la posición del disco la da el lector RFID (no hay sensor extra).
+- [ ] **Diagrama de bloques** (el corregido ya está en el README desde el 17/11/2026, en Mermaid; falta pasarlo al documento de clase): "Regulador" (dice "Relugador"); el celular va al servidor, no a la base; agregar el broker MQTT; "Motorreductor DC 24 V" (no paso a paso); "Fuente 220/16" (no 12); lector RFID a 3,3 V del ESP32 (no 5 V); un LED bicolor; la posición del disco la da el lector RFID (no hay sensor extra).
 
 ## 8. V2: todas hechas (04/11/2026)
 
