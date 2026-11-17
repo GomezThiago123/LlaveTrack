@@ -1,10 +1,20 @@
 # Pendientes de LlavesUBA
 
-Última actualización: 05/11/2026.
+Última actualización: 13/11/2026.
 
 **Dónde estamos:** el servidor, la web y la base (Supabase, con las 6 llaves reales) están hechos y probados con el simulador. El equipo ya entregó y recibió una llave real con el servidor en la notebook (03/11/2026). Lo que falta es terminar las pruebas del equipo y **crear las cuentas de la nube** para la demo, siguiendo [docs/despliegue.md](docs/despliegue.md). Qué es cada cosa: [documentacion.md](documentacion.md).
 
 ## 1. Ahora (te toca a vos)
+
+- [ ] **Alimentación del equipo (13 y 17/11/2026), lo más urgente para la demo:**
+  - El motor anda recién enchufado y a los pocos minutos deja de girar (`MOTOR_NO_GIRA`, el lector no ve ningún tag): 13/11 a las 13:44 y 14:59, 17/11 a las 16:57. Vuelve a andar después de desenchufar todo y volver a enchufar.
+  - El ESP32 no arranca solo con la fuente: al sacar el USB de la notebook (17/11, 17:05) queda desconectado. Solo con el USB se reinicia en bucle por baja tensión (`Brownout detector was triggered`, 143 veces el 17/11). Solo anda con los dos enchufados.
+  - Revisar con tester: fuente (16 V), fusible e interruptor, step-down (5 V en el pin 5V/VIN del ESP32, sin USB), step-up (24 V) y cables flojos. Ver si el step-up o el L298N se calientan.
+  - **Decisión para la demo (17/11/2026):** se presenta con la fuente y el USB de la notebook enchufados. Desenchufar todo y volver a enchufar (primero la fuente, después el USB) poco antes de empezar, con la notebook cargando y sin suspenderse.
+- [ ] **Sentido del motor (17/11/2026):** a las 16:52 el disco giró al revés y a las 17:03 al derecho (ya pasó el 04/11). Si el motor se conecta con una ficha que entra para los dos lados, marcarla.
+- [x] **Firmware ajeno en el equipo (17/11/2026):** alguien había grabado otro programa (con HTTP, no está en el repo) y el equipo no se conectaba al servidor. Se volvió a grabar el de `firmware/` con PlatformIO.
+- [x] **Firmware nuevo cargado** (13/11/2026): con el equipo en error ignora los pedidos de la web en vez de guardarlos para después de recalibrar.
+- [x] **Equipo trabado sin que la web se entere (13/11/2026):** con el homing fallado, el equipo ignoraba los pedidos y la web decía "El equipo está sacando tu llave". Ahora el servidor sabe que el equipo tiene una falla (motor o lector después del último `inicio`): no deja pedir llaves (`409 EQUIPO_CON_FALLA`), la web muestra "Equipo con falla" y marcar resuelto el incidente lo manda a recalibrar. Con tests.
 
 - [x] **Probado con el equipo lo pedido por los superiores (05/11/2026):** entrega directa ("Pedir llave" de la 101 en la web: el equipo la sacó solo en 7 s, "Hola Ana / Aula 101") y teclado con DNI + aula ("Hola Bruno / Aula 214"; un DNI que no es de nadie dio "Credencial no reconocida"). Las devoluciones, bien.
 
